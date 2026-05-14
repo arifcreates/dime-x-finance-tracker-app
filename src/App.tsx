@@ -18,6 +18,8 @@ import { Recurring } from './pages/Recurring';
 import { Reports } from './pages/Reports';
 import { AccountDetail } from './pages/AccountDetail';
 import { dataService } from './services/dataService';
+import { supabaseService } from './services/supabaseService';
+import { supabase } from './lib/supabase';
 import { useTheme } from './hooks/useTheme';
 import { Transaction } from './types';
 
@@ -50,37 +52,100 @@ function App() {
   useTheme();
 
   useEffect(() => {
-    // Check for existing user
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-      // Initialize sample data for registered users
-      dataService.initializeSampleData();
-      // Load transactions
-      setTransactions(dataService.getTransactions());
-    }
-    setIsLoading(false);
+    // Check for existing Supabase session
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // Get user profile
+          const profile = await supabaseService.getProfile(session.user.id);
+          
+          const userData = {
+            id: session.user.id,
+            name: profile.name,
+            email: profile.email,
+            avatar: null,
+            preferences: profile.preferences || {
+              theme: 'light',
+              currency: 'USD',
+              notifications: true,
+            }
+          };
+          
+          setUser(userData);
+          // Load transactions
+          const userTransactions = await dataService.getTransactions();
+          setTransactions(userTransactions);
+        } else {
+          // Check for guest user in localStorage
+          const savedUser = localStorage.getItem('user');
+          if (savedUser) {
+            const userData = JSON.parse(savedUser);
+            if (userData.id === 'guest') {
+              setUser(userData);
+              setTransactions([]);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setTransactions([]);
+        localStorage.removeItem('user');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const handleLogin = (userData: any) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setShowAuthModal(false);
-    
-    // Initialize sample data for new users (not guests)
-    if (userData.id !== 'guest') {
-      dataService.initializeSampleData();
+  const refreshTransactions = async () => {
+    if (user && user.id !== 'guest') {
+      const userTransactions = await dataService.getTransactions();
+      setTransactions(userTransactions);
+    } else {
+      setTransactions([]);
     }
-    
-    // Load transactions
-    setTransactions(dataService.getTransactions());
   };
 
-  const handleLogout = () => {
+  const handleLogin = async (userData: any) => {
+    setUser(userData);
+    setShowAuthModal(false);
+    
+    if (userData.id === 'guest') {
+      localStorage.setItem('user', JSON.stringify(userData));
+      setTransactions([]);
+    } else {
+      // Load user's transactions from Supabase
+      await refreshTransactions();
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      if (user && user.id !== 'guest') {
+        await supabaseService.signOut();
+      }
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+    
     setUser(null);
-    localStorage.removeItem('user');
     setShowAuthModal(false);
     setTransactions([]);
+    localStorage.removeItem('user');
   };
 
   const handleQuickAction = (action: string) => {
@@ -100,7 +165,8 @@ function App() {
     const props = { 
       transactions, 
       onQuickAction: handleQuickAction,
-      user 
+      user,
+      onUpdate: refreshTransactions
     };
 
     // Show account detail if an account is selected
@@ -115,21 +181,21 @@ function App() {
 
     switch (activeSection) {
       case 'dashboard':
-        return <Dashboard {...props} />;
+        return <Dashboard {...props} onUpdate={refreshTransactions} />;
       case 'income':
-        return <Income />;
+        return <Income onUpdate={refreshTransactions} />;
       case 'expenses':
-        return <Expenses />;
+        return <Expenses onUpdate={refreshTransactions} />;
       case 'accounts':
-        return <Accounts onAccountSelect={handleAccountSelect} />;
+        return <Accounts onAccountSelect={handleAccountSelect} onUpdate={refreshTransactions} />;
       case 'emi':
-        return <EMI />;
+        return <EMI onUpdate={refreshTransactions} />;
       case 'recurring':
-        return <Recurring />;
+        return <Recurring onUpdate={refreshTransactions} />;
       case 'reports':
         return <Reports />;
       default:
-        return <Dashboard {...props} />;
+        return <Dashboard {...props} onUpdate={refreshTransactions} />;
     }
   };
 

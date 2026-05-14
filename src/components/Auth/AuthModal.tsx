@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, User, Mail, Lock, Eye, EyeOff, ArrowRight, UserPlus, Users } from 'lucide-react';
+import { supabaseService } from '../../services/supabaseService';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -22,6 +23,8 @@ const DimeXLogo: React.FC<{ className?: string }> = ({ className = "h-8 w-8" }) 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
   const [mode, setMode] = useState<'login' | 'register' | 'guest'>('login');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -29,34 +32,71 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
     confirmPassword: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError(null);
     
-    if (mode === 'register' && formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
-
-    // Simulate authentication
-    const user = {
-      id: '1',
-      name: formData.name || 'John Doe',
-      email: formData.email,
-      avatar: null,
-      preferences: {
-        theme: 'light',
-        currency: 'USD',
-        notifications: true,
+    try {
+      if (mode === 'register') {
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error('Passwords do not match');
+        }
+        
+        const { user } = await supabaseService.signUp(formData.email, formData.password, formData.name);
+        
+        if (user) {
+          const userData = {
+            id: user.id,
+            name: formData.name,
+            email: formData.email,
+            avatar: null,
+            preferences: {
+              theme: 'light',
+              currency: 'USD',
+              notifications: true,
+            }
+          };
+          
+          // Initialize sample data for new users
+          await supabaseService.initializeSampleData(user.id);
+          
+          onLogin(userData);
+          onClose();
+        }
+      } else if (mode === 'login') {
+        const { user } = await supabaseService.signIn(formData.email, formData.password);
+        
+        if (user) {
+          // Get user profile
+          const profile = await supabaseService.getProfile(user.id);
+          
+          const userData = {
+            id: user.id,
+            name: profile.name,
+            email: profile.email,
+            avatar: null,
+            preferences: profile.preferences || {
+              theme: 'light',
+              currency: 'USD',
+              notifications: true,
+            }
+          };
+          
+          onLogin(userData);
+          onClose();
+        }
       }
-    };
-
-    localStorage.setItem('user', JSON.stringify(user));
-    onLogin(user);
-    onClose();
+    } catch (err: any) {
+      console.error('Auth error:', err);
+      setError(err.message || 'An error occurred during authentication');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGuestLogin = () => {
-    const guestUser = {
+    const user = {
       id: 'guest',
       name: 'Guest User',
       email: 'guest@dime-x.com',
@@ -68,8 +108,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
       }
     };
 
-    localStorage.setItem('user', JSON.stringify(guestUser));
-    onLogin(guestUser);
+    onLogin(user);
     onClose();
   };
 
@@ -128,6 +167,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                  <p className="text-red-700 dark:text-red-400 text-sm font-medium">{error}</p>
+                </div>
+              )}
+              
               {mode === 'register' && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -209,10 +254,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
 
               <button
                 type="submit"
+                disabled={isLoading}
                 className="w-full bg-black dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold text-base hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors flex items-center justify-center space-x-2 mt-6"
               >
-                <span>{mode === 'login' ? 'Sign In' : 'Create Account'}</span>
-                <ArrowRight className="h-5 w-5" />
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white dark:border-black border-t-transparent"></div>
+                    <span>Please wait...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{mode === 'login' ? 'Sign In' : 'Create Account'}</span>
+                    <ArrowRight className="h-5 w-5" />
+                  </>
+                )}
               </button>
             </form>
           )}
