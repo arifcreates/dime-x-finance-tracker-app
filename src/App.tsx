@@ -38,6 +38,29 @@ const isTouchDevice = () => {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 };
 
+const getSavedGuestUser = () => {
+  try {
+    const savedUser = localStorage.getItem('user');
+    if (!savedUser) return null;
+
+    const userData = JSON.parse(savedUser);
+    return userData?.id === 'guest' ? userData : null;
+  } catch (error) {
+    console.warn('Ignoring invalid saved user:', error);
+    localStorage.removeItem('user');
+    return null;
+  }
+};
+
+const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+  return await Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      window.setTimeout(() => reject(new Error('Session check timed out')), timeoutMs);
+    }),
+  ]);
+};
+
 function App() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -45,7 +68,7 @@ function App() {
   const [user, setUser] = useState<any>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Initialize theme
   useTheme();
@@ -53,20 +76,18 @@ function App() {
   useEffect(() => {
     // Check for existing Supabase session
     const checkSession = async () => {
+      setIsLoading(true);
       try {
         if (!supabaseConfigured) {
-          const savedUser = localStorage.getItem('user');
-          if (savedUser) {
-            const userData = JSON.parse(savedUser);
-            if (userData.id === 'guest') {
-              setUser(userData);
-              setTransactions([]);
-            }
+          const savedGuest = getSavedGuestUser();
+          if (savedGuest) {
+            setUser(savedGuest);
+            setTransactions([]);
           }
           return;
         }
 
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await withTimeout(supabase.auth.getSession(), 2500);
         
         if (session?.user) {
           // Get user profile
@@ -90,13 +111,10 @@ function App() {
           setTransactions(userTransactions);
         } else {
           // Check for guest user in localStorage
-          const savedUser = localStorage.getItem('user');
-          if (savedUser) {
-            const userData = JSON.parse(savedUser);
-            if (userData.id === 'guest') {
-              setUser(userData);
-              setTransactions([]);
-            }
+          const savedGuest = getSavedGuestUser();
+          if (savedGuest) {
+            setUser(savedGuest);
+            setTransactions([]);
           }
         }
       } catch (error) {
@@ -216,8 +234,8 @@ function App() {
     }
   };
 
-  // Show loading state
-  if (isLoading) {
+  // Show loading state only while restoring a known signed-in user.
+  if (isLoading && user) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-black dark:border-white border-t-transparent"></div>

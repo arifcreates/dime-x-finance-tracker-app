@@ -26,18 +26,20 @@ class DataService {
   };
 
   constructor() {
-    try {
-      supabase.auth.onAuthStateChange((event, session) => {
-        this.currentUserId = session?.user?.id || null;
-        if (event === 'SIGNED_IN' && this.currentUserId) {
-          this.syncLocalDataToSupabase();
-        }
-        if (event === 'SIGNED_OUT') {
-          this.clearCache();
-        }
-      });
-    } catch (error) {
-      console.error('Supabase auth init error:', error);
+    if (supabaseConfigured) {
+      try {
+        supabase.auth.onAuthStateChange((event, session) => {
+          this.currentUserId = session?.user?.id || null;
+          if (event === 'SIGNED_IN' && this.currentUserId) {
+            this.syncLocalDataToSupabase();
+          }
+          if (event === 'SIGNED_OUT') {
+            this.clearCache();
+          }
+        });
+      } catch (error) {
+        console.error('Supabase auth init error:', error);
+      }
     }
 
     window.addEventListener('online', () => {
@@ -72,8 +74,14 @@ class DataService {
   }
 
   private getFromStorage<T>(key: string): T[] {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : [];
+    try {
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.warn(`Ignoring invalid ${key} data:`, error);
+      localStorage.removeItem(key);
+      return [];
+    }
   }
 
   private saveToStorage<T>(key: string, data: T[]): void {
