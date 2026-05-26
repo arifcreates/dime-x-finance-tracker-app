@@ -9,7 +9,16 @@ const isTheme = (value: unknown): value is Theme => {
 const getStoredUser = () => {
   try {
     const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    const userData = user ? JSON.parse(user) : null;
+    if (userData && !localStorage.getItem('dime-ui-refresh-20260527')) {
+      userData.preferences = {
+        ...userData.preferences,
+        theme: 'dark',
+      };
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('dime-ui-refresh-20260527', '1');
+    }
+    return userData;
   } catch (error) {
     console.warn('Ignoring invalid saved user preferences:', error);
     localStorage.removeItem('user');
@@ -20,7 +29,7 @@ const getStoredUser = () => {
 export const useTheme = () => {
   const [theme, setTheme] = useState<Theme>(() => {
     const storedTheme = getStoredUser()?.preferences?.theme;
-    return isTheme(storedTheme) ? storedTheme : 'light';
+    return isTheme(storedTheme) ? storedTheme : 'dark';
   });
 
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');

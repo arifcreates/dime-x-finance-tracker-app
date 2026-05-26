@@ -357,6 +357,10 @@ class DataService {
 
   // ── Analytics (computed from cache after async load) ────────────────────────
 
+  private isTransfer(transaction: Transaction): boolean {
+    return transaction.category.toLowerCase() === 'transfer';
+  }
+
   async getMonthlyIncome(month?: number, year?: number): Promise<number> {
     const transactions = await this.getTransactions();
     const currentDate = new Date();
@@ -365,7 +369,7 @@ class DataService {
     return transactions
       .filter(t => {
         const date = new Date(t.date);
-        return t.type === 'income' && date.getMonth() === targetMonth && date.getFullYear() === targetYear;
+        return t.type === 'income' && !this.isTransfer(t) && date.getMonth() === targetMonth && date.getFullYear() === targetYear;
       })
       .reduce((sum, t) => sum + t.amount, 0);
   }
@@ -378,7 +382,7 @@ class DataService {
     return transactions
       .filter(t => {
         const date = new Date(t.date);
-        return t.type === 'expense' && date.getMonth() === targetMonth && date.getFullYear() === targetYear;
+        return t.type === 'expense' && !this.isTransfer(t) && date.getMonth() === targetMonth && date.getFullYear() === targetYear;
       })
       .reduce((sum, t) => sum + t.amount, 0);
   }
@@ -394,16 +398,28 @@ class DataService {
     return income - expenses;
   }
 
-  async getIncomeByCategory(): Promise<Record<string, number>> {
-    const transactions = (await this.getTransactions()).filter(t => t.type === 'income');
+  async getIncomeByCategory(month?: number, year?: number): Promise<Record<string, number>> {
+    const currentDate = new Date();
+    const targetMonth = month ?? currentDate.getMonth();
+    const targetYear = year ?? currentDate.getFullYear();
+    const transactions = (await this.getTransactions()).filter(t => {
+      const date = new Date(t.date);
+      return t.type === 'income' && !this.isTransfer(t) && date.getMonth() === targetMonth && date.getFullYear() === targetYear;
+    });
     return transactions.reduce((acc, t) => {
       acc[t.category] = (acc[t.category] || 0) + t.amount;
       return acc;
     }, {} as Record<string, number>);
   }
 
-  async getExpensesByCategory(): Promise<Record<string, number>> {
-    const transactions = (await this.getTransactions()).filter(t => t.type === 'expense');
+  async getExpensesByCategory(month?: number, year?: number): Promise<Record<string, number>> {
+    const currentDate = new Date();
+    const targetMonth = month ?? currentDate.getMonth();
+    const targetYear = year ?? currentDate.getFullYear();
+    const transactions = (await this.getTransactions()).filter(t => {
+      const date = new Date(t.date);
+      return t.type === 'expense' && !this.isTransfer(t) && date.getMonth() === targetMonth && date.getFullYear() === targetYear;
+    });
     return transactions.reduce((acc, t) => {
       acc[t.category] = (acc[t.category] || 0) + t.amount;
       return acc;

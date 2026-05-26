@@ -100,7 +100,7 @@ function App() {
             email: profile.email,
             avatar: null,
             preferences: profile.preferences || {
-              theme: 'light',
+              theme: 'dark',
               currency: 'USD',
               notifications: true,
             }

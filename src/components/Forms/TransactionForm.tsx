@@ -25,7 +25,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const currencySymbol = currencyService.getCurrencySymbol(currency);
   const [formData, setFormData] = useState({
     description: transaction?.description || '',
-    amount: transaction?.amount || 0,
+    amount: transaction?.amount ? String(transaction.amount) : '',
     category: transaction?.category || '',
     account: transaction?.account || '',
     date: transaction?.date || new Date().toISOString().split('T')[0],
@@ -35,7 +35,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      dataService.getAccounts().then(setAccounts);
+      dataService.getAccounts().then((loadedAccounts) => {
+        setAccounts(loadedAccounts);
+        setFormData((prev) => ({
+          ...prev,
+          account: prev.account || loadedAccounts[0]?.name || '',
+        }));
+      });
     }
   }, [isOpen]);
   
@@ -47,17 +53,37 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.account && accounts.length > 0) {
-      setFormData(prev => ({ ...prev, account: accounts[0].name }));
+    if (!formData.account) {
+      alert('Please create or select an account first');
+      return;
+    }
+
+    const amount = Number(formData.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert('Please enter an amount greater than zero');
       return;
     }
     
     const newTransaction: Transaction = {
       id: transaction?.id || generateId(),
       ...formData,
+      amount,
       type,
       status: 'completed',
     };
+
+    const selectedAccount = accounts.find(account => account.name === newTransaction.account);
+    if (selectedAccount) {
+      const previousAmount =
+        transaction?.account === selectedAccount.name && transaction.type === type
+          ? transaction.amount
+          : 0;
+      const direction = type === 'income' ? 1 : -1;
+      await dataService.saveAccount({
+        ...selectedAccount,
+        balance: selectedAccount.balance - direction * previousAmount + direction * amount,
+      });
+    }
 
     await dataService.saveTransaction(newTransaction);
     onSave(newTransaction);
@@ -66,7 +92,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     // Reset form
     setFormData({
       description: '',
-      amount: 0,
+      amount: '',
       category: '',
       account: accounts.length > 0 ? accounts[0].name : '',
       date: new Date().toISOString().split('T')[0],
@@ -130,7 +156,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                   min="0"
                   step="0.01"
                   value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   className="w-full pl-8 pr-4 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-black focus:border-transparent transition-all font-medium text-base"
                   placeholder="0.00"
                 />

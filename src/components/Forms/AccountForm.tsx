@@ -22,7 +22,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
   const [formData, setFormData] = useState({
     name: account?.name || '',
     type: account?.type || 'savings' as const,
-    balance: account?.balance || 0,
+    balance: account?.balance ? String(account.balance) : '',
     currency: account?.currency || currency,
   });
 
@@ -32,7 +32,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
     setFormData({
       name: account?.name || '',
       type: account?.type || 'savings',
-      balance: account?.balance || 0,
+      balance: account?.balance ? String(account.balance) : '',
       currency: account?.currency || currency,
     });
   }, [account, currency, isOpen]);
@@ -43,6 +43,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
     const newAccount: Account = {
       id: account?.id || generateId(),
       ...formData,
+      balance: Number(formData.balance) || 0,
     };
 
     await dataService.saveAccount(newAccount);
@@ -53,7 +54,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
     setFormData({
       name: '',
       type: 'savings',
-      balance: 0,
+      balance: '',
       currency,
     });
   };
@@ -117,7 +118,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
               min="0"
               step="0.01"
               value={formData.balance}
-              onChange={(e) => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })}
+              onChange={(e) => setFormData({ ...formData, balance: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
               placeholder="0.00"
             />

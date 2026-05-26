@@ -27,7 +27,7 @@ const createLocalUser = (name: string, email: string) => ({
   email,
   avatar: null,
   preferences: {
-    theme: 'light',
+    theme: 'dark',
     currency: 'USD',
     notifications: true,
   },
@@ -73,7 +73,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
             email: formData.email,
             avatar: null,
             preferences: {
-              theme: 'light',
+              theme: 'dark',
               currency: 'USD',
               notifications: true,
             }
@@ -112,7 +112,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
             email: profile.email,
             avatar: null,
             preferences: profile.preferences || {
-              theme: 'light',
+              theme: 'dark',
               currency: 'USD',
               notifications: true,
             }
@@ -137,7 +137,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
       email: 'guest@dime-x.com',
       avatar: null,
       preferences: {
-        theme: 'light',
+        theme: 'dark',
         currency: 'USD',
         notifications: false,
       }
