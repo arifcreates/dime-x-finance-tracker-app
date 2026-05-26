@@ -98,17 +98,23 @@ function App() {
 
     checkSession();
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setTransactions([]);
-        localStorage.removeItem('user');
-      }
-    });
+    // Listen for auth state changes (skip if Supabase not configured)
+    let unsubscribe = () => {};
+    try {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setTransactions([]);
+          localStorage.removeItem('user');
+        }
+      });
+      unsubscribe = () => subscription.unsubscribe();
+    } catch (error) {
+      console.error('Auth state change setup error:', error);
+    }
 
     return () => {
-      subscription.unsubscribe();
+      unsubscribe();
     };
   }, []);
 

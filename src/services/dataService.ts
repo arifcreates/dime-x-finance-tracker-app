@@ -26,15 +26,19 @@ class DataService {
   };
 
   constructor() {
-    supabase.auth.onAuthStateChange((event, session) => {
-      this.currentUserId = session?.user?.id || null;
-      if (event === 'SIGNED_IN' && this.currentUserId) {
-        this.syncLocalDataToSupabase();
-      }
-      if (event === 'SIGNED_OUT') {
-        this.clearCache();
-      }
-    });
+    try {
+      supabase.auth.onAuthStateChange((event, session) => {
+        this.currentUserId = session?.user?.id || null;
+        if (event === 'SIGNED_IN' && this.currentUserId) {
+          this.syncLocalDataToSupabase();
+        }
+        if (event === 'SIGNED_OUT') {
+          this.clearCache();
+        }
+      });
+    } catch (error) {
+      console.error('Supabase auth init error:', error);
+    }
 
     window.addEventListener('online', () => {
       this.isOnline = true;
