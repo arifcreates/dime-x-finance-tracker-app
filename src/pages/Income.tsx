@@ -6,6 +6,7 @@ import { InvoiceStatusModal } from '../components/Forms/InvoiceStatusModal';
 import { Invoice, Transaction } from '../types';
 import { dataService } from '../services/dataService';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
 export const Income: React.FC = () => {
   const fmt = useCurrencyFormat();

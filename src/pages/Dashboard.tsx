@@ -10,6 +10,7 @@ import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownLeft, Plus, Do
 import { formatCurrency, formatDate, getDaysUntilDate } from '../utils/formatters';
 import { Transaction, Account, EMI, CreditCard, RecurringPayment } from '../types';
 import { dataService } from '../services/dataService';
+import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
 interface DashboardProps {
   transactions: Transaction[];
@@ -87,10 +88,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
     loadData();
 
     // Load saved card order or use default
-    const savedOrder = localStorage.getItem('dashboardCardOrder');
-    if (savedOrder) {
-      setCardOrder(JSON.parse(savedOrder));
-    } else {
+    try {
+      const savedOrder = localStorage.getItem('dashboardCardOrder');
+      setCardOrder(savedOrder ? JSON.parse(savedOrder) : [
+        'hero-balance',
+        'quick-actions',
+        'upcoming-payments',
+        'account-breakdown',
+        'cash-flow-chart',
+        'income-breakdown',
+        'recent-transactions'
+      ]);
+    } catch (error) {
+      console.warn('Ignoring invalid dashboard card order:', error);
+      localStorage.removeItem('dashboardCardOrder');
       setCardOrder([
         'hero-balance',
         'quick-actions',

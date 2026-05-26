@@ -4,6 +4,7 @@ import { Account, Transaction } from '../types';
 import { dataService } from '../services/dataService';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { TransactionForm } from '../components/Forms/TransactionForm';
+import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
 interface AccountDetailProps {
   accountId: string;

@@ -5,6 +5,7 @@ import { CreditCardForm } from '../components/Forms/CreditCardForm';
 import { EMI as EMIType, CreditCard } from '../types';
 import { dataService } from '../services/dataService';
 import { formatCurrency, formatDate, getDaysUntilDate } from '../utils/formatters';
+import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
 export const EMI: React.FC = () => {
   const fmt = useCurrencyFormat();

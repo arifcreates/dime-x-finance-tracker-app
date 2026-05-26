@@ -4,6 +4,7 @@ import { TransactionForm } from '../components/Forms/TransactionForm';
 import { Transaction } from '../types';
 import { dataService } from '../services/dataService';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
 export const Expenses: React.FC = () => {
   const fmt = useCurrencyFormat();

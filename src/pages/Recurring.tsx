@@ -4,6 +4,7 @@ import { RecurringPaymentForm } from '../components/Forms/RecurringPaymentForm';
 import { RecurringPayment } from '../types';
 import { dataService } from '../services/dataService';
 import { formatCurrency, formatDate, getDaysUntilDate } from '../utils/formatters';
+import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
 export const Recurring: React.FC = () => {
   const fmt = useCurrencyFormat();
