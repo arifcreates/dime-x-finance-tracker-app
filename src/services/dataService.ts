@@ -96,19 +96,33 @@ class DataService {
     this.saveToStorage(key, items);
   }
 
+  private deleteStorageItem<T extends { id: string }>(key: string, id: string): void {
+    this.saveToStorage(key, this.getFromStorage<T>(key).filter(item => item.id !== id));
+  }
+
+  private mergeById<T extends { id: string }>(remoteItems: T[], localItems: T[]): T[] {
+    const items = new Map<string, T>();
+    for (const item of remoteItems) items.set(item.id, item);
+    for (const item of localItems) items.set(item.id, item);
+    return Array.from(items.values());
+  }
+
   private async fetchFromSupabaseOrStorage<T>(
     supabaseMethod: () => Promise<T[]>,
     storageKey: string
   ): Promise<T[]> {
+    const localItems = this.getFromStorage<T>(storageKey);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try {
-        return await supabaseMethod();
+        const remoteItems = await supabaseMethod();
+        return this.mergeById(remoteItems as Array<T & { id: string }>, localItems as Array<T & { id: string }>) as T[];
       } catch (error) {
         console.error('Supabase error, falling back to localStorage:', error);
-        return this.getFromStorage<T>(storageKey);
+        return localItems;
       }
     }
-    return this.getFromStorage<T>(storageKey);
+    return localItems;
   }
 
   // ── Async fetch methods (update cache) ──────────────────────────────────────
@@ -182,15 +196,14 @@ class DataService {
   // ── Save / Delete ────────────────────────────────────────────────────────────
 
   async saveTransaction(transaction: Transaction): Promise<void> {
+    this.upsertStorageItem('transactions', transaction);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try {
         await supabaseService.saveTransaction(this.currentUserId, transaction);
       } catch (error) {
-        console.error('Error saving to Supabase, saving locally:', error);
-        this.upsertStorageItem('transactions', transaction);
+        console.error('Error saving to Supabase, kept local copy:', error);
       }
-    } else {
-      this.upsertStorageItem('transactions', transaction);
     }
     const idx = this.cache.transactions.findIndex(t => t.id === transaction.id);
     if (idx >= 0) this.cache.transactions[idx] = transaction;
@@ -198,25 +211,24 @@ class DataService {
   }
 
   async deleteTransaction(id: string): Promise<void> {
+    this.deleteStorageItem<Transaction>('transactions', id);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteTransaction(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
-    } else {
-      this.saveToStorage('transactions', this.getFromStorage<Transaction>('transactions').filter(t => t.id !== id));
     }
     this.cache.transactions = this.cache.transactions.filter(t => t.id !== id);
   }
 
   async saveAccount(account: Account): Promise<void> {
+    this.upsertStorageItem('accounts', account);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try {
         await supabaseService.saveAccount(this.currentUserId, account);
       } catch (error) {
-        console.error('Error saving to Supabase, saving locally:', error);
-        this.upsertStorageItem('accounts', account);
+        console.error('Error saving to Supabase, kept local copy:', error);
       }
-    } else {
-      this.upsertStorageItem('accounts', account);
     }
     const idx = this.cache.accounts.findIndex(a => a.id === account.id);
     if (idx >= 0) this.cache.accounts[idx] = account;
@@ -224,24 +236,21 @@ class DataService {
   }
 
   async deleteAccount(id: string): Promise<void> {
+    this.deleteStorageItem<Account>('accounts', id);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteAccount(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
-    } else {
-      this.saveToStorage('accounts', this.getFromStorage<Account>('accounts').filter(a => a.id !== id));
     }
     this.cache.accounts = this.cache.accounts.filter(a => a.id !== id);
   }
 
   async saveInvoice(invoice: Invoice): Promise<void> {
+    this.upsertStorageItem('invoices', invoice);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.saveInvoice(this.currentUserId, invoice); }
       catch (error) { console.error('Error saving to Supabase:', error); }
-    } else {
-      const items = this.getFromStorage<Invoice>('invoices');
-      const idx = items.findIndex(i => i.id === invoice.id);
-      if (idx >= 0) items[idx] = invoice; else items.push(invoice);
-      this.saveToStorage('invoices', items);
     }
     const idx = this.cache.invoices.findIndex(i => i.id === invoice.id);
     if (idx >= 0) this.cache.invoices[idx] = invoice;
@@ -249,24 +258,21 @@ class DataService {
   }
 
   async deleteInvoice(id: string): Promise<void> {
+    this.deleteStorageItem<Invoice>('invoices', id);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteInvoice(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
-    } else {
-      this.saveToStorage('invoices', this.getFromStorage<Invoice>('invoices').filter(i => i.id !== id));
     }
     this.cache.invoices = this.cache.invoices.filter(i => i.id !== id);
   }
 
   async saveClient(client: Client): Promise<void> {
+    this.upsertStorageItem('clients', client);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.saveClient(this.currentUserId, client); }
       catch (error) { console.error('Error saving to Supabase:', error); }
-    } else {
-      const items = this.getFromStorage<Client>('clients');
-      const idx = items.findIndex(c => c.id === client.id);
-      if (idx >= 0) items[idx] = client; else items.push(client);
-      this.saveToStorage('clients', items);
     }
     const idx = this.cache.clients.findIndex(c => c.id === client.id);
     if (idx >= 0) this.cache.clients[idx] = client;
@@ -274,24 +280,21 @@ class DataService {
   }
 
   async deleteClient(id: string): Promise<void> {
+    this.deleteStorageItem<Client>('clients', id);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteClient(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
-    } else {
-      this.saveToStorage('clients', this.getFromStorage<Client>('clients').filter(c => c.id !== id));
     }
     this.cache.clients = this.cache.clients.filter(c => c.id !== id);
   }
 
   async saveEMI(emi: EMI): Promise<void> {
+    this.upsertStorageItem('emis', emi);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.saveEMI(this.currentUserId, emi); }
       catch (error) { console.error('Error saving to Supabase:', error); }
-    } else {
-      const items = this.getFromStorage<EMI>('emis');
-      const idx = items.findIndex(e => e.id === emi.id);
-      if (idx >= 0) items[idx] = emi; else items.push(emi);
-      this.saveToStorage('emis', items);
     }
     const idx = this.cache.emis.findIndex(e => e.id === emi.id);
     if (idx >= 0) this.cache.emis[idx] = emi;
@@ -299,24 +302,21 @@ class DataService {
   }
 
   async deleteEMI(id: string): Promise<void> {
+    this.deleteStorageItem<EMI>('emis', id);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteEMI(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
-    } else {
-      this.saveToStorage('emis', this.getFromStorage<EMI>('emis').filter(e => e.id !== id));
     }
     this.cache.emis = this.cache.emis.filter(e => e.id !== id);
   }
 
   async saveCreditCard(card: CreditCard): Promise<void> {
+    this.upsertStorageItem('creditcards', card);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.saveCreditCard(this.currentUserId, card); }
       catch (error) { console.error('Error saving to Supabase:', error); }
-    } else {
-      const items = this.getFromStorage<CreditCard>('creditcards');
-      const idx = items.findIndex(c => c.id === card.id);
-      if (idx >= 0) items[idx] = card; else items.push(card);
-      this.saveToStorage('creditcards', items);
     }
     const idx = this.cache.creditCards.findIndex(c => c.id === card.id);
     if (idx >= 0) this.cache.creditCards[idx] = card;
@@ -324,24 +324,21 @@ class DataService {
   }
 
   async deleteCreditCard(id: string): Promise<void> {
+    this.deleteStorageItem<CreditCard>('creditcards', id);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteCreditCard(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
-    } else {
-      this.saveToStorage('creditcards', this.getFromStorage<CreditCard>('creditcards').filter(c => c.id !== id));
     }
     this.cache.creditCards = this.cache.creditCards.filter(c => c.id !== id);
   }
 
   async saveRecurringPayment(payment: RecurringPayment): Promise<void> {
+    this.upsertStorageItem('recurringpayments', payment);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.saveRecurringPayment(this.currentUserId, payment); }
       catch (error) { console.error('Error saving to Supabase:', error); }
-    } else {
-      const items = this.getFromStorage<RecurringPayment>('recurringpayments');
-      const idx = items.findIndex(p => p.id === payment.id);
-      if (idx >= 0) items[idx] = payment; else items.push(payment);
-      this.saveToStorage('recurringpayments', items);
     }
     const idx = this.cache.recurringPayments.findIndex(p => p.id === payment.id);
     if (idx >= 0) this.cache.recurringPayments[idx] = payment;
@@ -349,11 +346,11 @@ class DataService {
   }
 
   async deleteRecurringPayment(id: string): Promise<void> {
+    this.deleteStorageItem<RecurringPayment>('recurringpayments', id);
+
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteRecurringPayment(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
-    } else {
-      this.saveToStorage('recurringpayments', this.getFromStorage<RecurringPayment>('recurringpayments').filter(p => p.id !== id));
     }
     this.cache.recurringPayments = this.cache.recurringPayments.filter(p => p.id !== id);
   }
