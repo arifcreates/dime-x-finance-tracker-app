@@ -204,6 +204,7 @@ function App() {
       transactions, 
       onQuickAction: handleQuickAction,
       quickActionRequest,
+      onQuickActionHandled: () => setQuickActionRequest(null),
       user,
       onUpdate: refreshTransactions
     };

@@ -16,6 +16,7 @@ interface DashboardProps {
   transactions: Transaction[];
   onQuickAction?: (action: string) => void;
   quickActionRequest?: { action: string; id: number } | null;
+  onQuickActionHandled?: () => void;
   onUpdate?: () => void;
   user?: any;
 }
@@ -32,6 +33,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   transactions: initialTransactions,
   onQuickAction,
   quickActionRequest,
+  onQuickActionHandled,
   onUpdate,
   user
 }) => {
@@ -145,12 +147,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
   useEffect(() => {
     if (quickActionRequest) {
       openQuickAction(quickActionRequest.action);
+      onQuickActionHandled?.();
     }
-  }, [quickActionRequest, openQuickAction]);
+  }, [quickActionRequest, openQuickAction, onQuickActionHandled]);
 
   const handleQuickAction = (action: string) => {
     openQuickAction(action);
-    onQuickAction?.(action);
   };
 
   const handleViewAllTransactions = () => {
