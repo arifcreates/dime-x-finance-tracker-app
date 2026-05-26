@@ -10,6 +10,7 @@ import { formatCurrency, formatDate } from '../utils/formatters';
 export const Income: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [showIncomeForm, setShowIncomeForm] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -21,9 +22,11 @@ export const Income: React.FC = () => {
     refreshData();
   }, []);
 
-  const refreshData = () => {
-    setInvoices(dataService.getInvoices());
-    setTransactions(dataService.getTransactions().filter(t => t.type === 'income'));
+  const refreshData = async () => {
+    const [invs, txns, cls] = await Promise.all([dataService.getInvoices(), dataService.getTransactions(), dataService.getClients()]);
+    setInvoices(invs);
+    setTransactions(txns.filter(t => t.type === 'income'));
+    setClients(cls);
   };
 
   const handleInvoiceSave = () => {
@@ -184,7 +187,7 @@ export const Income: React.FC = () => {
                     {/* Mobile Cards */}
                     <div className="block lg:hidden space-y-4">
                       {invoices.map((invoice) => {
-                        const client = dataService.getClients().find(c => c.id === invoice.clientId);
+                        const client = clients.find(c => c.id === invoice.clientId);
                         return (
                           <div key={invoice.id} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
                             <div className="flex justify-between items-start mb-3">
@@ -242,7 +245,7 @@ export const Income: React.FC = () => {
                         </thead>
                         <tbody>
                           {invoices.map((invoice) => {
-                            const client = dataService.getClients().find(c => c.id === invoice.clientId);
+                            const client = clients.find(c => c.id === invoice.clientId);
                             return (
                               <tr key={invoice.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                                 <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{invoice.invoiceNumber}</td>

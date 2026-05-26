@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Invoice, InvoiceItem, Client } from '../../types';
 import { generateId } from '../../utils/formatters';
@@ -37,7 +37,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     address: '',
   });
 
-  const clients = dataService.getClients();
+  const [clients, setClients] = useState<Client[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      dataService.getClients().then(setClients);
+    }
+  }, [isOpen]);
 
   const updateItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
     const updatedItems = [...items];

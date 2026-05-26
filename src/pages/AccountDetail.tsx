@@ -20,27 +20,27 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ accountId, onBack 
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
 
   useEffect(() => {
-    const foundAccount = dataService.getAccounts().find(acc => acc.id === accountId);
-    setAccount(foundAccount || null);
-    
-    // Get transactions for this account
-    const allTransactions = dataService.getTransactions();
-    const accountTransactions = allTransactions.filter(t => t.account === foundAccount?.name);
-    setTransactions(accountTransactions);
-    setFilteredTransactions(accountTransactions);
+    const load = async () => {
+      const accounts = await dataService.getAccounts();
+      const foundAccount = accounts.find(acc => acc.id === accountId) || null;
+      setAccount(foundAccount);
+      const allTransactions = await dataService.getTransactions();
+      const accountTransactions = allTransactions.filter(t => t.account === foundAccount?.name);
+      setTransactions(accountTransactions);
+      setFilteredTransactions(accountTransactions);
+    };
+    load();
   }, [accountId]);
 
   useEffect(() => {
     let filtered = transactions;
 
-    // Filter by type
     if (filterType !== 'all') {
       filtered = filtered.filter(t => t.type === filterType);
     }
 
-    // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(t => 
+      filtered = filtered.filter(t =>
         t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.category.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -49,11 +49,11 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ accountId, onBack 
     setFilteredTransactions(filtered);
   }, [transactions, filterType, searchTerm]);
 
-  const handleTransactionSave = () => {
-    const foundAccount = dataService.getAccounts().find(acc => acc.id === accountId);
-    setAccount(foundAccount || null);
-    
-    const allTransactions = dataService.getTransactions();
+  const handleTransactionSave = async () => {
+    const accounts = await dataService.getAccounts();
+    const foundAccount = accounts.find(acc => acc.id === accountId) || null;
+    setAccount(foundAccount);
+    const allTransactions = await dataService.getTransactions();
     const accountTransactions = allTransactions.filter(t => t.account === foundAccount?.name);
     setTransactions(accountTransactions);
   };

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { Transaction } from '../../types';
+import { Transaction, Account } from '../../types';
 import { generateId } from '../../utils/formatters';
 import { dataService } from '../../services/dataService';
 
@@ -27,7 +27,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     date: transaction?.date || new Date().toISOString().split('T')[0],
   });
 
-  const accounts = dataService.getAccounts();
+  const [accounts, setAccounts] = useState<Account[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      dataService.getAccounts().then(setAccounts);
+    }
+  }, [isOpen]);
   
   const incomeCategories = ['Freelance', 'Consulting', 'Product Sales', 'Investment', 'Royalties', 'Other'];
   const expenseCategories = ['Office', 'Software', 'Marketing', 'Travel', 'Equipment', 'Utilities', 'Food', 'Transportation', 'Other'];

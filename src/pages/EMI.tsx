@@ -19,9 +19,10 @@ export const EMI: React.FC = () => {
     refreshData();
   }, []);
 
-  const refreshData = () => {
-    setEMIs(dataService.getEMIs());
-    setCreditCards(dataService.getCreditCards());
+  const refreshData = async () => {
+    const [emiList, cardList] = await Promise.all([dataService.getEMIs(), dataService.getCreditCards()]);
+    setEMIs(emiList);
+    setCreditCards(cardList);
   };
 
   const handleEMISave = () => {

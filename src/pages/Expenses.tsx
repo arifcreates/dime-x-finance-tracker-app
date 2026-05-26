@@ -12,18 +12,20 @@ export const Expenses: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
-    setExpenses(dataService.getTransactions().filter(t => t.type === 'expense'));
+    dataService.getTransactions().then(txns => setExpenses(txns.filter(t => t.type === 'expense')));
   }, []);
 
-  const handleExpenseSave = () => {
-    setExpenses(dataService.getTransactions().filter(t => t.type === 'expense'));
+  const handleExpenseSave = async () => {
+    const txns = await dataService.getTransactions();
+    setExpenses(txns.filter(t => t.type === 'expense'));
     setEditingExpense(undefined);
   };
 
-  const handleDeleteExpense = (id: string) => {
+  const handleDeleteExpense = async (id: string) => {
     if (confirm('Are you sure you want to delete this expense?')) {
-      dataService.deleteTransaction(id);
-      setExpenses(dataService.getTransactions().filter(t => t.type === 'expense'));
+      await dataService.deleteTransaction(id);
+      const txns = await dataService.getTransactions();
+      setExpenses(txns.filter(t => t.type === 'expense'));
     }
   };
 

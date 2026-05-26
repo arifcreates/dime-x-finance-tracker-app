@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, DollarSign } from 'lucide-react';
-import { Invoice } from '../../types';
+import { Invoice, Account } from '../../types';
 import { dataService } from '../../services/dataService';
 import { generateId } from '../../utils/formatters';
 
@@ -19,8 +19,13 @@ export const InvoiceStatusModal: React.FC<InvoiceStatusModalProps> = ({
 }) => {
   const [selectedAccount, setSelectedAccount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [accounts, setAccounts] = useState<Account[]>([]);
 
-  const accounts = dataService.getAccounts();
+  useEffect(() => {
+    if (isOpen) {
+      dataService.getAccounts().then(setAccounts);
+    }
+  }, [isOpen]);
 
   const handleMarkAsPaid = async () => {
     if (!selectedAccount) {

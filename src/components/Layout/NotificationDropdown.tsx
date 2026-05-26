@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, CheckCircle, AlertCircle, Calendar, CreditCard, X } from 'lucide-react';
 import { formatCurrency, formatDate, getDaysUntilDate } from '../../utils/formatters';
 import { dataService } from '../../services/dataService';
+import { EMI, CreditCard as CreditCardType } from '../../types';
 
 interface NotificationDropdownProps {
   isOpen: boolean;
@@ -9,12 +10,24 @@ interface NotificationDropdownProps {
 }
 
 export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose }) => {
+  const [emis, setEmis] = useState<EMI[]>([]);
+  const [creditCards, setCreditCards] = useState<CreditCardType[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      Promise.all([dataService.getEMIs(), dataService.getCreditCards()]).then(([emiList, cardList]) => {
+        setEmis(emiList);
+        setCreditCards(cardList);
+      });
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // Generate notifications from data
   const notifications = [
     // EMI notifications
-    ...dataService.getEMIs().map(emi => {
+    ...emis.map(emi => {
       const daysUntil = getDaysUntilDate(emi.nextDueDate);
       return {
         id: `emi-${emi.id}`,
@@ -27,7 +40,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
       };
     }),
     // Credit card notifications
-    ...dataService.getCreditCards().map(card => {
+    ...creditCards.map(card => {
       const daysUntil = getDaysUntilDate(card.dueDate);
       return {
         id: `card-${card.id}`,

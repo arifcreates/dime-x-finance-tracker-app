@@ -16,13 +16,15 @@ export const Reports: React.FC = () => {
     
     try {
       // Get all data
-      const transactions = dataService.getTransactions();
-      const accounts = dataService.getAccounts();
-      const invoices = dataService.getInvoices();
-      const emis = dataService.getEMIs();
-      const creditCards = dataService.getCreditCards();
-      const recurringPayments = dataService.getRecurringPayments();
-      const clients = dataService.getClients();
+      const [transactions, accounts, invoices, emis, creditCards, recurringPayments, clients] = await Promise.all([
+        dataService.getTransactions(),
+        dataService.getAccounts(),
+        dataService.getInvoices(),
+        dataService.getEMIs(),
+        dataService.getCreditCards(),
+        dataService.getRecurringPayments(),
+        dataService.getClients(),
+      ]);
 
       // Filter transactions by date range
       const filteredTransactions = transactions.filter(t => {

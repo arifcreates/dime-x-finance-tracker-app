@@ -15,8 +15,8 @@ export const Recurring: React.FC = () => {
     refreshData();
   }, []);
 
-  const refreshData = () => {
-    setPayments(dataService.getRecurringPayments());
+  const refreshData = async () => {
+    setPayments(await dataService.getRecurringPayments());
   };
 
   const handlePaymentSave = () => {

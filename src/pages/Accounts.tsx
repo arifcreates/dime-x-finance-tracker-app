@@ -17,16 +17,16 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect }) => {
   const [editingAccount, setEditingAccount] = useState<Account | undefined>();
 
   useEffect(() => {
-    setAccounts(dataService.getAccounts());
+    dataService.getAccounts().then(setAccounts);
   }, []);
 
-  const handleAccountSave = () => {
-    setAccounts(dataService.getAccounts());
+  const handleAccountSave = async () => {
+    setAccounts(await dataService.getAccounts());
     setEditingAccount(undefined);
   };
 
-  const handleTransfer = () => {
-    setAccounts(dataService.getAccounts());
+  const handleTransfer = async () => {
+    setAccounts(await dataService.getAccounts());
   };
 
   const handleDeleteAccount = (id: string) => {
