@@ -1,6 +1,6 @@
 import { Transaction, Account, Invoice, Client, EMI, CreditCard, RecurringPayment } from '../types';
 import { supabaseService } from './supabaseService';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseConfigured } from '../lib/supabase';
 
 class DataService {
   private currentUserId: string | null = null;
@@ -49,7 +49,7 @@ class DataService {
   }
 
   private async syncLocalDataToSupabase() {
-    if (!this.currentUserId || !this.isOnline) return;
+    if (!supabaseConfigured || !this.currentUserId || !this.isOnline) return;
     try {
       const localAccounts = this.getFromStorage<Account>('accounts');
       for (const account of localAccounts) await supabaseService.saveAccount(this.currentUserId, account);
@@ -80,7 +80,7 @@ class DataService {
     supabaseMethod: () => Promise<T[]>,
     storageKey: string
   ): Promise<T[]> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try {
         return await supabaseMethod();
       } catch (error) {
@@ -162,7 +162,7 @@ class DataService {
   // ── Save / Delete ────────────────────────────────────────────────────────────
 
   async saveTransaction(transaction: Transaction): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.saveTransaction(this.currentUserId, transaction); }
       catch (error) { console.error('Error saving to Supabase, saving locally:', error); }
     } else {
@@ -177,7 +177,7 @@ class DataService {
   }
 
   async deleteTransaction(id: string): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteTransaction(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
     } else {
@@ -187,7 +187,7 @@ class DataService {
   }
 
   async saveAccount(account: Account): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.saveAccount(this.currentUserId, account); }
       catch (error) { console.error('Error saving to Supabase:', error); }
     } else {
@@ -202,7 +202,7 @@ class DataService {
   }
 
   async deleteAccount(id: string): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteAccount(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
     } else {
@@ -212,7 +212,7 @@ class DataService {
   }
 
   async saveInvoice(invoice: Invoice): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.saveInvoice(this.currentUserId, invoice); }
       catch (error) { console.error('Error saving to Supabase:', error); }
     } else {
@@ -227,7 +227,7 @@ class DataService {
   }
 
   async deleteInvoice(id: string): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteInvoice(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
     } else {
@@ -237,7 +237,7 @@ class DataService {
   }
 
   async saveClient(client: Client): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.saveClient(this.currentUserId, client); }
       catch (error) { console.error('Error saving to Supabase:', error); }
     } else {
@@ -252,7 +252,7 @@ class DataService {
   }
 
   async deleteClient(id: string): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteClient(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
     } else {
@@ -262,7 +262,7 @@ class DataService {
   }
 
   async saveEMI(emi: EMI): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.saveEMI(this.currentUserId, emi); }
       catch (error) { console.error('Error saving to Supabase:', error); }
     } else {
@@ -277,7 +277,7 @@ class DataService {
   }
 
   async deleteEMI(id: string): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteEMI(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
     } else {
@@ -287,7 +287,7 @@ class DataService {
   }
 
   async saveCreditCard(card: CreditCard): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.saveCreditCard(this.currentUserId, card); }
       catch (error) { console.error('Error saving to Supabase:', error); }
     } else {
@@ -302,7 +302,7 @@ class DataService {
   }
 
   async deleteCreditCard(id: string): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteCreditCard(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
     } else {
@@ -312,7 +312,7 @@ class DataService {
   }
 
   async saveRecurringPayment(payment: RecurringPayment): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.saveRecurringPayment(this.currentUserId, payment); }
       catch (error) { console.error('Error saving to Supabase:', error); }
     } else {
@@ -327,7 +327,7 @@ class DataService {
   }
 
   async deleteRecurringPayment(id: string): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       try { await supabaseService.deleteRecurringPayment(id); }
       catch (error) { console.error('Error deleting from Supabase:', error); }
     } else {
@@ -392,7 +392,7 @@ class DataService {
   }
 
   async initializeSampleData(): Promise<void> {
-    if (this.currentUserId && this.isOnline) {
+    if (supabaseConfigured && this.currentUserId && this.isOnline) {
       await supabaseService.initializeSampleData(this.currentUserId);
     }
   }
