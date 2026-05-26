@@ -6,45 +6,55 @@ class DataService {
   private currentUserId: string | null = null;
   private isOnline = true;
 
+  // In-memory cache — populated on first async load, updated after every save/delete
+  private cache: {
+    transactions: Transaction[];
+    accounts: Account[];
+    invoices: Invoice[];
+    clients: Client[];
+    emis: EMI[];
+    creditCards: CreditCard[];
+    recurringPayments: RecurringPayment[];
+  } = {
+    transactions: [],
+    accounts: [],
+    invoices: [],
+    clients: [],
+    emis: [],
+    creditCards: [],
+    recurringPayments: [],
+  };
+
   constructor() {
-    // Listen for auth state changes
     supabase.auth.onAuthStateChange((event, session) => {
       this.currentUserId = session?.user?.id || null;
       if (event === 'SIGNED_IN' && this.currentUserId) {
         this.syncLocalDataToSupabase();
       }
-    });
-
-    // Check online status
-    window.addEventListener('online', () => {
-      this.isOnline = true;
-      if (this.currentUserId) {
-        this.syncLocalDataToSupabase();
+      if (event === 'SIGNED_OUT') {
+        this.clearCache();
       }
     });
 
-    window.addEventListener('offline', () => {
-      this.isOnline = false;
+    window.addEventListener('online', () => {
+      this.isOnline = true;
+      if (this.currentUserId) this.syncLocalDataToSupabase();
     });
+
+    window.addEventListener('offline', () => { this.isOnline = false; });
+  }
+
+  private clearCache() {
+    this.cache = { transactions: [], accounts: [], invoices: [], clients: [], emis: [], creditCards: [], recurringPayments: [] };
   }
 
   private async syncLocalDataToSupabase() {
     if (!this.currentUserId || !this.isOnline) return;
-
     try {
-      // Sync accounts
       const localAccounts = this.getFromStorage<Account>('accounts');
-      for (const account of localAccounts) {
-        await supabaseService.saveAccount(this.currentUserId, account);
-      }
-
-      // Sync transactions
+      for (const account of localAccounts) await supabaseService.saveAccount(this.currentUserId, account);
       const localTransactions = this.getFromStorage<Transaction>('transactions');
-      for (const transaction of localTransactions) {
-        await supabaseService.saveTransaction(this.currentUserId, transaction);
-      }
-
-      // Clear local storage after successful sync
+      for (const transaction of localTransactions) await supabaseService.saveTransaction(this.currentUserId, transaction);
       localStorage.removeItem('accounts');
       localStorage.removeItem('transactions');
       localStorage.removeItem('clients');
@@ -66,343 +76,277 @@ class DataService {
     localStorage.setItem(key, JSON.stringify(data));
   }
 
-  private async useSupabaseOrFallback<T>(
-    supabaseMethod: () => Promise<T>,
-    fallbackMethod: () => T
-  ): Promise<T> {
+  private async fetchFromSupabaseOrStorage<T>(
+    supabaseMethod: () => Promise<T[]>,
+    storageKey: string
+  ): Promise<T[]> {
     if (this.currentUserId && this.isOnline) {
       try {
         return await supabaseMethod();
       } catch (error) {
         console.error('Supabase error, falling back to localStorage:', error);
-        return fallbackMethod();
+        return this.getFromStorage<T>(storageKey);
       }
     }
-    return fallbackMethod();
+    return this.getFromStorage<T>(storageKey);
   }
 
-  // Transactions
+  // ── Async fetch methods (update cache) ──────────────────────────────────────
+
   async getTransactions(): Promise<Transaction[]> {
-    return this.useSupabaseOrFallback(
+    this.cache.transactions = await this.fetchFromSupabaseOrStorage(
       () => supabaseService.getTransactions(this.currentUserId!),
-      () => this.getFromStorage<Transaction>('transactions')
+      'transactions'
     );
+    return this.cache.transactions;
   }
+
+  async getAccounts(): Promise<Account[]> {
+    this.cache.accounts = await this.fetchFromSupabaseOrStorage(
+      () => supabaseService.getAccounts(this.currentUserId!),
+      'accounts'
+    );
+    return this.cache.accounts;
+  }
+
+  async getInvoices(): Promise<Invoice[]> {
+    this.cache.invoices = await this.fetchFromSupabaseOrStorage(
+      () => supabaseService.getInvoices(this.currentUserId!),
+      'invoices'
+    );
+    return this.cache.invoices;
+  }
+
+  async getClients(): Promise<Client[]> {
+    this.cache.clients = await this.fetchFromSupabaseOrStorage(
+      () => supabaseService.getClients(this.currentUserId!),
+      'clients'
+    );
+    return this.cache.clients;
+  }
+
+  async getEMIs(): Promise<EMI[]> {
+    this.cache.emis = await this.fetchFromSupabaseOrStorage(
+      () => supabaseService.getEMIs(this.currentUserId!),
+      'emis'
+    );
+    return this.cache.emis;
+  }
+
+  async getCreditCards(): Promise<CreditCard[]> {
+    this.cache.creditCards = await this.fetchFromSupabaseOrStorage(
+      () => supabaseService.getCreditCards(this.currentUserId!),
+      'creditcards'
+    );
+    return this.cache.creditCards;
+  }
+
+  async getRecurringPayments(): Promise<RecurringPayment[]> {
+    this.cache.recurringPayments = await this.fetchFromSupabaseOrStorage(
+      () => supabaseService.getRecurringPayments(this.currentUserId!),
+      'recurringpayments'
+    );
+    return this.cache.recurringPayments;
+  }
+
+  // ── Synchronous cache reads (safe to call in render) ────────────────────────
+
+  getCachedTransactions(): Transaction[] { return this.cache.transactions; }
+  getCachedAccounts(): Account[] { return this.cache.accounts; }
+  getCachedInvoices(): Invoice[] { return this.cache.invoices; }
+  getCachedClients(): Client[] { return this.cache.clients; }
+  getCachedEMIs(): EMI[] { return this.cache.emis; }
+  getCachedCreditCards(): CreditCard[] { return this.cache.creditCards; }
+  getCachedRecurringPayments(): RecurringPayment[] { return this.cache.recurringPayments; }
+
+  // ── Save / Delete ────────────────────────────────────────────────────────────
 
   async saveTransaction(transaction: Transaction): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.saveTransaction(this.currentUserId, transaction);
-        return;
-      } catch (error) {
-        console.error('Error saving to Supabase, saving locally:', error);
-      }
-    }
-    
-    // Fallback to localStorage
-    const transactions = this.getFromStorage<Transaction>('transactions');
-    const existingIndex = transactions.findIndex(t => t.id === transaction.id);
-    
-    if (existingIndex >= 0) {
-      transactions[existingIndex] = transaction;
+      try { await supabaseService.saveTransaction(this.currentUserId, transaction); }
+      catch (error) { console.error('Error saving to Supabase, saving locally:', error); }
     } else {
-      transactions.push(transaction);
+      const items = this.getFromStorage<Transaction>('transactions');
+      const idx = items.findIndex(t => t.id === transaction.id);
+      if (idx >= 0) items[idx] = transaction; else items.push(transaction);
+      this.saveToStorage('transactions', items);
     }
-    
-    this.saveToStorage('transactions', transactions);
+    const idx = this.cache.transactions.findIndex(t => t.id === transaction.id);
+    if (idx >= 0) this.cache.transactions[idx] = transaction;
+    else this.cache.transactions.push(transaction);
   }
 
   async deleteTransaction(id: string): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.deleteTransaction(id);
-        return;
-      } catch (error) {
-        console.error('Error deleting from Supabase, deleting locally:', error);
-      }
+      try { await supabaseService.deleteTransaction(id); }
+      catch (error) { console.error('Error deleting from Supabase:', error); }
+    } else {
+      this.saveToStorage('transactions', this.getFromStorage<Transaction>('transactions').filter(t => t.id !== id));
     }
-    
-    const transactions = this.getFromStorage<Transaction>('transactions').filter(t => t.id !== id);
-    this.saveToStorage('transactions', transactions);
-  }
-
-  // Accounts
-  async getAccounts(): Promise<Account[]> {
-    return this.useSupabaseOrFallback(
-      () => supabaseService.getAccounts(this.currentUserId!),
-      () => this.getFromStorage<Account>('accounts')
-    );
+    this.cache.transactions = this.cache.transactions.filter(t => t.id !== id);
   }
 
   async saveAccount(account: Account): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.saveAccount(this.currentUserId, account);
-        return;
-      } catch (error) {
-        console.error('Error saving to Supabase, saving locally:', error);
-      }
-    }
-    
-    const accounts = this.getFromStorage<Account>('accounts');
-    const existingIndex = accounts.findIndex(a => a.id === account.id);
-    
-    if (existingIndex >= 0) {
-      accounts[existingIndex] = account;
+      try { await supabaseService.saveAccount(this.currentUserId, account); }
+      catch (error) { console.error('Error saving to Supabase:', error); }
     } else {
-      accounts.push(account);
+      const items = this.getFromStorage<Account>('accounts');
+      const idx = items.findIndex(a => a.id === account.id);
+      if (idx >= 0) items[idx] = account; else items.push(account);
+      this.saveToStorage('accounts', items);
     }
-    
-    this.saveToStorage('accounts', accounts);
+    const idx = this.cache.accounts.findIndex(a => a.id === account.id);
+    if (idx >= 0) this.cache.accounts[idx] = account;
+    else this.cache.accounts.push(account);
   }
 
   async deleteAccount(id: string): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.deleteAccount(id);
-        return;
-      } catch (error) {
-        console.error('Error deleting from Supabase, deleting locally:', error);
-      }
+      try { await supabaseService.deleteAccount(id); }
+      catch (error) { console.error('Error deleting from Supabase:', error); }
+    } else {
+      this.saveToStorage('accounts', this.getFromStorage<Account>('accounts').filter(a => a.id !== id));
     }
-    
-    const accounts = this.getFromStorage<Account>('accounts').filter(a => a.id !== id);
-    this.saveToStorage('accounts', accounts);
-  }
-
-  // Invoices
-  async getInvoices(): Promise<Invoice[]> {
-    return this.useSupabaseOrFallback(
-      () => supabaseService.getInvoices(this.currentUserId!),
-      () => this.getFromStorage<Invoice>('invoices')
-    );
+    this.cache.accounts = this.cache.accounts.filter(a => a.id !== id);
   }
 
   async saveInvoice(invoice: Invoice): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.saveInvoice(this.currentUserId, invoice);
-        return;
-      } catch (error) {
-        console.error('Error saving to Supabase, saving locally:', error);
-      }
-    }
-    
-    const invoices = this.getFromStorage<Invoice>('invoices');
-    const existingIndex = invoices.findIndex(i => i.id === invoice.id);
-    
-    if (existingIndex >= 0) {
-      invoices[existingIndex] = invoice;
+      try { await supabaseService.saveInvoice(this.currentUserId, invoice); }
+      catch (error) { console.error('Error saving to Supabase:', error); }
     } else {
-      invoices.push(invoice);
+      const items = this.getFromStorage<Invoice>('invoices');
+      const idx = items.findIndex(i => i.id === invoice.id);
+      if (idx >= 0) items[idx] = invoice; else items.push(invoice);
+      this.saveToStorage('invoices', items);
     }
-    
-    this.saveToStorage('invoices', invoices);
+    const idx = this.cache.invoices.findIndex(i => i.id === invoice.id);
+    if (idx >= 0) this.cache.invoices[idx] = invoice;
+    else this.cache.invoices.push(invoice);
   }
 
   async deleteInvoice(id: string): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.deleteInvoice(id);
-        return;
-      } catch (error) {
-        console.error('Error deleting from Supabase, deleting locally:', error);
-      }
+      try { await supabaseService.deleteInvoice(id); }
+      catch (error) { console.error('Error deleting from Supabase:', error); }
+    } else {
+      this.saveToStorage('invoices', this.getFromStorage<Invoice>('invoices').filter(i => i.id !== id));
     }
-    
-    const invoices = this.getFromStorage<Invoice>('invoices').filter(i => i.id !== id);
-    this.saveToStorage('invoices', invoices);
-  }
-
-  // Clients
-  async getClients(): Promise<Client[]> {
-    return this.useSupabaseOrFallback(
-      () => supabaseService.getClients(this.currentUserId!),
-      () => this.getFromStorage<Client>('clients')
-    );
+    this.cache.invoices = this.cache.invoices.filter(i => i.id !== id);
   }
 
   async saveClient(client: Client): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.saveClient(this.currentUserId, client);
-        return;
-      } catch (error) {
-        console.error('Error saving to Supabase, saving locally:', error);
-      }
-    }
-    
-    const clients = this.getFromStorage<Client>('clients');
-    const existingIndex = clients.findIndex(c => c.id === client.id);
-    
-    if (existingIndex >= 0) {
-      clients[existingIndex] = client;
+      try { await supabaseService.saveClient(this.currentUserId, client); }
+      catch (error) { console.error('Error saving to Supabase:', error); }
     } else {
-      clients.push(client);
+      const items = this.getFromStorage<Client>('clients');
+      const idx = items.findIndex(c => c.id === client.id);
+      if (idx >= 0) items[idx] = client; else items.push(client);
+      this.saveToStorage('clients', items);
     }
-    
-    this.saveToStorage('clients', clients);
+    const idx = this.cache.clients.findIndex(c => c.id === client.id);
+    if (idx >= 0) this.cache.clients[idx] = client;
+    else this.cache.clients.push(client);
   }
 
   async deleteClient(id: string): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.deleteClient(id);
-        return;
-      } catch (error) {
-        console.error('Error deleting from Supabase, deleting locally:', error);
-      }
+      try { await supabaseService.deleteClient(id); }
+      catch (error) { console.error('Error deleting from Supabase:', error); }
+    } else {
+      this.saveToStorage('clients', this.getFromStorage<Client>('clients').filter(c => c.id !== id));
     }
-    
-    const clients = this.getFromStorage<Client>('clients').filter(c => c.id !== id);
-    this.saveToStorage('clients', clients);
-  }
-
-  // EMIs
-  async getEMIs(): Promise<EMI[]> {
-    return this.useSupabaseOrFallback(
-      () => supabaseService.getEMIs(this.currentUserId!),
-      () => this.getFromStorage<EMI>('emis')
-    );
+    this.cache.clients = this.cache.clients.filter(c => c.id !== id);
   }
 
   async saveEMI(emi: EMI): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.saveEMI(this.currentUserId, emi);
-        return;
-      } catch (error) {
-        console.error('Error saving to Supabase, saving locally:', error);
-      }
-    }
-    
-    const emis = this.getFromStorage<EMI>('emis');
-    const existingIndex = emis.findIndex(e => e.id === emi.id);
-    
-    if (existingIndex >= 0) {
-      emis[existingIndex] = emi;
+      try { await supabaseService.saveEMI(this.currentUserId, emi); }
+      catch (error) { console.error('Error saving to Supabase:', error); }
     } else {
-      emis.push(emi);
+      const items = this.getFromStorage<EMI>('emis');
+      const idx = items.findIndex(e => e.id === emi.id);
+      if (idx >= 0) items[idx] = emi; else items.push(emi);
+      this.saveToStorage('emis', items);
     }
-    
-    this.saveToStorage('emis', emis);
+    const idx = this.cache.emis.findIndex(e => e.id === emi.id);
+    if (idx >= 0) this.cache.emis[idx] = emi;
+    else this.cache.emis.push(emi);
   }
 
   async deleteEMI(id: string): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.deleteEMI(id);
-        return;
-      } catch (error) {
-        console.error('Error deleting from Supabase, deleting locally:', error);
-      }
+      try { await supabaseService.deleteEMI(id); }
+      catch (error) { console.error('Error deleting from Supabase:', error); }
+    } else {
+      this.saveToStorage('emis', this.getFromStorage<EMI>('emis').filter(e => e.id !== id));
     }
-    
-    const emis = this.getFromStorage<EMI>('emis').filter(e => e.id !== id);
-    this.saveToStorage('emis', emis);
-  }
-
-  // Credit Cards
-  async getCreditCards(): Promise<CreditCard[]> {
-    return this.useSupabaseOrFallback(
-      () => supabaseService.getCreditCards(this.currentUserId!),
-      () => this.getFromStorage<CreditCard>('creditcards')
-    );
+    this.cache.emis = this.cache.emis.filter(e => e.id !== id);
   }
 
   async saveCreditCard(card: CreditCard): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.saveCreditCard(this.currentUserId, card);
-        return;
-      } catch (error) {
-        console.error('Error saving to Supabase, saving locally:', error);
-      }
-    }
-    
-    const cards = this.getFromStorage<CreditCard>('creditcards');
-    const existingIndex = cards.findIndex(c => c.id === card.id);
-    
-    if (existingIndex >= 0) {
-      cards[existingIndex] = card;
+      try { await supabaseService.saveCreditCard(this.currentUserId, card); }
+      catch (error) { console.error('Error saving to Supabase:', error); }
     } else {
-      cards.push(card);
+      const items = this.getFromStorage<CreditCard>('creditcards');
+      const idx = items.findIndex(c => c.id === card.id);
+      if (idx >= 0) items[idx] = card; else items.push(card);
+      this.saveToStorage('creditcards', items);
     }
-    
-    this.saveToStorage('creditcards', cards);
+    const idx = this.cache.creditCards.findIndex(c => c.id === card.id);
+    if (idx >= 0) this.cache.creditCards[idx] = card;
+    else this.cache.creditCards.push(card);
   }
 
   async deleteCreditCard(id: string): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.deleteCreditCard(id);
-        return;
-      } catch (error) {
-        console.error('Error deleting from Supabase, deleting locally:', error);
-      }
+      try { await supabaseService.deleteCreditCard(id); }
+      catch (error) { console.error('Error deleting from Supabase:', error); }
+    } else {
+      this.saveToStorage('creditcards', this.getFromStorage<CreditCard>('creditcards').filter(c => c.id !== id));
     }
-    
-    const cards = this.getFromStorage<CreditCard>('creditcards').filter(c => c.id !== id);
-    this.saveToStorage('creditcards', cards);
-  }
-
-  // Recurring Payments
-  async getRecurringPayments(): Promise<RecurringPayment[]> {
-    return this.useSupabaseOrFallback(
-      () => supabaseService.getRecurringPayments(this.currentUserId!),
-      () => this.getFromStorage<RecurringPayment>('recurringpayments')
-    );
+    this.cache.creditCards = this.cache.creditCards.filter(c => c.id !== id);
   }
 
   async saveRecurringPayment(payment: RecurringPayment): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.saveRecurringPayment(this.currentUserId, payment);
-        return;
-      } catch (error) {
-        console.error('Error saving to Supabase, saving locally:', error);
-      }
-    }
-    
-    const payments = this.getFromStorage<RecurringPayment>('recurringpayments');
-    const existingIndex = payments.findIndex(p => p.id === payment.id);
-    
-    if (existingIndex >= 0) {
-      payments[existingIndex] = payment;
+      try { await supabaseService.saveRecurringPayment(this.currentUserId, payment); }
+      catch (error) { console.error('Error saving to Supabase:', error); }
     } else {
-      payments.push(payment);
+      const items = this.getFromStorage<RecurringPayment>('recurringpayments');
+      const idx = items.findIndex(p => p.id === payment.id);
+      if (idx >= 0) items[idx] = payment; else items.push(payment);
+      this.saveToStorage('recurringpayments', items);
     }
-    
-    this.saveToStorage('recurringpayments', payments);
+    const idx = this.cache.recurringPayments.findIndex(p => p.id === payment.id);
+    if (idx >= 0) this.cache.recurringPayments[idx] = payment;
+    else this.cache.recurringPayments.push(payment);
   }
 
   async deleteRecurringPayment(id: string): Promise<void> {
     if (this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.deleteRecurringPayment(id);
-        return;
-      } catch (error) {
-        console.error('Error deleting from Supabase, deleting locally:', error);
-      }
+      try { await supabaseService.deleteRecurringPayment(id); }
+      catch (error) { console.error('Error deleting from Supabase:', error); }
+    } else {
+      this.saveToStorage('recurringpayments', this.getFromStorage<RecurringPayment>('recurringpayments').filter(p => p.id !== id));
     }
-    
-    const payments = this.getFromStorage<RecurringPayment>('recurringpayments').filter(p => p.id !== id);
-    this.saveToStorage('recurringpayments', payments);
+    this.cache.recurringPayments = this.cache.recurringPayments.filter(p => p.id !== id);
   }
 
-  // Analytics and calculations
+  // ── Analytics (computed from cache after async load) ────────────────────────
+
   async getMonthlyIncome(month?: number, year?: number): Promise<number> {
     const transactions = await this.getTransactions();
     const currentDate = new Date();
     const targetMonth = month ?? currentDate.getMonth();
     const targetYear = year ?? currentDate.getFullYear();
-
     return transactions
       .filter(t => {
         const date = new Date(t.date);
-        return t.type === 'income' && 
-               date.getMonth() === targetMonth && 
-               date.getFullYear() === targetYear;
+        return t.type === 'income' && date.getMonth() === targetMonth && date.getFullYear() === targetYear;
       })
       .reduce((sum, t) => sum + t.amount, 0);
   }
@@ -412,13 +356,10 @@ class DataService {
     const currentDate = new Date();
     const targetMonth = month ?? currentDate.getMonth();
     const targetYear = year ?? currentDate.getFullYear();
-
     return transactions
       .filter(t => {
         const date = new Date(t.date);
-        return t.type === 'expense' && 
-               date.getMonth() === targetMonth && 
-               date.getFullYear() === targetYear;
+        return t.type === 'expense' && date.getMonth() === targetMonth && date.getFullYear() === targetYear;
       })
       .reduce((sum, t) => sum + t.amount, 0);
   }
@@ -450,7 +391,6 @@ class DataService {
     }, {} as Record<string, number>);
   }
 
-  // Initialize sample data for new users
   async initializeSampleData(): Promise<void> {
     if (this.currentUserId && this.isOnline) {
       await supabaseService.initializeSampleData(this.currentUserId);

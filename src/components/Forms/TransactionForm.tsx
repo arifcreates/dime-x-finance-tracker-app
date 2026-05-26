@@ -27,7 +27,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     date: transaction?.date || new Date().toISOString().split('T')[0],
   });
 
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>(() => dataService.getCachedAccounts());
 
   useEffect(() => {
     if (isOpen) {

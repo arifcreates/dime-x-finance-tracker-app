@@ -19,7 +19,7 @@ export const InvoiceStatusModal: React.FC<InvoiceStatusModalProps> = ({
 }) => {
   const [selectedAccount, setSelectedAccount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>(() => dataService.getCachedAccounts());
 
   useEffect(() => {
     if (isOpen) {

@@ -37,7 +37,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     address: '',
   });
 
-  const [clients, setClients] = useState<Client[]>([]);
+  const [clients, setClients] = useState<Client[]>(() => dataService.getCachedClients());
 
   useEffect(() => {
     if (isOpen) {
