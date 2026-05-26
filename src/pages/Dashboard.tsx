@@ -8,7 +8,7 @@ import { InvoiceForm } from '../components/Forms/InvoiceForm';
 import { TransactionsModal } from '../components/Dashboard/TransactionsModal';
 import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownLeft, Plus, DollarSign, Activity, PieChart } from 'lucide-react';
 import { formatCurrency, formatDate, getDaysUntilDate } from '../utils/formatters';
-import { Transaction } from '../types';
+import { Transaction, Account, EMI, CreditCard, RecurringPayment } from '../types';
 import { dataService } from '../services/dataService';
 
 interface DashboardProps {
@@ -25,21 +25,66 @@ interface DashboardCard {
   className: string;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ 
+export const Dashboard: React.FC<DashboardProps> = ({
   transactions: initialTransactions,
   onQuickAction,
-  user 
+  user
 }) => {
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [emis, setEmis] = useState<EMI[]>([]);
+  const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
+  const [recurringPayments, setRecurringPayments] = useState<RecurringPayment[]>([]);
+  const [thisMonthIncome, setThisMonthIncome] = useState(0);
+  const [thisMonthExpenses, setThisMonthExpenses] = useState(0);
+  const [cashFlow, setCashFlow] = useState(0);
+  const [totalBalance, setTotalBalance] = useState(0);
+  const [lastMonthIncome, setLastMonthIncome] = useState(0);
+  const [lastMonthExpenses, setLastMonthExpenses] = useState(0);
+  const [incomeByCategory, setIncomeByCategory] = useState<Record<string, number>>({});
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [showTransactionsModal, setShowTransactionsModal] = useState(false);
   const [transactionType, setTransactionType] = useState<'income' | 'expense'>('income');
   const [cardOrder, setCardOrder] = useState<string[]>([]);
 
+  const loadData = async () => {
+    const [
+      txns, accs, emiList, cards, payments,
+      income, expenses, flow, balance,
+      lmIncome, lmExpenses, incByCat
+    ] = await Promise.all([
+      dataService.getTransactions(),
+      dataService.getAccounts(),
+      dataService.getEMIs(),
+      dataService.getCreditCards(),
+      dataService.getRecurringPayments(),
+      dataService.getMonthlyIncome(),
+      dataService.getMonthlyExpenses(),
+      dataService.getCashFlow(),
+      dataService.getTotalBalance(),
+      dataService.getMonthlyIncome(new Date().getMonth() === 0 ? 11 : new Date().getMonth() - 1, new Date().getMonth() === 0 ? new Date().getFullYear() - 1 : new Date().getFullYear()),
+      dataService.getMonthlyExpenses(new Date().getMonth() === 0 ? 11 : new Date().getMonth() - 1, new Date().getMonth() === 0 ? new Date().getFullYear() - 1 : new Date().getFullYear()),
+      dataService.getIncomeByCategory(),
+    ]);
+
+    setTransactions(txns);
+    setAccounts(accs);
+    setEmis(emiList);
+    setCreditCards(cards);
+    setRecurringPayments(payments);
+    setThisMonthIncome(income);
+    setThisMonthExpenses(expenses);
+    setCashFlow(flow);
+    setTotalBalance(balance);
+    setLastMonthIncome(lmIncome);
+    setLastMonthExpenses(lmExpenses);
+    setIncomeByCategory(incByCat);
+  };
+
   useEffect(() => {
-    setTransactions(dataService.getTransactions());
-    
+    loadData();
+
     // Load saved card order or use default
     const savedOrder = localStorage.getItem('dashboardCardOrder');
     if (savedOrder) {
@@ -58,7 +103,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, []);
 
   const refreshData = () => {
-    setTransactions(dataService.getTransactions());
+    loadData();
   };
 
   const handleQuickAction = (action: string) => {
@@ -116,30 +161,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
   }, []);
 
-  // Calculate real-time metrics
-  const thisMonthIncome = dataService.getMonthlyIncome();
-  const thisMonthExpenses = dataService.getMonthlyExpenses();
-  const cashFlow = dataService.getCashFlow();
-  const totalBalance = dataService.getTotalBalance();
-
-  // Calculate previous month for comparison
-  const lastMonth = new Date();
-  lastMonth.setMonth(lastMonth.getMonth() - 1);
-  const lastMonthIncome = dataService.getMonthlyIncome(lastMonth.getMonth(), lastMonth.getFullYear());
-  const lastMonthExpenses = dataService.getMonthlyExpenses(lastMonth.getMonth(), lastMonth.getFullYear());
-
   const incomeChange = lastMonthIncome > 0 ? ((thisMonthIncome - lastMonthIncome) / lastMonthIncome * 100).toFixed(1) : '0';
   const expenseChange = lastMonthExpenses > 0 ? ((thisMonthExpenses - lastMonthExpenses) / lastMonthExpenses * 100).toFixed(1) : '0';
 
-  const accounts = dataService.getAccounts();
-
-  // Get income breakdown by category
-  const incomeByCategory = dataService.getIncomeByCategory();
   const totalIncome = Object.values(incomeByCategory).reduce((sum, amount) => sum + amount, 0);
 
   // Sample alerts with real data and due dates
   const alerts = [
-    ...dataService.getEMIs().map(emi => ({
+    ...emis.map(emi => ({
       id: emi.id,
       type: 'emi' as const,
       title: emi.name,
@@ -147,7 +176,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       dueDate: emi.nextDueDate,
       urgency: getDaysUntilDate(emi.nextDueDate) <= 3 ? 'high' as const : 'medium' as const,
     })),
-    ...dataService.getCreditCards().map(card => ({
+    ...creditCards.map(card => ({
       id: card.id,
       type: 'credit-card' as const,
       title: card.name,
@@ -155,7 +184,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       dueDate: card.dueDate,
       urgency: getDaysUntilDate(card.dueDate) <= 3 ? 'high' as const : 'medium' as const,
     })),
-    ...dataService.getRecurringPayments().filter(p => p.isActive).map(payment => ({
+    ...recurringPayments.filter(p => p.isActive).map(payment => ({
       id: payment.id,
       type: 'subscription' as const,
       title: payment.name,
