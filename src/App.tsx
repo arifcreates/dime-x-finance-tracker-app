@@ -6,7 +6,6 @@ import { LandingPage } from './components/Landing/LandingPage';
 import { Sidebar } from './components/Layout/Sidebar';
 import { Header } from './components/Layout/Header';
 import { MobileNav } from './components/Layout/MobileNav';
-import { AuthModal } from './components/Auth/AuthModal';
 import { SettingsModal } from './components/Settings/SettingsModal';
 import { QuickActionsFAB } from './components/Dashboard/QuickActionsFAB';
 import { Dashboard } from './pages/Dashboard';
@@ -19,7 +18,7 @@ import { Reports } from './pages/Reports';
 import { AccountDetail } from './pages/AccountDetail';
 import { dataService } from './services/dataService';
 import { supabaseService } from './services/supabaseService';
-import { supabase } from './lib/supabase';
+import { supabase, supabaseConfigured } from './lib/supabase';
 import { useTheme } from './hooks/useTheme';
 import { CurrencyProvider } from './contexts/CurrencyContext';
 import { Transaction } from './types';
@@ -44,7 +43,6 @@ function App() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,6 +54,18 @@ function App() {
     // Check for existing Supabase session
     const checkSession = async () => {
       try {
+        if (!supabaseConfigured) {
+          const savedUser = localStorage.getItem('user');
+          if (savedUser) {
+            const userData = JSON.parse(savedUser);
+            if (userData.id === 'guest') {
+              setUser(userData);
+              setTransactions([]);
+            }
+          }
+          return;
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
@@ -100,17 +110,19 @@ function App() {
 
     // Listen for auth state changes (skip if Supabase not configured)
     let unsubscribe = () => {};
-    try {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setTransactions([]);
-          localStorage.removeItem('user');
-        }
-      });
-      unsubscribe = () => subscription.unsubscribe();
-    } catch (error) {
-      console.error('Auth state change setup error:', error);
+    if (supabaseConfigured) {
+      try {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+          if (event === 'SIGNED_OUT') {
+            setUser(null);
+            setTransactions([]);
+            localStorage.removeItem('user');
+          }
+        });
+        unsubscribe = () => subscription.unsubscribe();
+      } catch (error) {
+        console.error('Auth state change setup error:', error);
+      }
     }
 
     return () => {
@@ -129,7 +141,6 @@ function App() {
 
   const handleLogin = async (userData: any) => {
     setUser(userData);
-    setShowAuthModal(false);
     
     if (userData.id === 'guest') {
       localStorage.setItem('user', JSON.stringify(userData));
@@ -150,7 +161,6 @@ function App() {
     }
     
     setUser(null);
-    setShowAuthModal(false);
     setTransactions([]);
     localStorage.removeItem('user');
   };

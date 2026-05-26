@@ -2,15 +2,25 @@ import { useState, useEffect } from 'react';
 
 export type Theme = 'light' | 'dark' | 'auto';
 
+const isTheme = (value: unknown): value is Theme => {
+  return value === 'light' || value === 'dark' || value === 'auto';
+};
+
+const getStoredUser = () => {
+  try {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+  } catch (error) {
+    console.warn('Ignoring invalid saved user preferences:', error);
+    localStorage.removeItem('user');
+    return null;
+  }
+};
+
 export const useTheme = () => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Get theme from user preferences or default to 'light'
-    const user = localStorage.getItem('user');
-    if (user) {
-      const userData = JSON.parse(user);
-      return userData.preferences?.theme || 'light';
-    }
-    return 'light';
+    const storedTheme = getStoredUser()?.preferences?.theme;
+    return isTheme(storedTheme) ? storedTheme : 'light';
   });
 
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
@@ -48,9 +58,8 @@ export const useTheme = () => {
     setTheme(newTheme);
     
     // Update user preferences
-    const user = localStorage.getItem('user');
-    if (user) {
-      const userData = JSON.parse(user);
+    const userData = getStoredUser();
+    if (userData) {
       userData.preferences = {
         ...userData.preferences,
         theme: newTheme
