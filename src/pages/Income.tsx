@@ -8,6 +8,7 @@ import { dataService } from '../services/dataService';
 import { formatCurrency, formatDate } from '../utils/formatters';
 
 export const Income: React.FC = () => {
+  const fmt = useCurrencyFormat();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [clients, setClients] = useState<any[]>([]);
@@ -121,22 +122,22 @@ export const Income: React.FC = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Invoiced</h4>
-            <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalInvoiceAmount)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">{fmt(totalInvoiceAmount)}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{invoices.length} invoices</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Amount Paid</h4>
-            <p className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(paidAmount)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">{fmt(paidAmount)}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Received payments</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Pending Amount</h4>
-            <p className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">{formatCurrency(pendingAmount)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">{fmt(pendingAmount)}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Outstanding invoices</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Direct Income</h4>
-            <p className="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(totalIncomeRecords)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{fmt(totalIncomeRecords)}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{transactions.length} records</p>
           </div>
         </div>
@@ -207,7 +208,7 @@ export const Income: React.FC = () => {
                               </select>
                             </div>
                             <div className="flex justify-between items-center mb-3">
-                              <span className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(invoice.amount)}</span>
+                              <span className="text-lg font-bold text-gray-900 dark:text-white">{fmt(invoice.amount)}</span>
                               <span className="text-sm text-gray-500 dark:text-gray-400">Due: {formatDate(invoice.dueDate)}</span>
                             </div>
                             <div className="flex space-x-2">
@@ -250,7 +251,7 @@ export const Income: React.FC = () => {
                               <tr key={invoice.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                                 <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{invoice.invoiceNumber}</td>
                                 <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{client?.name || 'Unknown Client'}</td>
-                                <td className="py-3 px-4 font-semibold text-gray-900 dark:text-white">{formatCurrency(invoice.amount)}</td>
+                                <td className="py-3 px-4 font-semibold text-gray-900 dark:text-white">{fmt(invoice.amount)}</td>
                                 <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{formatDate(invoice.date)}</td>
                                 <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{formatDate(invoice.dueDate)}</td>
                                 <td className="py-3 px-4">
@@ -314,7 +315,7 @@ export const Income: React.FC = () => {
                               <p className="text-sm text-gray-500 dark:text-gray-400">{transaction.category} • {formatDate(transaction.date)} • {transaction.account}</p>
                             </div>
                             <div className="flex items-center space-x-3">
-                              <p className="font-semibold text-green-600 dark:text-green-400 text-lg">{formatCurrency(transaction.amount)}</p>
+                              <p className="font-semibold text-green-600 dark:text-green-400 text-lg">{fmt(transaction.amount)}</p>
                               <button
                                 onClick={() => handleDeleteTransaction(transaction.id)}
                                 className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"

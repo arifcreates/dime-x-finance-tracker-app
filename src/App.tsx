@@ -21,6 +21,7 @@ import { dataService } from './services/dataService';
 import { supabaseService } from './services/supabaseService';
 import { supabase } from './lib/supabase';
 import { useTheme } from './hooks/useTheme';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import { Transaction } from './types';
 
 const sectionTitles: Record<string, string> = {
@@ -214,6 +215,7 @@ function App() {
   }
 
   return (
+    <CurrencyProvider initialCurrency={user?.preferences?.currency}>
     <DndProvider backend={isTouchDevice() ? TouchBackend : HTML5Backend}>
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
         {/* Desktop Sidebar */}
@@ -283,6 +285,7 @@ function App() {
         />
       </div>
     </DndProvider>
+    </CurrencyProvider>
   );
 }
 

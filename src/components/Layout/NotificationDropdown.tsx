@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, CheckCircle, AlertCircle, Calendar, CreditCard, X } from 'lucide-react';
 import { formatCurrency, formatDate, getDaysUntilDate } from '../../utils/formatters';
+import { useCurrencyFormat } from '../../hooks/useCurrencyFormat';
 import { dataService } from '../../services/dataService';
 import { EMI, CreditCard as CreditCardType } from '../../types';
 
@@ -10,6 +11,7 @@ interface NotificationDropdownProps {
 }
 
 export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose }) => {
+  const fmt = useCurrencyFormat();
   const [emis, setEmis] = useState<EMI[]>([]);
   const [creditCards, setCreditCards] = useState<CreditCardType[]>([]);
 
@@ -33,7 +35,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
         id: `emi-${emi.id}`,
         type: 'emi' as const,
         title: `EMI Payment Due`,
-        message: `${emi.name} payment of ${formatCurrency(emi.monthlyAmount)} is due ${daysUntil <= 0 ? 'today' : `in ${daysUntil} days`}`,
+        message: `${emi.name} payment of ${fmt(emi.monthlyAmount)} is due ${daysUntil <= 0 ? 'today' : `in ${daysUntil} days`}`,
         time: emi.nextDueDate,
         urgency: daysUntil <= 3 ? 'high' as const : 'medium' as const,
         icon: Calendar,
@@ -46,7 +48,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
         id: `card-${card.id}`,
         type: 'credit-card' as const,
         title: `Credit Card Payment Due`,
-        message: `${card.name} minimum payment of ${formatCurrency(card.minimumDue)} is due ${daysUntil <= 0 ? 'today' : `in ${daysUntil} days`}`,
+        message: `${card.name} minimum payment of ${fmt(card.minimumDue)} is due ${daysUntil <= 0 ? 'today' : `in ${daysUntil} days`}`,
         time: card.dueDate,
         urgency: daysUntil <= 3 ? 'high' as const : 'medium' as const,
         icon: CreditCard,

@@ -6,6 +6,7 @@ import { dataService } from '../services/dataService';
 import { formatCurrency, formatDate } from '../utils/formatters';
 
 export const Expenses: React.FC = () => {
+  const fmt = useCurrencyFormat();
   const [expenses, setExpenses] = useState<Transaction[]>([]);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Transaction | undefined>();
@@ -80,11 +81,11 @@ export const Expenses: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Expenses</h4>
-            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(totalExpenses)}</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">{fmt(totalExpenses)}</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">This Month</h4>
-            <p className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">{formatCurrency(thisMonthExpenses)}</p>
+            <p className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">{fmt(thisMonthExpenses)}</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Categories</h4>
@@ -105,7 +106,7 @@ export const Expenses: React.FC = () => {
               >
                 <div className="flex justify-between">
                   <span className="text-sm sm:text-base text-gray-900 dark:text-white">All Expenses</span>
-                  <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{formatCurrency(totalExpenses)}</span>
+                  <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{fmt(totalExpenses)}</span>
                 </div>
               </button>
               {Object.entries(categoryTotals).map(([category, total]) => (
@@ -118,7 +119,7 @@ export const Expenses: React.FC = () => {
                 >
                   <div className="flex justify-between">
                     <span className="text-sm sm:text-base truncate text-gray-900 dark:text-white">{category}</span>
-                    <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{formatCurrency(total)}</span>
+                    <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{fmt(total)}</span>
                   </div>
                 </button>
               ))}
@@ -158,7 +159,7 @@ export const Expenses: React.FC = () => {
                             </p>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <p className="font-semibold text-red-600 dark:text-red-400">{formatCurrency(expense.amount)}</p>
+                            <p className="font-semibold text-red-600 dark:text-red-400">{fmt(expense.amount)}</p>
                             <div className="flex space-x-1">
                               <button
                                 onClick={() => handleEditExpense(expense)}

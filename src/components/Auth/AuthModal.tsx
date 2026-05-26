@@ -115,7 +115,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-900 w-full max-w-md mx-auto rounded-3xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="relative bg-gradient-to-r from-black to-gray-800 dark:from-gray-800 dark:to-gray-900 p-6 text-white">

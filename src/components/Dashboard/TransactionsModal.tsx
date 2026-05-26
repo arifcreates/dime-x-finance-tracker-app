@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Search, Filter, ArrowUpRight, ArrowDownLeft, Trash2, Calendar } from 'lucide-react';
 import { Transaction } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import { useCurrencyFormat } from '../../hooks/useCurrencyFormat';
 import { dataService } from '../../services/dataService';
 
 interface TransactionsModalProps {
@@ -17,6 +18,7 @@ export const TransactionsModal: React.FC<TransactionsModalProps> = ({
   transactions,
   onUpdate
 }) => {
+  const fmt = useCurrencyFormat();
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
@@ -109,14 +111,14 @@ export const TransactionsModal: React.FC<TransactionsModalProps> = ({
                 <ArrowUpRight className="h-5 w-5 text-green-600 dark:text-green-400" />
                 <span className="text-sm font-medium text-green-700 dark:text-green-400">Total Income</span>
               </div>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{fmt(totalIncome)}</p>
             </div>
             <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800">
               <div className="flex items-center space-x-2 mb-2">
                 <ArrowDownLeft className="h-5 w-5 text-red-600 dark:text-red-400" />
                 <span className="text-sm font-medium text-red-700 dark:text-red-400">Total Expenses</span>
               </div>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalExpenses)}</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{fmt(totalExpenses)}</p>
             </div>
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
               <div className="flex items-center space-x-2 mb-2">
@@ -128,7 +130,7 @@ export const TransactionsModal: React.FC<TransactionsModalProps> = ({
                   ? 'text-green-600 dark:text-green-400' 
                   : 'text-red-600 dark:text-red-400'
               }`}>
-                {formatCurrency(Math.abs(totalIncome - totalExpenses))}
+                {fmt(Math.abs(totalIncome - totalExpenses))}
               </p>
             </div>
           </div>
@@ -235,7 +237,7 @@ export const TransactionsModal: React.FC<TransactionsModalProps> = ({
                         <td className={`py-4 px-4 text-right font-bold ${
                           transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                         }`}>
-                          {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                          {transaction.type === 'income' ? '+' : '-'}{fmt(transaction.amount)}
                         </td>
                         <td className="py-4 px-4 text-center">
                           <button
@@ -294,7 +296,7 @@ export const TransactionsModal: React.FC<TransactionsModalProps> = ({
                       <span className={`font-bold ${
                         transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                       }`}>
-                        {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                        {transaction.type === 'income' ? '+' : '-'}{fmt(transaction.amount)}
                       </span>
                     </div>
                   </div>

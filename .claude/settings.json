@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(gh auth *)",
+      "Read(//Users/arif/**)",
+      "Bash(ssh -T git@github.com)",
+      "Bash(curl -s https://api.github.com/repos/arifcreates/dime-x-finance-tracker-app/commits/main)",
+      "Bash(npx vite *)",
+      "mcp__browsermcp__browser_navigate",
+      "Bash(~/.kimi-webbridge/bin/kimi-webbridge status *)",
+      "Bash(curl -s -X POST http://127.0.0.1:10086/command -H 'Content-Type: application/json' -d '{\"action\":\"navigate\",\"args\":{\"url\":\"http://localhost:5174\",\"newTab\":true},\"session\":\"dime\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:10086/command -H 'Content-Type: application/json' -d '{\"action\":\"screenshot\",\"args\":{\"path\":\"/tmp/dime-initial.png\"},\"session\":\"dime\"}')",
+      "Read(//tmp/**)",
+      "Read(//private/tmp/**)",
+      "Bash(curl -s -X POST http://127.0.0.1:10086/command -H 'Content-Type: application/json' -d '{\"action\":\"evaluate\",\"args\":{\"code\":\"JSON.stringify\\(window.__errors || []\\)\"},\"session\":\"dime\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:10086/command -H 'Content-Type: application/json' -d '{\"action\":\"evaluate\",\"args\":{\"code\":\"JSON.stringify\\(document.body.innerHTML.substring\\(0,500\\)\\)\"},\"session\":\"dime\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:10086/command -H 'Content-Type: application/json' -d '{\"action\":\"get_console_logs\",\"args\":{},\"session\":\"dime\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:10086/command -H 'Content-Type: application/json' -d '{\"action\":\"evaluate\",\"args\":{\"code\":\"\\(\\(\\) => { const errs = []; window.onerror = \\(m,s,l,c,e\\) => errs.push\\({msg:m,src:s,line:l}\\); return \\\\\"hooked\\\\\"; }\\)\\(\\)\"},\"session\":\"dime\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:10086/command -H 'Content-Type: application/json' -d '{\"action\":\"evaluate\",\"args\":{\"code\":\"\\(\\(\\) => { const logs = []; const orig = console.error.bind\\(console\\); console.error = \\(...a\\) => { logs.push\\(a.map\\(String\\).join\\(\\\\\" \\\\\"\\)\\); orig\\(...a\\); }; window.__consoleLogs = logs; return \\\\\"hooked\\\\\"; }\\)\\(\\)\"},\"session\":\"dime\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:10086/command -H 'Content-Type: application/json' -d '{\"action\":\"navigate\",\"args\":{\"url\":\"http://localhost:5174\",\"newTab\":false},\"session\":\"dime\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:10086/command -H 'Content-Type: application/json' -d '{\"action\":\"evaluate\",\"args\":{\"code\":\"JSON.stringify\\(window.__consoleLogs || []\\)\"},\"session\":\"dime\"}')"
+    ]
+  }
+}

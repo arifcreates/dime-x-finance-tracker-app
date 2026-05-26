@@ -5,12 +5,15 @@ import { TransferForm } from '../components/Forms/TransferForm';
 import { Account, Transaction } from '../types';
 import { dataService } from '../services/dataService';
 import { formatCurrency } from '../utils/formatters';
+import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
 interface AccountsProps {
   onAccountSelect?: (accountId: string) => void;
+  onUpdate?: () => void;
 }
 
-export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect }) => {
+export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect, onUpdate }) => {
+  const fmt = useCurrencyFormat();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [showAccountForm, setShowAccountForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
@@ -21,19 +24,24 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect }) => {
   }, []);
 
   const handleAccountSave = async () => {
-    setAccounts(await dataService.getAccounts());
+    const updated = await dataService.getAccounts();
+    setAccounts(updated);
     setEditingAccount(undefined);
+    onUpdate?.();
   };
 
   const handleTransfer = async () => {
-    setAccounts(await dataService.getAccounts());
+    const updated = await dataService.getAccounts();
+    setAccounts(updated);
+    onUpdate?.();
   };
 
-  const handleDeleteAccount = (id: string) => {
+  const handleDeleteAccount = async (id: string) => {
     if (confirm('Are you sure you want to delete this account?')) {
-      const updatedAccounts = accounts.filter(acc => acc.id !== id);
-      localStorage.setItem('accounts', JSON.stringify(updatedAccounts));
-      setAccounts(updatedAccounts);
+      await dataService.deleteAccount(id);
+      const updated = await dataService.getAccounts();
+      setAccounts(updated);
+      onUpdate?.();
     }
   };
 
@@ -96,7 +104,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect }) => {
         {/* Total Balance Card */}
         <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-4 sm:p-6 rounded-2xl sm:rounded-[1.75rem] text-white">
           <h3 className="text-lg font-medium opacity-90">Total Balance</h3>
-          <p className="text-2xl sm:text-3xl font-bold mt-2">{formatCurrency(totalBalance)}</p>
+          <p className="text-2xl sm:text-3xl font-bold mt-2">{fmt(totalBalance)}</p>
           <p className="text-sm opacity-75 mt-1">Across {accounts.length} accounts</p>
         </div>
 
@@ -147,7 +155,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect }) => {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Balance</span>
-                    <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(account.balance)}</span>
+                    <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Currency</span>
@@ -228,7 +236,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect }) => {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Balance</span>
-                    <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(account.balance)}</span>
+                    <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Currency</span>
@@ -303,7 +311,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect }) => {
                   <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getAccountTypeColor(account.type)}`}>
                     {account.type.charAt(0).toUpperCase() + account.type.slice(1)}
                   </span>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(account.balance)}</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{account.currency}</p>
                 </div>
 

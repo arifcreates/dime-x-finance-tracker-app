@@ -6,6 +6,7 @@ import { dataService } from '../services/dataService';
 import { formatCurrency, formatDate, getDaysUntilDate } from '../utils/formatters';
 
 export const Recurring: React.FC = () => {
+  const fmt = useCurrencyFormat();
   const [payments, setPayments] = useState<RecurringPayment[]>([]);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState<RecurringPayment | undefined>();
@@ -107,17 +108,17 @@ export const Recurring: React.FC = () => {
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Monthly Cost</h4>
-            <p className="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(totalMonthlyAmount)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{fmt(totalMonthlyAmount)}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Recurring monthly</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Yearly Cost</h4>
-            <p className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">{formatCurrency(totalYearlyAmount)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">{fmt(totalYearlyAmount)}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Annual payments</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Annual</h4>
-            <p className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">{formatCurrency(totalAnnualCost)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">{fmt(totalAnnualCost)}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All subscriptions</p>
           </div>
         </div>
@@ -146,7 +147,7 @@ export const Recurring: React.FC = () => {
                         {category === 'all' ? 'All Categories' : category}
                       </span>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(categoryTotal)}</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{fmt(categoryTotal)}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{categoryPayments.length} items</p>
                       </div>
                     </div>
@@ -228,7 +229,7 @@ export const Recurring: React.FC = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                               <div>
                                 <p className="text-gray-500 dark:text-gray-400 font-medium">Amount</p>
-                                <p className="font-bold text-gray-900 dark:text-white text-lg">{formatCurrency(payment.amount)}</p>
+                                <p className="font-bold text-gray-900 dark:text-white text-lg">{fmt(payment.amount)}</p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">per {payment.frequency.slice(0, -2)}</p>
                               </div>
                               <div>
@@ -244,7 +245,7 @@ export const Recurring: React.FC = () => {
                               </div>
                               <div>
                                 <p className="text-gray-500 dark:text-gray-400 font-medium">Annual Cost</p>
-                                <p className="font-bold text-gray-900 dark:text-white text-lg">{formatCurrency(annualCost)}</p>
+                                <p className="font-bold text-gray-900 dark:text-white text-lg">{fmt(annualCost)}</p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">total per year</p>
                               </div>
                             </div>

@@ -7,6 +7,7 @@ import { dataService } from '../services/dataService';
 import { formatCurrency, formatDate, getDaysUntilDate } from '../utils/formatters';
 
 export const EMI: React.FC = () => {
+  const fmt = useCurrencyFormat();
   const [emis, setEMIs] = useState<EMIType[]>([]);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [showEMIForm, setShowEMIForm] = useState(false);
@@ -117,7 +118,7 @@ export const EMI: React.FC = () => {
               </span>
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Monthly EMI</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalEMIAmount)}</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">{fmt(totalEMIAmount)}</p>
           </div>
 
           <div className="bg-white dark:bg-gray-900 p-5 rounded-[1.5rem] shadow-sm border border-gray-100 dark:border-gray-800">
@@ -130,7 +131,7 @@ export const EMI: React.FC = () => {
               </span>
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Remaining Balance</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalRemainingBalance)}</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">{fmt(totalRemainingBalance)}</p>
           </div>
 
           <div className="bg-white dark:bg-gray-900 p-5 rounded-[1.5rem] shadow-sm border border-gray-100 dark:border-gray-800">
@@ -143,8 +144,8 @@ export const EMI: React.FC = () => {
               </span>
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Credit Used</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalCreditUsed)}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">of {formatCurrency(totalCreditLimit)} limit</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">{fmt(totalCreditUsed)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">of {fmt(totalCreditLimit)} limit</p>
           </div>
 
           <div className="bg-white dark:bg-gray-900 p-5 rounded-[1.5rem] shadow-sm border border-gray-100 dark:border-gray-800">
@@ -157,7 +158,7 @@ export const EMI: React.FC = () => {
               </span>
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Minimum Due</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalMinimumDue)}</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">{fmt(totalMinimumDue)}</p>
           </div>
         </div>
 
@@ -246,11 +247,11 @@ export const EMI: React.FC = () => {
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Monthly EMI</p>
-                                <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(emi.monthlyAmount)}</p>
+                                <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(emi.monthlyAmount)}</p>
                               </div>
                               <div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Remaining</p>
-                                <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{formatCurrency(emi.remainingBalance)}</p>
+                                <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{fmt(emi.remainingBalance)}</p>
                               </div>
                             </div>
 
@@ -322,7 +323,7 @@ export const EMI: React.FC = () => {
                               <div>
                                 <h4 className="font-bold text-gray-900 dark:text-white">{card.name}</h4>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {formatCurrency(availableCredit)} available
+                                  {fmt(availableCredit)} available
                                 </p>
                               </div>
                             </div>
@@ -346,11 +347,11 @@ export const EMI: React.FC = () => {
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Current Balance</p>
-                                <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(card.currentBalance)}</p>
+                                <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(card.currentBalance)}</p>
                               </div>
                               <div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Minimum Due</p>
-                                <p className="text-lg font-bold text-red-600 dark:text-red-400">{formatCurrency(card.minimumDue)}</p>
+                                <p className="text-lg font-bold text-red-600 dark:text-red-400">{fmt(card.minimumDue)}</p>
                               </div>
                             </div>
 

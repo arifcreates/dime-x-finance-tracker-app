@@ -11,6 +11,7 @@ interface AccountDetailProps {
 }
 
 export const AccountDetail: React.FC<AccountDetailProps> = ({ accountId, onBack }) => {
+  const fmt = useCurrencyFormat();
   const [account, setAccount] = useState<Account | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
@@ -133,7 +134,7 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ accountId, onBack 
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-white/80 text-sm font-medium">Current Balance</p>
-              <p className="text-3xl font-bold">{formatCurrency(account.balance, account.currency)}</p>
+              <p className="text-3xl font-bold">{fmt(account.balance, account.currency)}</p>
             </div>
             <div className="text-right">
               <span className="px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
@@ -145,11 +146,11 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ accountId, onBack 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
               <p className="text-white/80 text-xs font-medium mb-1">Total Income</p>
-              <p className="text-lg font-bold">{formatCurrency(totalIncome, account.currency)}</p>
+              <p className="text-lg font-bold">{fmt(totalIncome, account.currency)}</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
               <p className="text-white/80 text-xs font-medium mb-1">Total Expenses</p>
-              <p className="text-lg font-bold">{formatCurrency(totalExpenses, account.currency)}</p>
+              <p className="text-lg font-bold">{fmt(totalExpenses, account.currency)}</p>
             </div>
           </div>
         </div>
@@ -288,7 +289,7 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ accountId, onBack 
                         <p className={`font-bold ${
                           transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                         }`}>
-                          {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, account.currency)}
+                          {transaction.type === 'income' ? '+' : '-'}{fmt(transaction.amount, account.currency)}
                         </p>
                       </div>
                       <button

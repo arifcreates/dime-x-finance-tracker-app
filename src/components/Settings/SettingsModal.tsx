@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, User, Bell, Shield, Palette, Globe, CreditCard, Download, Trash2, LogOut } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('profile');
   const { theme, setTheme } = useTheme();
+  const { setCurrency } = useCurrency();
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -48,6 +50,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     
     localStorage.setItem('user', JSON.stringify(updatedUser));
     onUpdateUser(updatedUser);
+    setCurrency(formData.currency);
     onClose();
   };
 

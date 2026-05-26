@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { TrendingUp, Download, Filter, FileSpreadsheet, Calendar } from 'lucide-react';
 import { dataService } from '../services/dataService';
 import { formatCurrency } from '../utils/formatters';
+import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 import * as XLSX from 'xlsx';
 
 export const Reports: React.FC = () => {
+  const fmt = useCurrencyFormat();
   const [isExporting, setIsExporting] = useState(false);
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
@@ -44,10 +46,10 @@ export const Reports: React.FC = () => {
         ['Period:', `${dateRange.from} to ${dateRange.to}`],
         [],
         ['OVERVIEW'],
-        ['Total Income:', formatCurrency(filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0))],
-        ['Total Expenses:', formatCurrency(filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0))],
-        ['Net Cash Flow:', formatCurrency(filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) - filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0))],
-        ['Total Account Balance:', formatCurrency(accounts.reduce((sum, acc) => sum + acc.balance, 0))],
+        ['Total Income:', fmt(filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0))],
+        ['Total Expenses:', fmt(filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0))],
+        ['Net Cash Flow:', fmt(filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) - filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0))],
+        ['Total Account Balance:', fmt(accounts.reduce((sum, acc) => sum + acc.balance, 0))],
         [],
         ['ACCOUNTS BREAKDOWN'],
         ['Account Name', 'Type', 'Balance', 'Currency'],

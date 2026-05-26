@@ -30,6 +30,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onQuickAction,
   user
 }) => {
+  const fmt = useCurrencyFormat();
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [emis, setEmis] = useState<EMI[]>([]);
@@ -214,7 +215,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div>
                   <p className="text-white/70 text-xs font-medium">Total Balance</p>
-                  <p className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">{formatCurrency(totalBalance)}</p>
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">{fmt(totalBalance)}</p>
                 </div>
               </div>
               <div className="text-right">
@@ -237,7 +238,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </span>
                 </div>
                 <p className="text-white/70 text-xs font-medium mb-1">Monthly Income</p>
-                <p className="text-lg font-bold">{formatCurrency(thisMonthIncome)}</p>
+                <p className="text-lg font-bold">{fmt(thisMonthIncome)}</p>
               </div>
 
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
@@ -250,7 +251,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </span>
                 </div>
                 <p className="text-white/70 text-xs font-medium mb-1">Monthly Expenses</p>
-                <p className="text-lg font-bold">{formatCurrency(thisMonthExpenses)}</p>
+                <p className="text-lg font-bold">{fmt(thisMonthExpenses)}</p>
               </div>
 
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
@@ -265,7 +266,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </span>
                 </div>
                 <p className="text-white/70 text-xs font-medium mb-1">Cash Flow</p>
-                <p className="text-lg font-bold">{formatCurrency(Math.abs(cashFlow))}</p>
+                <p className="text-lg font-bold">{fmt(Math.abs(cashFlow))}</p>
               </div>
             </div>
           </div>
@@ -375,7 +376,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <Wallet className="h-6 w-6" />
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(account.balance)}</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           {totalBalance > 0 ? ((account.balance / totalBalance) * 100).toFixed(1) : 0}%
                         </p>
@@ -423,7 +424,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <Wallet className="h-6 w-6" />
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(account.balance)}</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           {totalBalance > 0 ? ((account.balance / totalBalance) * 100).toFixed(1) : 0}%
                         </p>
@@ -470,7 +471,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       }`}>
                         <Wallet className="h-4 w-4" />
                       </div>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(account.balance)}</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</p>
                     </div>
                     
                     <div className="space-y-2">
@@ -579,7 +580,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <div className={`w-3 h-3 rounded-full ${colors[index % colors.length]}`}></div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white text-sm">{category}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{formatCurrency(amount)}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{fmt(amount)}</p>
                         </div>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${bgColors[index % bgColors.length]}`}>
@@ -593,7 +594,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-4">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-gray-900 dark:text-white">Total Income</span>
-                  <span className="font-bold text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</span>
+                  <span className="font-bold text-green-600 dark:text-green-400">{fmt(totalIncome)}</span>
                 </div>
               </div>
             </div>

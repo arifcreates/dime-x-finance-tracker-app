@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Calendar, CreditCard } from 'lucide-react';
 import { formatCurrency, getDaysUntilDate, formatDate } from '../../utils/formatters';
+import { useCurrencyFormat } from '../../hooks/useCurrencyFormat';
 
 interface Alert {
   id: string;
@@ -17,6 +18,7 @@ interface UpcomingAlertsProps {
 }
 
 export const UpcomingAlerts: React.FC<UpcomingAlertsProps> = ({ alerts }) => {
+  const fmt = useCurrencyFormat();
   const getIcon = (type: string) => {
     switch (type) {
       case 'emi':
@@ -84,7 +86,7 @@ export const UpcomingAlerts: React.FC<UpcomingAlertsProps> = ({ alerts }) => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-sm">{formatCurrency(alert.amount)}</p>
+                    <p className="font-bold text-sm">{fmt(alert.amount)}</p>
                   </div>
                 </div>
               </div>
