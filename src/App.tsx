@@ -38,13 +38,13 @@ const isTouchDevice = () => {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 };
 
-const getSavedGuestUser = () => {
+const getSavedUser = () => {
   try {
     const savedUser = localStorage.getItem('user');
     if (!savedUser) return null;
 
     const userData = JSON.parse(savedUser);
-    return userData?.id === 'guest' ? userData : null;
+    return userData?.id ? userData : null;
   } catch (error) {
     console.warn('Ignoring invalid saved user:', error);
     localStorage.removeItem('user');
@@ -69,6 +69,7 @@ function App() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [quickActionRequest, setQuickActionRequest] = useState<{ action: string; id: number } | null>(null);
 
   // Initialize theme
   useTheme();
@@ -79,9 +80,9 @@ function App() {
       setIsLoading(true);
       try {
         if (!supabaseConfigured) {
-          const savedGuest = getSavedGuestUser();
-          if (savedGuest) {
-            setUser(savedGuest);
+          const savedUser = getSavedUser();
+          if (savedUser) {
+            setUser(savedUser);
             setTransactions([]);
           }
           return;
@@ -111,9 +112,9 @@ function App() {
           setTransactions(userTransactions);
         } else {
           // Check for guest user in localStorage
-          const savedGuest = getSavedGuestUser();
-          if (savedGuest) {
-            setUser(savedGuest);
+          const savedUser = getSavedUser();
+          if (savedUser) {
+            setUser(savedUser);
             setTransactions([]);
           }
         }
@@ -164,6 +165,7 @@ function App() {
       localStorage.setItem('user', JSON.stringify(userData));
       setTransactions([]);
     } else {
+      localStorage.setItem('user', JSON.stringify(userData));
       // Load user's transactions from Supabase
       await refreshTransactions();
     }
@@ -184,8 +186,9 @@ function App() {
   };
 
   const handleQuickAction = (action: string) => {
-    // This will be handled by individual pages
-    console.log('Quick action:', action);
+    setSelectedAccountId(null);
+    setActiveSection('dashboard');
+    setQuickActionRequest({ action, id: Date.now() });
   };
 
   const handleAccountSelect = (accountId: string) => {
@@ -200,6 +203,7 @@ function App() {
     const props = { 
       transactions, 
       onQuickAction: handleQuickAction,
+      quickActionRequest,
       user,
       onUpdate: refreshTransactions
     };

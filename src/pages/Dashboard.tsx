@@ -6,8 +6,8 @@ import { UpcomingAlerts } from '../components/Dashboard/UpcomingAlerts';
 import { TransactionForm } from '../components/Forms/TransactionForm';
 import { InvoiceForm } from '../components/Forms/InvoiceForm';
 import { TransactionsModal } from '../components/Dashboard/TransactionsModal';
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownLeft, Plus, DollarSign, Activity, PieChart } from 'lucide-react';
-import { formatCurrency, formatDate, getDaysUntilDate } from '../utils/formatters';
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, Plus, DollarSign, Activity, PieChart } from 'lucide-react';
+import { getDaysUntilDate } from '../utils/formatters';
 import { Transaction, Account, EMI, CreditCard, RecurringPayment } from '../types';
 import { dataService } from '../services/dataService';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
@@ -15,6 +15,8 @@ import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 interface DashboardProps {
   transactions: Transaction[];
   onQuickAction?: (action: string) => void;
+  quickActionRequest?: { action: string; id: number } | null;
+  onUpdate?: () => void;
   user?: any;
 }
 
@@ -29,6 +31,8 @@ interface DashboardCard {
 export const Dashboard: React.FC<DashboardProps> = ({
   transactions: initialTransactions,
   onQuickAction,
+  quickActionRequest,
+  onUpdate,
   user
 }) => {
   const fmt = useCurrencyFormat();
@@ -118,7 +122,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     loadData();
   };
 
-  const handleQuickAction = (action: string) => {
+  const openQuickAction = useCallback((action: string) => {
     switch (action) {
       case 'add-income':
         setTransactionType('income');
@@ -136,10 +140,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
         setShowTransactionForm(true);
         break;
     }
-    
-    if (onQuickAction) {
-      onQuickAction(action);
+  }, []);
+
+  useEffect(() => {
+    if (quickActionRequest) {
+      openQuickAction(quickActionRequest.action);
     }
+  }, [quickActionRequest, openQuickAction]);
+
+  const handleQuickAction = (action: string) => {
+    openQuickAction(action);
+    onQuickAction?.(action);
   };
 
   const handleViewAllTransactions = () => {
@@ -153,10 +164,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const handleTransactionSave = () => {
     refreshData();
+    onUpdate?.();
   };
 
   const handleInvoiceSave = () => {
     refreshData();
+    onUpdate?.();
   };
 
   const moveCard = useCallback((dragIndex: number, hoverIndex: number) => {

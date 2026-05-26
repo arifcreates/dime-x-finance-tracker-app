@@ -81,19 +81,19 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect, onUpdate })
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <button
                 onClick={() => setShowAccountForm(true)}
-                className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-semibold shadow-lg shadow-blue-500/25 hover:scale-[1.02]"
+                className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-all font-semibold shadow-sm"
               >
                 <Plus className="h-4 w-4" />
                 <span>Add Account</span>
               </button>
               <button
                 onClick={() => setShowTransferForm(true)}
-                className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-semibold shadow-lg shadow-green-500/25 hover:scale-[1.02]"
+                className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-white text-gray-900 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-semibold shadow-sm"
               >
                 <ArrowUpDown className="h-4 w-4" />
                 <span>Transfer</span>
               </button>
-              <button className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all font-semibold shadow-lg shadow-gray-500/25 hover:scale-[1.02]">
+              <button className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-semibold shadow-sm">
                 <RefreshCw className="h-4 w-4" />
                 <span>Reconcile</span>
               </button>
@@ -102,10 +102,10 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect, onUpdate })
         </div>
 
         {/* Total Balance Card */}
-        <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-4 sm:p-6 rounded-2xl sm:rounded-[1.75rem] text-white">
-          <h3 className="text-lg font-medium opacity-90">Total Balance</h3>
+        <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl sm:rounded-[1.75rem] text-gray-950 dark:text-white border border-gray-100 dark:border-gray-800 shadow-sm">
+          <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">Total Balance</h3>
           <p className="text-2xl sm:text-3xl font-bold mt-2">{fmt(totalBalance)}</p>
-          <p className="text-sm opacity-75 mt-1">Across {accounts.length} accounts</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Across {accounts.length} accounts</p>
         </div>
 
         {/* Accounts Grid - Horizontal Layout */}

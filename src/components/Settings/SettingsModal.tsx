@@ -250,6 +250,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <option value="EUR">EUR - Euro</option>
                         <option value="GBP">GBP - British Pound</option>
                         <option value="INR">INR - Indian Rupee</option>
+                        <option value="CAD">CAD - Canadian Dollar</option>
+                        <option value="AUD">AUD - Australian Dollar</option>
+                        <option value="JPY">JPY - Japanese Yen</option>
+                        <option value="CHF">CHF - Swiss Franc</option>
+                        <option value="CNY">CNY - Chinese Yuan</option>
+                        <option value="SGD">SGD - Singapore Dollar</option>
                       </select>
                     </div>
                     <div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, User, Mail, Lock, Eye, EyeOff, ArrowRight, UserPlus, Users } from 'lucide-react';
 import { supabaseService } from '../../services/supabaseService';
+import { supabaseConfigured } from '../../lib/supabase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -19,6 +20,18 @@ const DimeXLogo: React.FC<{ className?: string }> = ({ className = "h-8 w-8" }) 
     </g>
   </svg>
 );
+
+const createLocalUser = (name: string, email: string) => ({
+  id: `local-${Date.now()}`,
+  name: name || email.split('@')[0] || 'Dime-x User',
+  email,
+  avatar: null,
+  preferences: {
+    theme: 'light',
+    currency: 'USD',
+    notifications: true,
+  },
+});
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
   const [mode, setMode] = useState<'login' | 'register' | 'guest'>('login');
@@ -41,6 +54,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
       if (mode === 'register') {
         if (formData.password !== formData.confirmPassword) {
           throw new Error('Passwords do not match');
+        }
+
+        if (!supabaseConfigured) {
+          const userData = createLocalUser(formData.name, formData.email);
+          localStorage.setItem('user', JSON.stringify(userData));
+          onLogin(userData);
+          onClose();
+          return;
         }
         
         const { user } = await supabaseService.signUp(formData.email, formData.password, formData.name);
@@ -65,6 +86,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
           onClose();
         }
       } else if (mode === 'login') {
+        if (!supabaseConfigured) {
+          let userData = createLocalUser('', formData.email);
+          try {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) userData = JSON.parse(savedUser);
+          } catch {
+            localStorage.removeItem('user');
+          }
+          localStorage.setItem('user', JSON.stringify(userData));
+          onLogin(userData);
+          onClose();
+          return;
+        }
+
         const { user } = await supabaseService.signIn(formData.email, formData.password);
         
         if (user) {

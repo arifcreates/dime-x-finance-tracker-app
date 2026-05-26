@@ -3,6 +3,8 @@ import { X } from 'lucide-react';
 import { Transaction, Account } from '../../types';
 import { generateId } from '../../utils/formatters';
 import { dataService } from '../../services/dataService';
+import { useCurrency } from '../../contexts/CurrencyContext';
+import { currencyService } from '../../services/currencyService';
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -19,6 +21,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   type,
   transaction,
 }) => {
+  const { currency } = useCurrency();
+  const currencySymbol = currencyService.getCurrencySymbol(currency);
   const [formData, setFormData] = useState({
     description: transaction?.description || '',
     amount: transaction?.amount || 0,
@@ -40,7 +44,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   
   const categories = type === 'income' ? incomeCategories : expenseCategories;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.account && accounts.length > 0) {
@@ -55,7 +59,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       status: 'completed',
     };
 
-    dataService.saveTransaction(newTransaction);
+    await dataService.saveTransaction(newTransaction);
     onSave(newTransaction);
     onClose();
     
@@ -118,7 +122,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
-                  $
+                  {currencySymbol}
                 </span>
                 <input
                   type="number"

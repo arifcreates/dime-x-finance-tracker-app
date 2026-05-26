@@ -88,6 +88,14 @@ class DataService {
     localStorage.setItem(key, JSON.stringify(data));
   }
 
+  private upsertStorageItem<T extends { id: string }>(key: string, item: T): void {
+    const items = this.getFromStorage<T>(key);
+    const index = items.findIndex(existing => existing.id === item.id);
+    if (index >= 0) items[index] = item;
+    else items.push(item);
+    this.saveToStorage(key, items);
+  }
+
   private async fetchFromSupabaseOrStorage<T>(
     supabaseMethod: () => Promise<T[]>,
     storageKey: string
@@ -175,13 +183,14 @@ class DataService {
 
   async saveTransaction(transaction: Transaction): Promise<void> {
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.saveTransaction(this.currentUserId, transaction); }
-      catch (error) { console.error('Error saving to Supabase, saving locally:', error); }
+      try {
+        await supabaseService.saveTransaction(this.currentUserId, transaction);
+      } catch (error) {
+        console.error('Error saving to Supabase, saving locally:', error);
+        this.upsertStorageItem('transactions', transaction);
+      }
     } else {
-      const items = this.getFromStorage<Transaction>('transactions');
-      const idx = items.findIndex(t => t.id === transaction.id);
-      if (idx >= 0) items[idx] = transaction; else items.push(transaction);
-      this.saveToStorage('transactions', items);
+      this.upsertStorageItem('transactions', transaction);
     }
     const idx = this.cache.transactions.findIndex(t => t.id === transaction.id);
     if (idx >= 0) this.cache.transactions[idx] = transaction;
@@ -200,13 +209,14 @@ class DataService {
 
   async saveAccount(account: Account): Promise<void> {
     if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.saveAccount(this.currentUserId, account); }
-      catch (error) { console.error('Error saving to Supabase:', error); }
+      try {
+        await supabaseService.saveAccount(this.currentUserId, account);
+      } catch (error) {
+        console.error('Error saving to Supabase, saving locally:', error);
+        this.upsertStorageItem('accounts', account);
+      }
     } else {
-      const items = this.getFromStorage<Account>('accounts');
-      const idx = items.findIndex(a => a.id === account.id);
-      if (idx >= 0) items[idx] = account; else items.push(account);
-      this.saveToStorage('accounts', items);
+      this.upsertStorageItem('accounts', account);
     }
     const idx = this.cache.accounts.findIndex(a => a.id === account.id);
     if (idx >= 0) this.cache.accounts[idx] = account;
