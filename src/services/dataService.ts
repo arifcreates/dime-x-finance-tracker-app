@@ -61,13 +61,6 @@ class DataService {
       for (const account of localAccounts) await supabaseService.saveAccount(this.currentUserId, account);
       const localTransactions = this.getFromStorage<Transaction>('transactions');
       for (const transaction of localTransactions) await supabaseService.saveTransaction(this.currentUserId, transaction);
-      localStorage.removeItem('accounts');
-      localStorage.removeItem('transactions');
-      localStorage.removeItem('clients');
-      localStorage.removeItem('invoices');
-      localStorage.removeItem('emis');
-      localStorage.removeItem('creditcards');
-      localStorage.removeItem('recurringpayments');
     } catch (error) {
       console.error('Error syncing local data to Supabase:', error);
     }

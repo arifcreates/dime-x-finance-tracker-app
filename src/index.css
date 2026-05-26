@@ -148,14 +148,45 @@
   border-radius: 9999px !important;
 }
 
-[class*="bg-gradient-to-"] {
-  background-image: none !important;
-  background-color: #111111 !important;
-}
-
 .dark [class*="dark\:bg-gray-900"],
 .dark [class*="dark\:bg-gray-800"] {
   background-color: #0b0b0c !important;
+}
+
+.from-blue-500,
+.from-blue-600,
+.from-indigo-600,
+.from-purple-500,
+.from-purple-600,
+.from-pink-700,
+.from-green-500,
+.from-green-600,
+.from-red-500,
+.from-red-600,
+.from-orange-500,
+.from-yellow-500 {
+  --tw-gradient-from: #18181b var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(24 24 27 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+.to-blue-600,
+.to-blue-700,
+.to-indigo-600,
+.to-indigo-700,
+.to-indigo-800,
+.to-purple-600,
+.to-pink-600,
+.to-pink-700,
+.to-pink-800,
+.to-green-600,
+.to-emerald-600,
+.to-emerald-700,
+.to-red-500,
+.to-red-600,
+.to-orange-600,
+.to-yellow-600 {
+  --tw-gradient-to: #27272a var(--tw-gradient-to-position) !important;
 }
 
 .bg-blue-500,
@@ -185,7 +216,8 @@
 .text-green-600,
 .text-red-600,
 .text-purple-600,
-.text-orange-600 {
+.text-orange-600,
+.text-yellow-600 {
   color: #52525b !important;
 }
 
@@ -193,7 +225,8 @@
 .dark .text-green-400,
 .dark .text-red-400,
 .dark .text-purple-400,
-.dark .text-orange-400 {
+.dark .text-orange-400,
+.dark .text-yellow-400 {
   color: #d4d4d8 !important;
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard as CreditCardIcon, Plus, Calculator, Edit, Trash2, Calendar, DollarSign, TrendingDown, AlertCircle } from 'lucide-react';
+import { CreditCard as CreditCardIcon, Plus, Calculator, Edit, Trash2, Calendar, TrendingDown, AlertCircle, Target } from 'lucide-react';
 import { EMIForm } from '../components/Forms/EMIForm';
 import { CreditCardForm } from '../components/Forms/CreditCardForm';
 import { EMI as EMIType, CreditCard } from '../types';
@@ -67,6 +67,30 @@ export const EMI: React.FC = () => {
   const totalCreditLimit = creditCards.reduce((sum, card) => sum + card.creditLimit, 0);
   const totalCreditUsed = creditCards.reduce((sum, card) => sum + card.currentBalance, 0);
   const totalMinimumDue = creditCards.reduce((sum, card) => sum + card.minimumDue, 0);
+  const snowballDebts = [
+    ...emis
+      .filter(emi => emi.remainingBalance > 0)
+      .map(emi => ({
+        id: `emi-${emi.id}`,
+        name: emi.name,
+        type: 'Loan',
+        balance: emi.remainingBalance,
+        minimumPayment: emi.monthlyAmount,
+        rate: emi.interestRate,
+      })),
+    ...creditCards
+      .filter(card => card.currentBalance > 0)
+      .map(card => ({
+        id: `card-${card.id}`,
+        name: card.name,
+        type: 'Card',
+        balance: card.currentBalance,
+        minimumPayment: card.minimumDue,
+        rate: card.interestRate,
+      })),
+  ].sort((a, b) => a.balance - b.balance);
+  const snowballMinimum = snowballDebts.reduce((sum, debt) => sum + debt.minimumPayment, 0);
+  const snowballTarget = snowballDebts[0];
 
   const getUtilizationColor = (utilization: number) => {
     if (utilization > 80) return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30';
@@ -160,6 +184,70 @@ export const EMI: React.FC = () => {
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Minimum Due</p>
             <p className="text-xl font-bold text-gray-900 dark:text-white">{fmt(totalMinimumDue)}</p>
+          </div>
+        </div>
+
+        {/* Debt Snowball */}
+        <div className="bg-white dark:bg-gray-900 rounded-[1.75rem] shadow-sm border border-gray-100 dark:border-gray-800 p-5 sm:p-6">
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+                  <Target className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Debt Snowball Plan</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Pay minimums on everything, then put extra money toward the smallest balance first.
+                  </p>
+                </div>
+              </div>
+
+              {snowballTarget ? (
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Next Target</p>
+                    <p className="text-base font-semibold text-gray-900 dark:text-white">{snowballTarget.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{fmt(snowballTarget.balance)}</p>
+                  </div>
+                  <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Monthly Minimums</p>
+                    <p className="text-base font-semibold text-gray-900 dark:text-white">{fmt(snowballMinimum)}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Before extra payments</p>
+                  </div>
+                  <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Debts In Plan</p>
+                    <p className="text-base font-semibold text-gray-900 dark:text-white">{snowballDebts.length}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Smallest to largest</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-5 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">No active debt balances yet. Add a loan or card balance to generate a snowball plan.</p>
+                </div>
+              )}
+            </div>
+
+            {snowballDebts.length > 0 && (
+              <div className="w-full lg:w-[420px] space-y-2">
+                {snowballDebts.slice(0, 5).map((debt, index) => (
+                  <div key={debt.id} className="flex items-center justify-between gap-3 border border-gray-200 dark:border-gray-800 rounded-xl p-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ${
+                        index === 0 ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200'
+                      }`}>
+                        {index + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{debt.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{debt.type} · min {fmt(debt.minimumPayment)}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">{fmt(debt.balance)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
