@@ -60,9 +60,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
   ];
 
   const differences = [
-    'Manual where it matters, so you stay in control of the numbers.',
-    'Built for everyday finance tracking, invoices, expenses, accounts, and debt planning.',
-    'Clean enough for personal use, structured enough for freelance and small business work.',
+    'Track money in and out without connecting a bank.',
+    'Create invoices, manage accounts, and export clear records.',
+    'Use the debt snowball view when you want a simple payoff plan.',
   ];
 
   return (
@@ -102,11 +102,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
               <p className="mb-4 inline-flex rounded-full border border-black/[0.08] bg-white px-3 py-1 text-sm font-medium text-[#5f6672]">
                 Simple finance tracking for everyday money
               </p>
-              <h1 className="mx-auto max-w-[19rem] text-[2.4rem] font-medium leading-[1.08] tracking-tight text-[#111318] sm:max-w-none sm:text-5xl lg:mx-0 lg:text-6xl">
-                Manage your money, invoices, expenses, and debts in one clean place.
+              <h1 className="mx-auto max-w-[20rem] text-[2.35rem] font-medium leading-[1.08] tracking-tight text-[#111318] sm:max-w-none sm:text-5xl lg:mx-0 lg:text-6xl">
+                Manage your money, invoices, and expenses in one clean place.
               </h1>
-              <p className="mx-auto mt-5 max-w-[32rem] text-base leading-7 text-[#5f6672] sm:text-lg lg:mx-0">
-                Dime-x gives you a calm way to track inflows, send invoices, organize expenses, manage accounts, export records, and plan loan payoff without extra noise.
+              <p className="mx-auto mt-5 max-w-[32rem] text-base leading-6 text-[#5f6672] sm:text-lg sm:leading-7 lg:mx-0">
+                Dime-x keeps everyday finance work simple: track inflows, organize expenses, send invoices, manage accounts, export records, and use the debt snowball plan when you want to focus your payoff.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
@@ -164,7 +164,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
           <div className="mx-auto max-w-7xl">
             <div className="mx-auto max-w-2xl text-center lg:mx-0 lg:text-left">
               <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">What you can do with Dime-x</h2>
-              <p className="mx-auto mt-3 max-w-[30rem] text-[#5f6672] lg:mx-0">The useful parts of money management, kept visible and easy to update.</p>
+              <p className="mx-auto mt-3 max-w-[30rem] leading-6 text-[#5f6672] lg:mx-0">The useful parts of money management, kept visible and easy to update.</p>
             </div>
 
             <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -172,7 +172,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                 <div key={feature.title} className="rounded-lg border border-black/[0.08] bg-[#fbfbf8] p-5">
                   <feature.icon className="h-6 w-6 text-[#111318]" />
                   <h3 className="mt-4 text-lg font-semibold">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-[#5f6672]">{feature.description}</p>
+                  <p className="mt-2 text-sm leading-5 text-[#5f6672]">{feature.description}</p>
                 </div>
               ))}
             </div>
@@ -183,7 +183,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
             <div className="mx-auto max-w-2xl text-center lg:mx-0 lg:text-left">
               <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">Different because it stays simple.</h2>
-              <p className="mt-4 text-[#5f6672]">
+              <p className="mt-4 leading-6 text-[#5f6672]">
                 Dime-x does not try to connect your bank or make automated promises. It gives you a calm place to organize the money decisions you already make.
               </p>
             </div>
@@ -191,7 +191,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
               {differences.map(item => (
                 <div key={item} className="flex gap-3 rounded-lg border border-black/[0.08] bg-white p-4">
                   <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#111318]" />
-                  <p className="text-[#4b5563]">{item}</p>
+                  <p className="leading-6 text-[#4b5563]">{item}</p>
                 </div>
               ))}
             </div>
@@ -201,7 +201,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
         <section className="border-t border-black/[0.07] bg-white px-5 py-14 sm:px-6 sm:py-20 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
             <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">Start with a clearer view of your money.</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-[#5f6672]">
+            <p className="mx-auto mt-4 max-w-2xl leading-6 text-[#5f6672]">
               Create an account or log in to continue with a dashboard that keeps the important numbers close.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -228,7 +228,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
           <div className="flex items-center">
             <img src={dimeXWordmarkDark} alt="Dime-x" className="h-8 w-auto max-w-[130px]" />
           </div>
-          <p className="max-w-sm sm:max-w-none">Simple finance tracking, invoices, expenses, accounts, exports, and debt planning.</p>
+          <p className="max-w-sm leading-6 sm:max-w-none">Simple finance tracking, invoices, expenses, accounts, exports, and debt planning.</p>
         </div>
       </footer>
 

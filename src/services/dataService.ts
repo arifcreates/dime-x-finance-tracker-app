@@ -29,12 +29,9 @@ class DataService {
     if (supabaseConfigured) {
       try {
         supabase.auth.onAuthStateChange((event, session) => {
-          this.currentUserId = session?.user?.id || null;
+          this.setCurrentUserId(session?.user?.id || null);
           if (event === 'SIGNED_IN' && this.currentUserId) {
             this.syncLocalDataToSupabase();
-          }
-          if (event === 'SIGNED_OUT') {
-            this.clearCache();
           }
         });
       } catch (error) {
@@ -48,6 +45,16 @@ class DataService {
     });
 
     window.addEventListener('offline', () => { this.isOnline = false; });
+  }
+
+  setCurrentUserId(userId: string | null) {
+    if (this.currentUserId === userId) return;
+    this.currentUserId = userId;
+    this.clearCache();
+
+    if (userId && supabaseConfigured && this.isOnline) {
+      this.syncLocalDataToSupabase();
+    }
   }
 
   private clearCache() {

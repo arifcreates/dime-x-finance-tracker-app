@@ -130,7 +130,7 @@ function App() {
           };
           
           setUser(userData);
-          // Load transactions
+          dataService.setCurrentUserId(session.user.id);
           const userTransactions = await dataService.getTransactions();
           setTransactions(userTransactions);
         } else {
@@ -174,6 +174,7 @@ function App() {
 
   const refreshTransactions = async () => {
     if (user && user.id !== 'guest') {
+      dataService.setCurrentUserId(user.id);
       const userTransactions = await dataService.getTransactions();
       setTransactions(userTransactions);
     } else {
@@ -183,14 +184,15 @@ function App() {
 
   const handleLogin = async (userData: any) => {
     setUser(userData);
+    dataService.setCurrentUserId(userData.id === 'guest' ? null : userData.id);
     
     if (userData.id === 'guest') {
       localStorage.setItem('user', JSON.stringify(userData));
       setTransactions([]);
     } else {
       localStorage.setItem('user', JSON.stringify(userData));
-      // Load user's transactions from Supabase
-      await refreshTransactions();
+      const userTransactions = await dataService.getTransactions();
+      setTransactions(userTransactions);
     }
   };
 
@@ -205,6 +207,7 @@ function App() {
     
     setUser(null);
     setTransactions([]);
+    dataService.setCurrentUserId(null);
     localStorage.removeItem('user');
   };
 
