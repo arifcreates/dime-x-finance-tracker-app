@@ -11,7 +11,6 @@ import {
   Wallet,
 } from 'lucide-react';
 import { AuthModal } from '../Auth/AuthModal';
-import dimeXIconLight from '../../assets/brand/dimex-icon-light.svg';
 import dimeXWordmarkDark from '../../assets/brand/dimex-wordmark-dark.svg';
 
 interface LandingPageProps {
@@ -69,9 +68,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#f7f7f4] text-[#111318]" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
       <nav className="sticky top-0 z-40 border-b border-black/[0.07] bg-[#f7f7f4]/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center">
-            <img src={dimeXWordmarkDark} alt="Dime-x" className="h-7 w-auto max-w-[116px] sm:h-9 sm:max-w-none" />
+            <img src={dimeXWordmarkDark} alt="Dime-x" className="h-7 w-auto max-w-[108px] sm:h-9 sm:max-w-none" />
           </div>
 
           <div className="hidden items-center gap-8 md:flex">
@@ -97,20 +96,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
       </nav>
 
       <main>
-        <section className="px-4 pb-14 pt-12 sm:px-6 sm:pb-20 sm:pt-16 lg:px-8 lg:pb-28 lg:pt-24">
+        <section className="px-5 pb-14 pt-12 sm:px-6 sm:pb-20 sm:pt-16 lg:px-8 lg:pb-28 lg:pt-24">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-            <div className="max-w-3xl">
+            <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:text-left">
               <p className="mb-4 inline-flex rounded-full border border-black/[0.08] bg-white px-3 py-1 text-sm font-medium text-[#5f6672]">
                 Simple finance tracking for everyday money
               </p>
-              <h1 className="text-4xl font-medium leading-tight tracking-tight text-[#111318] sm:text-5xl lg:text-6xl">
+              <h1 className="mx-auto max-w-[19rem] text-[2.4rem] font-medium leading-[1.08] tracking-tight text-[#111318] sm:max-w-none sm:text-5xl lg:mx-0 lg:text-6xl">
                 Manage your money, invoices, expenses, and debts in one clean place.
               </h1>
-              <p className="mt-5 max-w-2xl text-base leading-7 text-[#5f6672] sm:text-lg">
+              <p className="mx-auto mt-5 max-w-[32rem] text-base leading-7 text-[#5f6672] sm:text-lg lg:mx-0">
                 Dime-x gives you a calm way to track inflows, send invoices, organize expenses, manage accounts, export records, and plan loan payoff without extra noise.
               </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
                 <button
                   onClick={() => openAuth('register')}
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#111318] px-6 py-3 font-medium text-white transition-colors hover:bg-black"
@@ -127,7 +126,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
               </div>
             </div>
 
-            <div className="rounded-xl border border-black/[0.08] bg-white p-4 shadow-[0_24px_70px_rgba(17,19,24,0.10)] sm:p-5">
+            <div className="rounded-xl border border-black/[0.08] bg-white p-3 shadow-[0_24px_70px_rgba(17,19,24,0.10)] sm:p-5">
               <div className="rounded-lg border border-black/[0.08] bg-[#fbfbf8] p-4">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
@@ -161,11 +160,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
           </div>
         </section>
 
-        <section id="features" className="border-t border-black/[0.07] bg-white px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <section id="features" className="border-t border-black/[0.07] bg-white px-5 py-14 sm:px-6 sm:py-20 lg:px-8">
           <div className="mx-auto max-w-7xl">
-            <div className="max-w-2xl">
+            <div className="mx-auto max-w-2xl text-center lg:mx-0 lg:text-left">
               <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">What you can do with Dime-x</h2>
-              <p className="mt-3 text-[#5f6672]">The useful parts of money management, kept visible and easy to update.</p>
+              <p className="mx-auto mt-3 max-w-[30rem] text-[#5f6672] lg:mx-0">The useful parts of money management, kept visible and easy to update.</p>
             </div>
 
             <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -180,9 +179,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
           </div>
         </section>
 
-        <section id="difference" className="border-t border-black/[0.07] px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <section id="difference" className="border-t border-black/[0.07] px-5 py-14 sm:px-6 sm:py-20 lg:px-8">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-            <div>
+            <div className="mx-auto max-w-2xl text-center lg:mx-0 lg:text-left">
               <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">Different because it stays simple.</h2>
               <p className="mt-4 text-[#5f6672]">
                 Dime-x does not try to connect your bank or make automated promises. It gives you a calm place to organize the money decisions you already make.
@@ -199,7 +198,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
           </div>
         </section>
 
-        <section className="border-t border-black/[0.07] bg-white px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <section className="border-t border-black/[0.07] bg-white px-5 py-14 sm:px-6 sm:py-20 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
             <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">Start with a clearer view of your money.</h2>
             <p className="mx-auto mt-4 max-w-2xl text-[#5f6672]">
@@ -224,15 +223,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
         </section>
       </main>
 
-      <footer className="border-t border-black/[0.07] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 text-sm text-[#6b7280] sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#111318]">
-              <img src={dimeXIconLight} alt="" className="h-5 w-5" />
-            </div>
-            <span>Dime-x</span>
+      <footer className="border-t border-black/[0.07] px-5 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 text-center text-sm text-[#6b7280] sm:flex-row sm:items-center sm:justify-between sm:text-left">
+          <div className="flex items-center">
+            <img src={dimeXWordmarkDark} alt="Dime-x" className="h-8 w-auto max-w-[130px]" />
           </div>
-          <p>Simple finance tracking, invoices, expenses, accounts, exports, and debt planning.</p>
+          <p className="max-w-sm sm:max-w-none">Simple finance tracking, invoices, expenses, accounts, exports, and debt planning.</p>
         </div>
       </footer>
 
