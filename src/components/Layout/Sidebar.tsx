@@ -11,6 +11,7 @@ import {
   X,
   User,
 } from 'lucide-react';
+import dimeXIconLight from '../../assets/brand/dimex-icon-light.svg';
 
 interface SidebarProps {
   activeSection: string;
@@ -30,18 +31,6 @@ const navigationItems = [
   { id: 'reports', label: 'Reports', icon: BarChart3 },
 ];
 
-// Custom star logo component using the provided SVG - bigger size
-const DimeXLogo: React.FC<{ className?: string }> = ({ className = "h-6 w-6" }) => (
-  <svg viewBox="0 0 100 100" fill="currentColor" className={className}>
-    <g>
-      <polygon points="85.1,50 72.3,72.3 59.4,50 72.3,27.7" />
-      <polygon points="14.9,50 27.7,72.3 40.6,50 27.7,27.7" />
-      <polygon points="50,40.6 72.3,27.7 50,14.9 27.7,27.7" />
-      <polygon points="50,85.1 72.3,72.3 50,59.4 27.7,72.3" />
-    </g>
-  </svg>
-);
-
 export const Sidebar: React.FC<SidebarProps> = ({ 
   activeSection, 
   onSectionChange, 
@@ -55,8 +44,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-5 lg:p-8 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 lg:w-16 lg:h-16 bg-black dark:bg-white rounded-2xl flex items-center justify-center shadow-lg">
-              <DimeXLogo className="h-8 w-8 lg:h-10 lg:w-10 text-white dark:text-black" />
+            <div className="w-12 h-12 lg:w-16 lg:h-16 bg-black rounded-2xl flex items-center justify-center shadow-lg dark:border dark:border-white/10">
+              <img src={dimeXIconLight} alt="Dime-x" className="h-8 w-8 lg:h-10 lg:w-10" />
             </div>
             <div>
               <h1 className="text-xl lg:text-2xl font-bold text-black dark:text-white" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>Dime-x</h1>

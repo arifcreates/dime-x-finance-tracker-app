@@ -11,21 +11,12 @@ import {
   Wallet,
 } from 'lucide-react';
 import { AuthModal } from '../Auth/AuthModal';
+import dimeXIconLight from '../../assets/brand/dimex-icon-light.svg';
+import dimeXWordmarkDark from '../../assets/brand/dimex-wordmark-dark.svg';
 
 interface LandingPageProps {
   onLogin: (user: any) => void;
 }
-
-const DimeXLogo: React.FC<{ className?: string }> = ({ className = 'h-12 w-12' }) => (
-  <svg viewBox="0 0 100 100" fill="currentColor" className={className}>
-    <g>
-      <polygon points="85.1,50 72.3,72.3 59.4,50 72.3,27.7" />
-      <polygon points="14.9,50 27.7,72.3 40.6,50 27.7,27.7" />
-      <polygon points="50,40.6 72.3,27.7 50,14.9 27.7,27.7" />
-      <polygon points="50,85.1 72.3,72.3 50,59.4 27.7,72.3" />
-    </g>
-  </svg>
-);
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -79,11 +70,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
     <div className="min-h-screen overflow-x-hidden bg-[#f7f7f4] text-[#111318]" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
       <nav className="sticky top-0 z-40 border-b border-black/[0.07] bg-[#f7f7f4]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#111318]">
-              <DimeXLogo className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight">Dime-x</span>
+          <div className="flex items-center">
+            <img src={dimeXWordmarkDark} alt="Dime-x" className="h-7 w-auto max-w-[116px] sm:h-9 sm:max-w-none" />
           </div>
 
           <div className="hidden items-center gap-8 md:flex">
@@ -240,7 +228,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
         <div className="mx-auto flex max-w-7xl flex-col gap-4 text-sm text-[#6b7280] sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#111318]">
-              <DimeXLogo className="h-5 w-5 text-white" />
+              <img src={dimeXIconLight} alt="" className="h-5 w-5" />
             </div>
             <span>Dime-x</span>
           </div>

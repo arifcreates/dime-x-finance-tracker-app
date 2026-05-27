@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, User, Mail, Lock, Eye, EyeOff, ArrowRight, UserPlus, Users } from 'lucide-react';
+import { X, User, Mail, Lock, Eye, EyeOff, ArrowRight, Users } from 'lucide-react';
 import { supabaseService } from '../../services/supabaseService';
 import { supabaseConfigured } from '../../lib/supabase';
+import dimeXIconLight from '../../assets/brand/dimex-icon-light.svg';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -9,18 +10,6 @@ interface AuthModalProps {
   onLogin: (user: any) => void;
   initialMode?: 'login' | 'register' | 'guest';
 }
-
-// Custom star logo component using the provided SVG - bigger size
-const DimeXLogo: React.FC<{ className?: string }> = ({ className = "h-8 w-8" }) => (
-  <svg viewBox="0 0 100 100" fill="currentColor" className={className}>
-    <g>
-      <polygon points="85.1,50 72.3,72.3 59.4,50 72.3,27.7" />
-      <polygon points="14.9,50 27.7,72.3 40.6,50 27.7,27.7" />
-      <polygon points="50,40.6 72.3,27.7 50,14.9 27.7,27.7" />
-      <polygon points="50,85.1 72.3,72.3 50,59.4 27.7,72.3" />
-    </g>
-  </svg>
-);
 
 const createLocalUser = (name: string, email: string) => ({
   id: `local-${Date.now()}`,
@@ -166,8 +155,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
             <X className="h-5 w-5" />
           </button>
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-white dark:bg-gray-800 sm:mb-4 sm:h-20 sm:w-20">
-              <DimeXLogo className="h-10 w-10 text-black dark:text-white sm:h-12 sm:w-12" />
+            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-black shadow-lg dark:border dark:border-white/10 sm:mb-4 sm:h-20 sm:w-20">
+              <img src={dimeXIconLight} alt="Dime-x" className="h-10 w-10 sm:h-12 sm:w-12" />
             </div>
             <h2 className="mb-1 text-xl font-semibold sm:mb-2" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
               {mode === 'login' ? 'Welcome Back' : mode === 'register' ? 'Create Account' : 'Continue as Guest'}
