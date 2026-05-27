@@ -155,21 +155,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 w-full max-w-md mx-auto rounded-3xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:flex sm:items-center sm:justify-center sm:p-4">
+      <div className="mx-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900 sm:rounded-3xl">
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-black to-gray-800 dark:from-gray-800 dark:to-gray-900 p-6 text-white">
+        <div className="relative flex-shrink-0 bg-gradient-to-r from-black to-gray-800 p-5 text-white dark:from-gray-800 dark:to-gray-900 sm:p-6">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-xl transition-colors"
+            className="absolute right-4 top-4 rounded-xl p-2 transition-colors hover:bg-white/20"
           >
             <X className="h-5 w-5" />
           </button>
           <div className="text-center">
-            <div className="w-20 h-20 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <DimeXLogo className="h-12 w-12 text-black dark:text-white" />
+            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-white dark:bg-gray-800 sm:mb-4 sm:h-20 sm:w-20">
+              <DimeXLogo className="h-10 w-10 text-black dark:text-white sm:h-12 sm:w-12" />
             </div>
-            <h2 className="text-xl font-bold mb-2" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
+            <h2 className="mb-1 text-xl font-semibold sm:mb-2" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
               {mode === 'login' ? 'Welcome Back' : mode === 'register' ? 'Create Account' : 'Continue as Guest'}
             </h2>
             <p className="text-white/80 text-sm">
@@ -184,21 +184,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
         </div>
 
         {/* Form */}
-        <div className="p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
           {mode === 'guest' ? (
             <div className="text-center space-y-4">
-              <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900 rounded-2xl flex items-center justify-center mx-auto">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900 sm:h-20 sm:w-20">
                 <Users className="h-10 w-10 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Guest Access</h3>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Guest Access</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
                   Explore Dime-x with empty data. No registration required.
                 </p>
               </div>
               <button
                 onClick={handleGuestLogin}
-                className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-base hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                className="flex w-full items-center justify-center space-x-2 rounded-xl bg-blue-600 py-3.5 text-base font-semibold text-white transition-colors hover:bg-blue-700 sm:py-4"
               >
                 <Users className="h-5 w-5" />
                 <span>Continue as Guest</span>
@@ -206,7 +206,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
               {error && (
                 <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
                   <p className="text-red-700 dark:text-red-400 text-sm font-medium">{error}</p>
@@ -215,7 +215,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
               
               {mode === 'register' && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Full Name
                   </label>
                   <div className="relative">
@@ -225,7 +225,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full pl-12 pr-4 py-4 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-base text-gray-900 transition-all focus:border-transparent focus:ring-2 focus:ring-black dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:ring-white sm:py-4"
                       placeholder="Enter your full name"
                     />
                   </div>
@@ -233,7 +233,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
               )}
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Email Address
                 </label>
                 <div className="relative">
@@ -243,14 +243,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full pl-12 pr-4 py-4 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-base text-gray-900 transition-all focus:border-transparent focus:ring-2 focus:ring-black dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:ring-white sm:py-4"
                     placeholder="Enter your email"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Password
                 </label>
                 <div className="relative">
@@ -260,7 +260,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
                     required
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full pl-12 pr-12 py-4 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-12 text-base text-gray-900 transition-all focus:border-transparent focus:ring-2 focus:ring-black dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:ring-white sm:py-4"
                     placeholder="Enter your password"
                   />
                   <button
@@ -275,7 +275,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
 
               {mode === 'register' && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Confirm Password
                   </label>
                   <div className="relative">
@@ -285,7 +285,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
                       required
                       value={formData.confirmPassword}
                       onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className="w-full pl-12 pr-4 py-4 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-base text-gray-900 transition-all focus:border-transparent focus:ring-2 focus:ring-black dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:ring-white sm:py-4"
                       placeholder="Confirm your password"
                     />
                   </div>
@@ -295,7 +295,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-black dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold text-base hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors flex items-center justify-center space-x-2 mt-6"
+                className="mt-5 flex w-full items-center justify-center space-x-2 rounded-xl bg-black py-3.5 text-base font-semibold text-white transition-colors hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100 sm:mt-6 sm:py-4"
               >
                 {isLoading ? (
                   <>
@@ -313,7 +313,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
           )}
 
           {/* Mode Toggle */}
-          <div className="mt-6 space-y-3">
+          <div className="mt-5 space-y-3 sm:mt-6">
             {mode !== 'guest' && (
               <div className="text-center">
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
