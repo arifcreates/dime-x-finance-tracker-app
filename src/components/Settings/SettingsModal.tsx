@@ -141,21 +141,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="flex min-h-0 flex-1 flex-col sm:flex-row overflow-hidden">
           {/* Sidebar Tabs */}
           <div className="w-full sm:w-1/3 bg-gray-50 dark:bg-gray-800 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-gray-700 px-4 py-3 sm:p-4 overflow-x-auto sm:overflow-y-auto">
-            <nav className="flex sm:block gap-2 sm:space-y-2 sm:gap-0 min-w-max sm:min-w-0">
+            <nav className="grid grid-cols-4 gap-2 sm:block sm:space-y-2 sm:gap-0">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
+                    title={tab.label}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex sm:w-full items-center space-x-2 sm:space-x-3 px-4 py-3 rounded-xl text-left transition-colors whitespace-nowrap ${
+                    className={`flex items-center justify-center sm:justify-start sm:w-full sm:space-x-3 px-3 sm:px-4 py-3 rounded-xl text-left transition-colors ${
                       activeTab === tab.id
                         ? 'bg-black dark:bg-white text-white dark:text-black'
                         : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
-                    <span className="font-medium text-sm">{tab.label}</span>
+                    <span className="hidden sm:inline font-medium text-sm">{tab.label}</span>
                   </button>
                 );
               })}

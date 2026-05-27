@@ -100,10 +100,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-gray-900">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overscroll-contain">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl w-[calc(100%-0.75rem)] sm:w-full max-w-4xl h-[calc(100dvh-var(--mobile-browser-bottom,0px)-0.75rem)] sm:h-auto sm:max-h-[90vh] mb-1.5 sm:mb-0 overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-5 sm:px-6 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
             {invoice ? 'Edit Invoice' : 'Create Invoice'}
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -111,7 +111,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -181,12 +181,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
           {/* Invoice Items */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-lg font-medium text-gray-900">Invoice Items</h4>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-white">Invoice Items</h4>
               <button
                 type="button"
                 onClick={addItem}
-                className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex-shrink-0"
               >
                 <Plus className="h-4 w-4" />
                 <span>Add Item</span>
@@ -195,8 +195,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
             <div className="space-y-3">
               {items.map((item, index) => (
-                <div key={index} className="grid grid-cols-12 gap-3 items-center">
-                  <div className="col-span-5">
+                <div key={index} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:items-end">
+                  <div className="sm:col-span-5">
+                    <label className="block sm:hidden text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Description</label>
                     <input
                       type="text"
                       placeholder="Description"
@@ -206,7 +208,9 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                       required
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="grid grid-cols-2 gap-3 sm:contents">
+                  <div className="sm:col-span-2">
+                    <label className="block sm:hidden text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Qty</label>
                     <input
                       type="number"
                       placeholder="Qty"
@@ -217,19 +221,23 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                       required
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
+                    <label className="block sm:hidden text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Rate</label>
                     <input
                       type="number"
                       placeholder="Rate"
                       min="0"
                       step="0.01"
-                      value={item.rate}
+                      value={item.rate || ''}
                       onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
                   </div>
-                  <div className="col-span-2">
+                  </div>
+                  <div className="grid grid-cols-[1fr_auto] gap-3 sm:contents">
+                  <div className="sm:col-span-2">
+                    <label className="block sm:hidden text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Amount</label>
                     <input
                       type="text"
                       value={`$${item.amount.toFixed(2)}`}
@@ -237,15 +245,17 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                       className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg"
                     />
                   </div>
-                  <div className="col-span-1">
+                  <div className="sm:col-span-1 flex items-end">
                     <button
                       type="button"
                       onClick={() => removeItem(index)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="w-full sm:w-auto p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
                       disabled={items.length === 1}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
+                  </div>
+                  </div>
                   </div>
                 </div>
               ))}

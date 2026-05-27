@@ -14,6 +14,7 @@ interface TransactionFormProps {
   type: 'income' | 'expense';
   transaction?: Transaction;
   onCreateAccount?: () => void;
+  initialDescription?: string;
 }
 
 export const TransactionForm: React.FC<TransactionFormProps> = ({
@@ -23,11 +24,12 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   type,
   transaction,
   onCreateAccount,
+  initialDescription = '',
 }) => {
   const { currency } = useCurrency();
   const currencySymbol = currencyService.getCurrencySymbol(currency);
   const [formData, setFormData] = useState({
-    description: transaction?.description || '',
+    description: transaction?.description || initialDescription,
     amount: transaction?.amount ? String(transaction.amount) : '',
     category: transaction?.category || '',
     account: transaction?.account || '',
@@ -38,15 +40,23 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      setFormData((prev) => ({
+        description: transaction?.description || initialDescription || '',
+        amount: transaction?.amount ? String(transaction.amount) : '',
+        category: transaction?.category || '',
+        account: transaction?.account || prev.account,
+        date: transaction?.date || new Date().toISOString().split('T')[0],
+      }));
+
       dataService.getAccounts().then((loadedAccounts) => {
         setAccounts(loadedAccounts);
         setFormData((prev) => ({
           ...prev,
-          account: prev.account || loadedAccounts[0]?.name || '',
+          account: transaction?.account || prev.account || loadedAccounts[0]?.name || '',
         }));
       });
     }
-  }, [isOpen]);
+  }, [initialDescription, isOpen, transaction]);
   
   const incomeCategories = ['Freelance', 'Consulting', 'Product Sales', 'Investment', 'Royalties', 'Other'];
   const expenseCategories = ['Office', 'Software', 'Marketing', 'Travel', 'Equipment', 'Utilities', 'Food', 'Transportation', 'Other'];
@@ -113,9 +123,9 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 overscroll-contain">
       {/* Mobile: Full screen modal */}
-      <div className="w-full h-full sm:h-auto sm:max-w-xl sm:mx-4 bg-white sm:rounded-3xl flex flex-col overflow-hidden">
+      <div className="w-[calc(100%-0.75rem)] h-[calc(100dvh-var(--mobile-browser-bottom,0px)-0.75rem)] sm:h-auto sm:max-h-[90vh] sm:max-w-xl sm:mx-4 bg-white dark:bg-gray-900 rounded-3xl flex flex-col overflow-hidden mb-1.5 sm:mb-0">
         {/* Header */}
         <div className="bg-gradient-to-r from-black to-gray-800 p-4 sm:p-6 text-white flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -137,8 +147,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         </div>
 
         {/* Form Content */}
-        <div className="flex-1 overflow-y-auto">
-          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-6">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-3">
                 Description
@@ -245,7 +255,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-4 sm:p-6 flex-shrink-0">
+        <div className="border-t border-gray-200 dark:border-gray-800 p-5 sm:p-6 flex-shrink-0 bg-white dark:bg-gray-900">
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               type="button"

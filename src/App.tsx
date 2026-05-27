@@ -260,7 +260,7 @@ function App() {
       case 'dashboard':
         return <Dashboard {...props} onUpdate={refreshTransactions} />;
       case 'income':
-        return <Income onUpdate={refreshTransactions} />;
+        return <Income onUpdate={refreshTransactions} onCreateAccount={handleCreateAccountFromQuickAction} />;
       case 'expenses':
         return <Expenses onUpdate={refreshTransactions} />;
       case 'accounts':

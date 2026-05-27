@@ -4,6 +4,7 @@ import { Account } from '../../types';
 import { generateId } from '../../utils/formatters';
 import { dataService } from '../../services/dataService';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { SelectField } from './SelectField';
 
 interface AccountFormProps {
   isOpen: boolean;
@@ -61,11 +62,21 @@ export const AccountForm: React.FC<AccountFormProps> = ({
 
   if (!isOpen) return null;
 
+  const accountTypeOptions = [
+    { value: 'savings', label: 'Savings' },
+    { value: 'current', label: 'Current' },
+    { value: 'cash', label: 'Cash' },
+    { value: 'investment', label: 'Investment' },
+  ];
+
+  const currencyOptions = ['USD', 'EUR', 'GBP', 'INR', 'CAD', 'AUD', 'JPY', 'CHF', 'CNY', 'SGD']
+    .map(value => ({ value, label: value }));
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overscroll-contain">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl w-[calc(100%-0.75rem)] sm:w-full max-w-md h-[calc(100dvh-var(--mobile-browser-bottom,0px)-0.75rem)] sm:h-auto sm:max-h-[90vh] mx-0 sm:mx-4 mb-1.5 sm:mb-0 overflow-hidden flex flex-col shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-5 sm:px-6 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             {account ? 'Edit Account' : 'Add Account'}
           </h3>
           <button
@@ -76,7 +87,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Account Name
@@ -95,17 +106,12 @@ export const AccountForm: React.FC<AccountFormProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Account Type
             </label>
-            <select
+            <SelectField
               required
               value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value as Account['type'] })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-            >
-              <option value="savings">Savings</option>
-              <option value="current">Current</option>
-              <option value="cash">Cash</option>
-              <option value="investment">Investment</option>
-            </select>
+              onChange={(value) => setFormData({ ...formData, type: value as Account['type'] })}
+              options={accountTypeOptions}
+            />
           </div>
 
           <div>
@@ -128,23 +134,12 @@ export const AccountForm: React.FC<AccountFormProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Currency
             </label>
-            <select
+            <SelectField
               required
               value={formData.currency}
-              onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="INR">INR</option>
-              <option value="CAD">CAD</option>
-              <option value="AUD">AUD</option>
-              <option value="JPY">JPY</option>
-              <option value="CHF">CHF</option>
-              <option value="CNY">CNY</option>
-              <option value="SGD">SGD</option>
-            </select>
+              onChange={(value) => setFormData({ ...formData, currency: value })}
+              options={currencyOptions}
+            />
           </div>
 
           <div className="flex space-x-3 pt-4">

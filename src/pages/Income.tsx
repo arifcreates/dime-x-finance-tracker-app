@@ -8,7 +8,12 @@ import { dataService } from '../services/dataService';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
-export const Income: React.FC = () => {
+interface IncomeProps {
+  onUpdate?: () => void;
+  onCreateAccount?: () => void;
+}
+
+export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
   const fmt = useCurrencyFormat();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -353,6 +358,7 @@ export const Income: React.FC = () => {
           onClose={() => setShowIncomeForm(false)}
           onSave={handleIncomeSave}
           type="income"
+          onCreateAccount={onCreateAccount}
         />
 
         {selectedInvoice && selectedInvoice.status !== 'paid' && (

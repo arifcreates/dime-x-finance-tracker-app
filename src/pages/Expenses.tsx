@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Receipt, Plus, Upload, Edit, Trash2 } from 'lucide-react';
+import { Receipt, Plus, Edit, Trash2 } from 'lucide-react';
 import { TransactionForm } from '../components/Forms/TransactionForm';
 import { Transaction } from '../types';
 import { dataService } from '../services/dataService';
@@ -64,15 +64,13 @@ export const Expenses: React.FC = () => {
             </div>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <button
-                onClick={() => setShowExpenseForm(true)}
+                onClick={() => {
+                  setShowExpenseForm(true);
+                }}
                 className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-colors font-medium shadow-lg shadow-orange-500/25"
               >
                 <Plus className="h-4 w-4" />
                 <span>Add Expense</span>
-              </button>
-              <button className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-medium shadow-lg shadow-gray-500/25">
-                <Upload className="h-4 w-4" />
-                <span>Upload Receipt</span>
               </button>
             </div>
           </div>
@@ -141,7 +139,9 @@ export const Expenses: React.FC = () => {
                   <Receipt className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-500 dark:text-gray-400 mb-4">No expenses found</p>
                   <button
-                    onClick={() => setShowExpenseForm(true)}
+                    onClick={() => {
+                      setShowExpenseForm(true);
+                    }}
                     className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                   >
                     Add Your First Expense

@@ -88,9 +88,9 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
   const utilizationPercentage = creditLimit > 0 ? (currentBalance / creditLimit) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl p-5 sm:p-8 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-8">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overscroll-contain">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl w-[calc(100%-0.75rem)] sm:w-full max-w-2xl h-[calc(100dvh-var(--mobile-browser-bottom,0px)-0.75rem)] sm:h-auto sm:max-h-[90vh] mx-0 sm:mx-4 mb-1.5 sm:mb-0 overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-5 sm:px-8 sm:py-6 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
             {card ? 'Edit Credit Card' : 'Add New Credit Card'}
           </h3>
@@ -102,7 +102,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-8 sm:py-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-3">
@@ -229,7 +229,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
             )}
           </div>
 
-          <div className="flex space-x-4 pt-6">
+          <div className="flex space-x-4 pt-4">
             <button
               type="button"
               onClick={onClose}
