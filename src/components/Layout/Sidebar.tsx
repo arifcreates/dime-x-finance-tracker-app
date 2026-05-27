@@ -11,7 +11,8 @@ import {
   X,
   User,
 } from 'lucide-react';
-import dimeXIconLight from '../../assets/brand/dimex-icon-light.svg';
+import dimeXWordmarkDark from '../../assets/brand/dimex-wordmark-dark.svg';
+import dimeXWordmarkLight from '../../assets/brand/dimex-wordmark-light.svg';
 
 interface SidebarProps {
   activeSection: string;
@@ -39,18 +40,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSettingsClick 
 }) => {
   return (
-    <div className="w-80 lg:w-80 bg-white dark:bg-gray-900 h-[calc(100dvh-var(--mobile-browser-bottom,0px))] lg:h-screen flex flex-col border-r border-gray-100 dark:border-gray-800">
+    <div className="w-80 lg:w-80 bg-[#f7f7f4] dark:bg-gray-900 h-[calc(100dvh-var(--mobile-browser-bottom,0px))] lg:h-screen flex flex-col border-r border-black/[0.07] dark:border-gray-800">
       {/* Header */}
-      <div className="p-5 lg:p-8 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+      <div className="p-5 lg:p-8 border-b border-black/[0.07] dark:border-gray-800 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 lg:w-16 lg:h-16 bg-black rounded-2xl flex items-center justify-center shadow-lg dark:border dark:border-white/10">
-              <img src={dimeXIconLight} alt="Dime-x" className="h-8 w-8 lg:h-10 lg:w-10" />
-            </div>
-            <div>
-              <h1 className="text-xl lg:text-2xl font-bold text-black dark:text-white" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>Dime-x</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Personal Finance</p>
-            </div>
+          <div className="flex min-w-0 items-center">
+            <img src={dimeXWordmarkDark} alt="Dime-x" className="h-9 w-auto max-w-[170px] dark:hidden" />
+            <img src={dimeXWordmarkLight} alt="Dime-x" className="hidden h-9 w-auto max-w-[170px] dark:block" />
           </div>
           {onClose && (
             <button
@@ -76,8 +72,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => onSectionChange(item.id)}
                   className={`w-full flex items-center space-x-4 px-4 py-3 rounded-2xl text-left transition-all duration-300 group ${
                     isActive
-                      ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg shadow-black/20 dark:shadow-white/20'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                      ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg shadow-black/10 dark:shadow-white/10'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
                   <Icon className={`h-5 w-5 ${isActive ? 'text-white dark:text-black' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300'}`} />
@@ -89,10 +85,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </ul>
       </nav>
 
-      <div className="p-4 lg:p-6 pb-[calc(1rem+var(--mobile-browser-bottom,0px))] lg:pb-6 border-t border-gray-100 dark:border-gray-800 flex-shrink-0">
+      <div className="p-4 lg:p-6 pb-[calc(1rem+var(--mobile-browser-bottom,0px))] lg:pb-6 border-t border-black/[0.07] dark:border-gray-800 flex-shrink-0">
         <button
           onClick={onSettingsClick}
-          className="w-full flex items-center space-x-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-all"
+          className="w-full flex items-center space-x-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 rounded-xl transition-all"
         >
           <div className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center">
             <User className="h-5 w-5 text-white dark:text-black" />

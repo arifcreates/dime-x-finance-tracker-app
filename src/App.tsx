@@ -123,7 +123,7 @@ function App() {
             email: profile.email,
             avatar: null,
             preferences: profile.preferences || {
-              theme: 'dark',
+              theme: 'light',
               currency: 'USD',
               notifications: true,
             }
@@ -279,7 +279,7 @@ function App() {
   // Show loading state only while restoring a known signed-in user.
   if (isLoading && user) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f7f7f4] dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-black dark:border-white border-t-transparent"></div>
       </div>
     );
@@ -293,7 +293,7 @@ function App() {
   return (
     <CurrencyProvider initialCurrency={user?.preferences?.currency}>
     <DndProvider backend={isTouchDevice() ? TouchBackend : HTML5Backend}>
-      <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <div className="flex h-screen bg-[#f7f7f4] dark:bg-gray-900 overflow-hidden">
         {/* Desktop Sidebar */}
         <div className="hidden lg:block">
           <Sidebar 

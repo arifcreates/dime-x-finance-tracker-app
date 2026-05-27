@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, User, Mail, Lock, Eye, EyeOff, ArrowRight, Users } from 'lucide-react';
 import { supabaseService } from '../../services/supabaseService';
 import { supabaseConfigured } from '../../lib/supabase';
-import dimeXIconLight from '../../assets/brand/dimex-icon-light.svg';
+import dimeXWordmarkDark from '../../assets/brand/dimex-wordmark-dark.svg';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -17,7 +17,7 @@ const createLocalUser = (name: string, email: string) => ({
   email,
   avatar: null,
   preferences: {
-    theme: 'dark',
+    theme: 'light',
     currency: 'USD',
     notifications: true,
   },
@@ -67,7 +67,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
             email: formData.email,
             avatar: null,
             preferences: {
-              theme: 'dark',
+              theme: 'light',
               currency: 'USD',
               notifications: true,
             }
@@ -106,7 +106,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
             email: profile.email,
             avatar: null,
             preferences: profile.preferences || {
-              theme: 'dark',
+              theme: 'light',
               currency: 'USD',
               notifications: true,
             }
@@ -131,7 +131,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
       email: 'guest@dime-x.com',
       avatar: null,
       preferences: {
-        theme: 'dark',
+        theme: 'light',
         currency: 'USD',
         notifications: false,
       }
@@ -145,23 +145,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:flex sm:items-center sm:justify-center sm:p-4">
-      <div className="mx-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900 sm:rounded-3xl">
+      <div className="mx-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-white shadow-[0_24px_70px_rgba(17,19,24,0.16)] dark:border-gray-800 dark:bg-gray-900 sm:rounded-3xl">
         {/* Header */}
-        <div className="relative flex-shrink-0 bg-gradient-to-r from-black to-gray-800 p-5 text-white dark:from-gray-800 dark:to-gray-900 sm:p-6">
+        <div className="relative flex-shrink-0 border-b border-black/[0.07] bg-[#f7f7f4] p-5 text-[#111318] dark:border-gray-800 dark:bg-gray-900 dark:text-white sm:p-6">
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-xl p-2 transition-colors hover:bg-white/20"
+            className="absolute right-4 top-4 rounded-xl p-2 text-[#5f6672] transition-colors hover:bg-black/[0.06] hover:text-[#111318] dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-black shadow-lg dark:border dark:border-white/10 sm:mb-4 sm:h-20 sm:w-20">
-              <img src={dimeXIconLight} alt="Dime-x" className="h-10 w-10 sm:h-12 sm:w-12" />
+            <div className="mx-auto mb-4 flex justify-center">
+              <img src={dimeXWordmarkDark} alt="Dime-x" className="h-10 w-auto max-w-[170px]" />
             </div>
             <h2 className="mb-1 text-xl font-semibold sm:mb-2" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
               {mode === 'login' ? 'Welcome Back' : mode === 'register' ? 'Create Account' : 'Continue as Guest'}
             </h2>
-            <p className="text-white/80 text-sm">
+            <p className="text-sm text-[#5f6672] dark:text-gray-400">
               {mode === 'login' 
                 ? 'Sign in to access your dashboard' 
                 : mode === 'register'
@@ -173,11 +173,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
         </div>
 
         {/* Form */}
-        <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-white p-5 dark:bg-gray-900 sm:p-6">
           {mode === 'guest' ? (
             <div className="text-center space-y-4">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900 sm:h-20 sm:w-20">
-                <Users className="h-10 w-10 text-blue-600 dark:text-blue-400" />
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-black/[0.08] bg-[#fbfbf8] dark:border-gray-800 dark:bg-gray-800 sm:h-20 sm:w-20">
+                <Users className="h-10 w-10 text-[#111318] dark:text-white" />
               </div>
               <div>
                 <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Guest Access</h3>
@@ -187,7 +187,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
               </div>
               <button
                 onClick={handleGuestLogin}
-                className="flex w-full items-center justify-center space-x-2 rounded-xl bg-blue-600 py-3.5 text-base font-semibold text-white transition-colors hover:bg-blue-700 sm:py-4"
+                className="flex w-full items-center justify-center space-x-2 rounded-xl bg-[#111318] py-3.5 text-base font-semibold text-white transition-colors hover:bg-black dark:bg-white dark:text-black dark:hover:bg-gray-100 sm:py-4"
               >
                 <Users className="h-5 w-5" />
                 <span>Continue as Guest</span>

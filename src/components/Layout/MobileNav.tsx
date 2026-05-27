@@ -24,7 +24,7 @@ const navigationItems = [
 
 export const MobileNav: React.FC<MobileNavProps> = ({ activeSection, onSectionChange }) => {
   return (
-    <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 px-2 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom)+var(--mobile-browser-bottom,0px))] shadow-[0_-10px_30px_rgba(15,23,42,0.08)]">
+    <nav className="bg-[#f7f7f4]/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-black/[0.07] dark:border-gray-800 px-2 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom)+var(--mobile-browser-bottom,0px))] shadow-[0_-10px_30px_rgba(17,19,24,0.08)]">
       <div className="flex items-center justify-around gap-1">
         {navigationItems.map((item) => {
           const Icon = item.icon;
@@ -37,7 +37,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ activeSection, onSectionCh
               className={`flex min-h-[54px] flex-1 flex-col items-center justify-center rounded-2xl px-2 py-2 transition-all duration-200 min-w-0 ${
                 isActive
                   ? 'bg-black dark:bg-white text-white dark:text-black'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-white dark:hover:bg-gray-800'
               }`}
             >
               <Icon className={`h-5 w-5 mb-1 ${isActive ? 'text-white dark:text-black' : 'text-gray-400 dark:text-gray-500'}`} />

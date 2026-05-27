@@ -20,7 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [showNotifications, setShowNotifications] = useState(false);
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+    <header className="bg-[#f7f7f4] dark:bg-gray-900 border-b border-black/[0.07] dark:border-gray-800 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           {/* Mobile Menu Button */}
@@ -32,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
           
           <div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight">
               {sectionTitle}
             </h2>
             <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium text-sm sm:text-base hidden sm:block">
@@ -54,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
               placeholder="Search transactions..."
               value={searchQuery}
               onChange={(e) => onSearch?.(e.target.value)}
-              className="pl-12 pr-6 py-3 bg-gray-50 dark:bg-gray-800 border-0 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:bg-white dark:focus:bg-gray-700 transition-all w-80 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-medium"
+              className="pl-12 pr-6 py-3 bg-white dark:bg-gray-800 border border-black/[0.07] dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:bg-white dark:focus:bg-gray-700 transition-all w-80 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-medium"
             />
           </div>
 
@@ -62,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="relative">
             <button 
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-3 sm:p-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-all"
+              className="relative p-3 sm:p-4 text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-white dark:hover:bg-gray-800 rounded-2xl transition-all"
             >
               <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-lime-400 rounded-full"></span>

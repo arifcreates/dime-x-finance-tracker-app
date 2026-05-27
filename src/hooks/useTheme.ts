@@ -10,13 +10,13 @@ const getStoredUser = () => {
   try {
     const user = localStorage.getItem('user');
     const userData = user ? JSON.parse(user) : null;
-    if (userData && !localStorage.getItem('dime-ui-refresh-20260527')) {
+    if (userData && !localStorage.getItem('dime-ui-light-refresh-20260527')) {
       userData.preferences = {
         ...userData.preferences,
-        theme: 'dark',
+        theme: 'light',
       };
       localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('dime-ui-refresh-20260527', '1');
+      localStorage.setItem('dime-ui-light-refresh-20260527', '1');
     }
     return userData;
   } catch (error) {
@@ -29,7 +29,7 @@ const getStoredUser = () => {
 export const useTheme = () => {
   const [theme, setTheme] = useState<Theme>(() => {
     const storedTheme = getStoredUser()?.preferences?.theme;
-    return isTheme(storedTheme) ? storedTheme : 'dark';
+    return isTheme(storedTheme) ? storedTheme : 'light';
   });
 
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
