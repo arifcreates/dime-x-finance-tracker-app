@@ -5,6 +5,7 @@ import { generateId } from '../../utils/formatters';
 import { dataService } from '../../services/dataService';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { currencyService } from '../../services/currencyService';
+import { SelectField } from './SelectField';
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -51,6 +52,14 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const expenseCategories = ['Office', 'Software', 'Marketing', 'Travel', 'Equipment', 'Utilities', 'Food', 'Transportation', 'Other'];
   
   const categories = type === 'income' ? incomeCategories : expenseCategories;
+  const categoryOptions = categories.map(category => ({
+    value: category,
+    label: category,
+  }));
+  const accountOptions = accounts.map(account => ({
+    value: account.name,
+    label: account.name,
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,17 +178,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
               <label className="block text-sm font-bold text-gray-700 mb-3">
                 Category
               </label>
-              <select
+              <SelectField
                 required
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-black focus:border-transparent transition-all font-medium text-base"
-              >
-                <option value="">Select category</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
+                onChange={(value) => setFormData({ ...formData, category: value })}
+                options={categoryOptions}
+                placeholder="Select category"
+              />
             </div>
 
             <div>
@@ -214,17 +219,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                   </div>
                 </div>
               ) : (
-                <select
+                <SelectField
                   required
                   value={formData.account}
-                  onChange={(e) => setFormData({ ...formData, account: e.target.value })}
-                  className="w-full px-4 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-black focus:border-transparent transition-all font-medium text-base"
-                >
-                  <option value="">Select account</option>
-                  {accounts.map(account => (
-                    <option key={account.id} value={account.name}>{account.name}</option>
-                  ))}
-                </select>
+                  onChange={(value) => setFormData({ ...formData, account: value })}
+                  options={accountOptions}
+                  placeholder="Select account"
+                />
               )}
             </div>
 

@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { RecurringPayment } from '../../types';
 import { generateId } from '../../utils/formatters';
 import { dataService } from '../../services/dataService';
+import { SelectField } from './SelectField';
 
 interface RecurringPaymentFormProps {
   isOpen: boolean;
@@ -51,6 +52,16 @@ export const RecurringPaymentForm: React.FC<RecurringPaymentFormProps> = ({
     'Marketing',
     'Other'
   ];
+
+  const frequencyOptions = [
+    { value: 'monthly', label: 'Monthly' },
+    { value: 'yearly', label: 'Yearly' },
+  ];
+
+  const categoryOptions = categories.map(category => ({
+    value: category,
+    label: category,
+  }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,32 +145,25 @@ export const RecurringPaymentForm: React.FC<RecurringPaymentFormProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Frequency
             </label>
-            <select
+            <SelectField
               required
               value={formData.frequency}
-              onChange={(e) => setFormData({ ...formData, frequency: e.target.value as 'monthly' | 'yearly' })}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            >
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-            </select>
+              onChange={(value) => setFormData({ ...formData, frequency: value as 'monthly' | 'yearly' })}
+              options={frequencyOptions}
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Category
             </label>
-            <select
+            <SelectField
               required
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            >
-              <option value="">Select category</option>
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
+              onChange={(value) => setFormData({ ...formData, category: value })}
+              options={categoryOptions}
+              placeholder="Select category"
+            />
           </div>
 
           <div>
