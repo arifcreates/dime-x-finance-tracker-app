@@ -16,6 +16,7 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
   }
 
   body {
@@ -25,6 +26,8 @@
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     font-size: 15px;
     line-height: 1.5;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -67,6 +70,8 @@
   textarea {
     color: #111827;
     background-color: #ffffff;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .dark input,
@@ -84,6 +89,30 @@
 
   option {
     padding: 0.75rem 1rem;
+  }
+
+  input[type="date"] {
+    min-height: 52px;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    line-height: 1.25;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  input[type="date"]::-webkit-date-and-time-value {
+    min-height: 1.25rem;
+    text-align: left;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    margin-left: 0.5rem;
+  }
+
+  .modal-scroll {
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
 }
 
@@ -103,6 +132,7 @@
   input[type="url"],
   input[type="password"],
   input[type="search"],
+  input[type="date"],
   select,
   textarea {
     font-size: 16px;

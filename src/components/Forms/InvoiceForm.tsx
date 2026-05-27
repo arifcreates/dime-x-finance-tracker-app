@@ -111,7 +111,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6 space-y-6">
+        <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto overscroll-contain modal-scroll px-5 py-5 sm:px-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

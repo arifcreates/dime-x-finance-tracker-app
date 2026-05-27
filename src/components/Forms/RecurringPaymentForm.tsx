@@ -110,7 +110,7 @@ export const RecurringPaymentForm: React.FC<RecurringPaymentFormProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6 space-y-5">
+        <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto overscroll-contain modal-scroll px-5 py-5 sm:px-6 space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Payment Name
