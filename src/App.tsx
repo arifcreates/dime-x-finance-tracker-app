@@ -204,6 +204,11 @@ function App() {
     setSelectedAccountId(accountId);
   };
 
+  const handleCreateAccountFromQuickAction = () => {
+    setSelectedAccountId(null);
+    setActiveSection('accounts');
+  };
+
   const handleBackToAccounts = () => {
     setSelectedAccountId(null);
   };
@@ -214,6 +219,7 @@ function App() {
       onQuickAction: handleQuickAction,
       quickActionRequest,
       onQuickActionHandled: () => setQuickActionRequest(null),
+      onCreateAccount: handleCreateAccountFromQuickAction,
       user,
       onUpdate: refreshTransactions
     };

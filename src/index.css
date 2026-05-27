@@ -60,6 +60,32 @@
   }
 }
 
+@layer components {
+  input,
+  select,
+  textarea {
+    color: #111827;
+    background-color: #ffffff;
+  }
+
+  .dark input,
+  .dark select,
+  .dark textarea {
+    color: #f9fafb;
+    background-color: #111827;
+  }
+
+  select {
+    min-height: 44px;
+    padding-right: 2.75rem !important;
+    text-overflow: ellipsis;
+  }
+
+  option {
+    padding: 0.75rem 1rem;
+  }
+}
+
 /* Ensure proper touch targets on mobile */
 @media (max-width: 768px) {
   button, a, input, select, textarea {

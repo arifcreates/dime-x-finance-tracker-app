@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { CreditCard } from '../../types';
 import { generateId } from '../../utils/formatters';
@@ -19,28 +19,51 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     name: card?.name || '',
-    creditLimit: card?.creditLimit || 0,
-    currentBalance: card?.currentBalance || 0,
-    minimumDue: card?.minimumDue || 0,
+    creditLimit: card?.creditLimit ? String(card.creditLimit) : '',
+    currentBalance: card?.currentBalance ? String(card.currentBalance) : '',
+    minimumDue: card?.minimumDue ? String(card.minimumDue) : '',
     dueDate: card?.dueDate || new Date().toISOString().split('T')[0],
-    interestRate: card?.interestRate || 0,
+    interestRate: card?.interestRate ? String(card.interestRate) : '',
   });
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setFormData({
+      name: card?.name || '',
+      creditLimit: card?.creditLimit ? String(card.creditLimit) : '',
+      currentBalance: card?.currentBalance ? String(card.currentBalance) : '',
+      minimumDue: card?.minimumDue ? String(card.minimumDue) : '',
+      dueDate: card?.dueDate || new Date().toISOString().split('T')[0],
+      interestRate: card?.interestRate ? String(card.interestRate) : '',
+    });
+  }, [card, isOpen]);
+
   const calculateMinimumDue = () => {
-    const { currentBalance } = formData;
+    const currentBalance = Number(formData.currentBalance);
     if (currentBalance > 0) {
       // Typically 5% of current balance or minimum $25
       const minDue = Math.max(currentBalance * 0.05, 25);
-      setFormData(prev => ({ ...prev, minimumDue: Math.round(minDue) }));
+      setFormData(prev => ({ ...prev, minimumDue: String(Math.round(minDue)) }));
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const creditLimit = Number(formData.creditLimit);
+    const currentBalance = Number(formData.currentBalance);
+    const minimumDue = Number(formData.minimumDue);
+    const interestRate = Number(formData.interestRate);
     
     const newCard: CreditCard = {
       id: card?.id || generateId(),
-      ...formData,
+      name: formData.name,
+      creditLimit,
+      currentBalance,
+      minimumDue,
+      dueDate: formData.dueDate,
+      interestRate,
     };
 
     dataService.saveCreditCard(newCard);
@@ -50,23 +73,25 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
     // Reset form
     setFormData({
       name: '',
-      creditLimit: 0,
-      currentBalance: 0,
-      minimumDue: 0,
+      creditLimit: '',
+      currentBalance: '',
+      minimumDue: '',
       dueDate: new Date().toISOString().split('T')[0],
-      interestRate: 0,
+      interestRate: '',
     });
   };
 
   if (!isOpen) return null;
 
-  const utilizationPercentage = formData.creditLimit > 0 ? (formData.currentBalance / formData.creditLimit) * 100 : 0;
+  const creditLimit = Number(formData.creditLimit);
+  const currentBalance = Number(formData.currentBalance);
+  const utilizationPercentage = creditLimit > 0 ? (currentBalance / creditLimit) * 100 : 0;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl p-8 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl p-5 sm:p-8 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-8">
-          <h3 className="text-2xl font-bold text-gray-900">
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
             {card ? 'Edit Credit Card' : 'Add New Credit Card'}
           </h3>
           <button
@@ -103,7 +128,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
                 min="0"
                 step="100"
                 value={formData.creditLimit}
-                onChange={(e) => setFormData({ ...formData, creditLimit: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => setFormData({ ...formData, creditLimit: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="0"
               />
@@ -119,7 +144,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
                 min="0"
                 step="1"
                 value={formData.currentBalance}
-                onChange={(e) => setFormData({ ...formData, currentBalance: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => setFormData({ ...formData, currentBalance: e.target.value })}
                 onBlur={calculateMinimumDue}
                 className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="0"
@@ -137,7 +162,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
                 max="50"
                 step="0.1"
                 value={formData.interestRate}
-                onChange={(e) => setFormData({ ...formData, interestRate: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => setFormData({ ...formData, interestRate: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="0.0"
               />
@@ -153,7 +178,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
                 min="0"
                 step="1"
                 value={formData.minimumDue}
-                onChange={(e) => setFormData({ ...formData, minimumDue: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => setFormData({ ...formData, minimumDue: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="0"
               />
@@ -173,7 +198,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
             </div>
 
             {/* Credit Utilization Display */}
-            {formData.creditLimit > 0 && (
+            {creditLimit > 0 && (
               <div className="md:col-span-2 p-4 bg-gray-50 rounded-2xl">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-semibold text-gray-700">Credit Utilization</span>

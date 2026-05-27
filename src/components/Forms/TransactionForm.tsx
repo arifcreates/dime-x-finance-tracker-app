@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { Plus, Wallet, X } from 'lucide-react';
 import { Transaction, Account } from '../../types';
 import { generateId } from '../../utils/formatters';
 import { dataService } from '../../services/dataService';
@@ -12,6 +12,7 @@ interface TransactionFormProps {
   onSave: (transaction: Transaction) => void;
   type: 'income' | 'expense';
   transaction?: Transaction;
+  onCreateAccount?: () => void;
 }
 
 export const TransactionForm: React.FC<TransactionFormProps> = ({
@@ -20,6 +21,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   onSave,
   type,
   transaction,
+  onCreateAccount,
 }) => {
   const { currency } = useCurrency();
   const currencySymbol = currencyService.getCurrencySymbol(currency);
@@ -184,17 +186,46 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
               <label className="block text-sm font-bold text-gray-700 mb-3">
                 Account Used
               </label>
-              <select
-                required
-                value={formData.account}
-                onChange={(e) => setFormData({ ...formData, account: e.target.value })}
-                className="w-full px-4 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-black focus:border-transparent transition-all font-medium text-base"
-              >
-                <option value="">Select account</option>
-                {accounts.map(account => (
-                  <option key={account.id} value={account.name}>{account.name}</option>
-                ))}
-              </select>
+              {accounts.length === 0 ? (
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                      <Wallet className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900 dark:text-white">Create an account first</p>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        {type === 'income' ? 'Income' : 'Expenses'} need an account so the balance can update correctly.
+                      </p>
+                      {onCreateAccount && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            onCreateAccount();
+                          }}
+                          className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors font-semibold"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add account
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <select
+                  required
+                  value={formData.account}
+                  onChange={(e) => setFormData({ ...formData, account: e.target.value })}
+                  className="w-full px-4 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-black focus:border-transparent transition-all font-medium text-base"
+                >
+                  <option value="">Select account</option>
+                  {accounts.map(account => (
+                    <option key={account.id} value={account.name}>{account.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>

@@ -18,6 +18,7 @@ interface DashboardProps {
   quickActionRequest?: { action: string; id: number } | null;
   onQuickActionHandled?: () => void;
   onUpdate?: () => void;
+  onCreateAccount?: () => void;
   user?: any;
 }
 
@@ -35,6 +36,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   quickActionRequest,
   onQuickActionHandled,
   onUpdate,
+  onCreateAccount,
   user
 }) => {
   const fmt = useCurrencyFormat();
@@ -679,6 +681,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           onClose={() => setShowTransactionForm(false)}
           onSave={handleTransactionSave}
           type={transactionType}
+          onCreateAccount={onCreateAccount}
         />
 
         <InvoiceForm

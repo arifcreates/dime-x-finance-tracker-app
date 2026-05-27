@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { RecurringPayment } from '../../types';
 import { generateId } from '../../utils/formatters';
@@ -19,12 +19,25 @@ export const RecurringPaymentForm: React.FC<RecurringPaymentFormProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     name: payment?.name || '',
-    amount: payment?.amount || 0,
+    amount: payment?.amount ? String(payment.amount) : '',
     frequency: payment?.frequency || 'monthly' as const,
     nextDate: payment?.nextDate || new Date().toISOString().split('T')[0],
     category: payment?.category || '',
     isActive: payment?.isActive ?? true,
   });
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setFormData({
+      name: payment?.name || '',
+      amount: payment?.amount ? String(payment.amount) : '',
+      frequency: payment?.frequency || 'monthly',
+      nextDate: payment?.nextDate || new Date().toISOString().split('T')[0],
+      category: payment?.category || '',
+      isActive: payment?.isActive ?? true,
+    });
+  }, [payment, isOpen]);
 
   const categories = [
     'Software',
@@ -41,10 +54,17 @@ export const RecurringPaymentForm: React.FC<RecurringPaymentFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const amount = Number(formData.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert('Please enter an amount greater than zero');
+      return;
+    }
     
     const newPayment: RecurringPayment = {
       id: payment?.id || generateId(),
       ...formData,
+      amount,
     };
 
     dataService.saveRecurringPayment(newPayment);
@@ -54,7 +74,7 @@ export const RecurringPaymentForm: React.FC<RecurringPaymentFormProps> = ({
     // Reset form
     setFormData({
       name: '',
-      amount: 0,
+      amount: '',
       frequency: 'monthly',
       nextDate: new Date().toISOString().split('T')[0],
       category: '',
@@ -66,9 +86,9 @@ export const RecurringPaymentForm: React.FC<RecurringPaymentFormProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 sm:p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-gray-900">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
             {payment ? 'Edit' : 'Add'} Recurring Payment
           </h3>
           <button
@@ -104,8 +124,8 @@ export const RecurringPaymentForm: React.FC<RecurringPaymentFormProps> = ({
               min="0"
               step="0.01"
               value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
               placeholder="0.00"
             />
           </div>

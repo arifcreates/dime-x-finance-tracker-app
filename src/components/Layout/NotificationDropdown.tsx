@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Calendar, CreditCard, X } from 'lucide-react';
-import { formatCurrency, formatDate, getDaysUntilDate } from '../../utils/formatters';
+import { formatDate, getDaysUntilDate } from '../../utils/formatters';
 import { useCurrencyFormat } from '../../hooks/useCurrencyFormat';
 import { dataService } from '../../services/dataService';
 import { EMI, CreditCard as CreditCardType } from '../../types';
@@ -94,9 +94,9 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
       />
       
       {/* Dropdown */}
-      <div className="absolute right-0 top-full mt-2 w-96 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden">
+      <div className="absolute right-0 top-full mt-3 w-[calc(100vw-2rem)] sm:w-96 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
@@ -123,13 +123,13 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
               <p className="text-gray-400 dark:text-gray-500 text-sm">You're all caught up!</p>
             </div>
           ) : (
-            <div className="p-2">
+            <div className="p-3 space-y-3">
               {notifications.slice(0, 8).map((notification) => {
                 const Icon = notification.icon;
                 return (
                   <div
                     key={notification.id}
-                    className={`p-3 mb-2 rounded-xl border-l-4 ${getNotificationColor(notification.urgency)} hover:shadow-md transition-all cursor-pointer`}
+                    className={`p-4 rounded-xl border-l-4 ${getNotificationColor(notification.urgency)} hover:shadow-md transition-all cursor-pointer`}
                   >
                     <div className="flex items-start space-x-3">
                       <Icon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${getIconColor(notification.urgency)}`} />
@@ -154,7 +154,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
 
         {/* Footer */}
         {notifications.length > 0 && (
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-700">
             <button className="w-full text-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold text-sm transition-colors">
               Mark all as read
             </button>

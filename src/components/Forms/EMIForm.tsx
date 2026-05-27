@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { EMI } from '../../types';
 import { generateId } from '../../utils/formatters';
@@ -19,34 +19,63 @@ export const EMIForm: React.FC<EMIFormProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     name: emi?.name || '',
-    principal: emi?.principal || 0,
-    interestRate: emi?.interestRate || 0,
-    tenure: emi?.tenure || 0,
-    monthlyAmount: emi?.monthlyAmount || 0,
-    remainingBalance: emi?.remainingBalance || 0,
+    principal: emi?.principal ? String(emi.principal) : '',
+    interestRate: emi?.interestRate ? String(emi.interestRate) : '',
+    tenure: emi?.tenure ? String(emi.tenure) : '',
+    monthlyAmount: emi?.monthlyAmount ? String(emi.monthlyAmount) : '',
+    remainingBalance: emi?.remainingBalance ? String(emi.remainingBalance) : '',
     nextDueDate: emi?.nextDueDate || new Date().toISOString().split('T')[0],
   });
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setFormData({
+      name: emi?.name || '',
+      principal: emi?.principal ? String(emi.principal) : '',
+      interestRate: emi?.interestRate ? String(emi.interestRate) : '',
+      tenure: emi?.tenure ? String(emi.tenure) : '',
+      monthlyAmount: emi?.monthlyAmount ? String(emi.monthlyAmount) : '',
+      remainingBalance: emi?.remainingBalance ? String(emi.remainingBalance) : '',
+      nextDueDate: emi?.nextDueDate || new Date().toISOString().split('T')[0],
+    });
+  }, [emi, isOpen]);
+
   const calculateEMI = () => {
-    const { principal, interestRate, tenure } = formData;
+    const principal = Number(formData.principal);
+    const interestRate = Number(formData.interestRate);
+    const tenure = Number(formData.tenure);
+
     if (principal && interestRate && tenure) {
       const monthlyRate = interestRate / 100 / 12;
-      const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / 
+      const calculatedEMI = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / 
                   (Math.pow(1 + monthlyRate, tenure) - 1);
       setFormData(prev => ({ 
         ...prev, 
-        monthlyAmount: Math.round(emi),
-        remainingBalance: prev.remainingBalance || principal
+        monthlyAmount: String(Math.round(calculatedEMI)),
+        remainingBalance: prev.remainingBalance || String(principal)
       }));
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const principal = Number(formData.principal);
+    const interestRate = Number(formData.interestRate);
+    const tenure = Number(formData.tenure);
+    const monthlyAmount = Number(formData.monthlyAmount);
+    const remainingBalance = Number(formData.remainingBalance);
     
     const newEMI: EMI = {
       id: emi?.id || generateId(),
-      ...formData,
+      name: formData.name,
+      principal,
+      interestRate,
+      tenure,
+      monthlyAmount,
+      remainingBalance,
+      nextDueDate: formData.nextDueDate,
     };
 
     dataService.saveEMI(newEMI);
@@ -56,11 +85,11 @@ export const EMIForm: React.FC<EMIFormProps> = ({
     // Reset form
     setFormData({
       name: '',
-      principal: 0,
-      interestRate: 0,
-      tenure: 0,
-      monthlyAmount: 0,
-      remainingBalance: 0,
+      principal: '',
+      interestRate: '',
+      tenure: '',
+      monthlyAmount: '',
+      remainingBalance: '',
       nextDueDate: new Date().toISOString().split('T')[0],
     });
   };
@@ -69,9 +98,9 @@ export const EMIForm: React.FC<EMIFormProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl p-8 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl p-5 sm:p-8 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-8">
-          <h3 className="text-2xl font-bold text-gray-900">
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
             {emi ? 'Edit EMI' : 'Add New EMI'}
           </h3>
           <button
@@ -93,7 +122,7 @@ export const EMIForm: React.FC<EMIFormProps> = ({
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
                 placeholder="e.g., Home Loan, Car Loan"
               />
             </div>
@@ -108,9 +137,9 @@ export const EMIForm: React.FC<EMIFormProps> = ({
                 min="0"
                 step="1000"
                 value={formData.principal}
-                onChange={(e) => setFormData({ ...formData, principal: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => setFormData({ ...formData, principal: e.target.value })}
                 onBlur={calculateEMI}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
                 placeholder="0"
               />
             </div>
@@ -126,9 +155,9 @@ export const EMIForm: React.FC<EMIFormProps> = ({
                 max="50"
                 step="0.1"
                 value={formData.interestRate}
-                onChange={(e) => setFormData({ ...formData, interestRate: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => setFormData({ ...formData, interestRate: e.target.value })}
                 onBlur={calculateEMI}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
                 placeholder="0.0"
               />
             </div>
@@ -143,9 +172,9 @@ export const EMIForm: React.FC<EMIFormProps> = ({
                 min="1"
                 max="600"
                 value={formData.tenure}
-                onChange={(e) => setFormData({ ...formData, tenure: parseInt(e.target.value) || 0 })}
+                onChange={(e) => setFormData({ ...formData, tenure: e.target.value })}
                 onBlur={calculateEMI}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
                 placeholder="0"
               />
             </div>
@@ -160,8 +189,8 @@ export const EMIForm: React.FC<EMIFormProps> = ({
                 min="0"
                 step="1"
                 value={formData.monthlyAmount}
-                onChange={(e) => setFormData({ ...formData, monthlyAmount: parseFloat(e.target.value) || 0 })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-gray-50"
+                onChange={(e) => setFormData({ ...formData, monthlyAmount: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all bg-gray-50 dark:bg-gray-800"
                 placeholder="0"
                 readOnly
               />
@@ -178,8 +207,8 @@ export const EMIForm: React.FC<EMIFormProps> = ({
                 min="0"
                 step="1000"
                 value={formData.remainingBalance}
-                onChange={(e) => setFormData({ ...formData, remainingBalance: parseFloat(e.target.value) || 0 })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                onChange={(e) => setFormData({ ...formData, remainingBalance: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
                 placeholder="0"
               />
             </div>
@@ -193,7 +222,7 @@ export const EMIForm: React.FC<EMIFormProps> = ({
                 required
                 value={formData.nextDueDate}
                 onChange={(e) => setFormData({ ...formData, nextDueDate: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
               />
             </div>
           </div>
