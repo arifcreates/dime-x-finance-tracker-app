@@ -7,6 +7,7 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLogin: (user: any) => void;
+  initialMode?: 'login' | 'register' | 'guest';
 }
 
 // Custom star logo component using the provided SVG - bigger size
@@ -33,8 +34,8 @@ const createLocalUser = (name: string, email: string) => ({
   },
 });
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
-  const [mode, setMode] = useState<'login' | 'register' | 'guest'>('login');
+export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, initialMode = 'login' }) => {
+  const [mode, setMode] = useState<'login' | 'register' | 'guest'>(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +45,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
     password: '',
     confirmPassword: '',
   });
+
+  React.useEffect(() => {
+    if (isOpen) setMode(initialMode);
+  }, [initialMode, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
