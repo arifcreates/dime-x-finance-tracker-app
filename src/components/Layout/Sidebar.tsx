@@ -50,16 +50,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSettingsClick 
 }) => {
   return (
-    <div className="w-80 lg:w-80 bg-white dark:bg-gray-900 min-h-screen flex flex-col border-r border-gray-100 dark:border-gray-800">
+    <div className="w-80 lg:w-80 bg-white dark:bg-gray-900 h-[calc(100dvh-var(--mobile-browser-bottom,0px))] lg:h-screen flex flex-col border-r border-gray-100 dark:border-gray-800">
       {/* Header */}
-      <div className="p-6 lg:p-8 border-b border-gray-100 dark:border-gray-800">
+      <div className="p-5 lg:p-8 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-black dark:bg-white rounded-2xl flex items-center justify-center shadow-lg">
-              <DimeXLogo className="h-10 w-10 text-white dark:text-black" />
+            <div className="w-12 h-12 lg:w-16 lg:h-16 bg-black dark:bg-white rounded-2xl flex items-center justify-center shadow-lg">
+              <DimeXLogo className="h-8 w-8 lg:h-10 lg:w-10 text-white dark:text-black" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-black dark:text-white" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>Dime-x</h1>
+              <h1 className="text-xl lg:text-2xl font-bold text-black dark:text-white" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>Dime-x</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Personal Finance</p>
             </div>
           </div>
@@ -75,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 lg:p-6">
+      <nav className="flex-1 overflow-y-auto p-4 lg:p-6">
         <ul className="space-y-2">
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -100,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </ul>
       </nav>
 
-      <div className="p-4 lg:p-6 border-t border-gray-100 dark:border-gray-800">
+      <div className="p-4 lg:p-6 pb-[calc(1rem+var(--mobile-browser-bottom,0px))] lg:pb-6 border-t border-gray-100 dark:border-gray-800 flex-shrink-0">
         <button
           onClick={onSettingsClick}
           className="w-full flex items-center space-x-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-all"

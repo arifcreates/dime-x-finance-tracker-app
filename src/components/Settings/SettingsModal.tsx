@@ -89,6 +89,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     { value: 'auto', label: 'Auto (System)' },
   ];
 
+  const ToggleSwitch = ({
+    checked,
+    onClick,
+    label,
+  }: {
+    checked: boolean;
+    onClick: () => void;
+    label: string;
+  }) => (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={checked}
+      onClick={onClick}
+      className={`relative inline-flex h-8 w-14 flex-shrink-0 items-center rounded-full border p-1 transition-all ${
+        checked
+          ? 'border-black bg-black dark:border-white dark:bg-white'
+          : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
+      }`}
+    >
+      <span
+        className={`h-6 w-6 rounded-full shadow-sm transition-transform ${
+          checked
+            ? 'translate-x-6 bg-white dark:bg-black'
+            : 'translate-x-0 bg-gray-300 dark:bg-gray-600'
+        }`}
+      />
+    </button>
+  );
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
       <div className="bg-white dark:bg-gray-900 w-full sm:max-w-2xl h-[calc(100dvh-var(--mobile-browser-bottom,0px))] sm:h-auto sm:max-h-[90vh] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
@@ -183,23 +213,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Notification Preferences</h3>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                      <div>
+                    <div className="flex items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                      <div className="min-w-0">
                         <h4 className="font-semibold text-gray-900 dark:text-white">Push Notifications</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Receive notifications on your device</p>
                       </div>
-                      <button
+                      <ToggleSwitch
+                        label="Toggle push notifications"
+                        checked={formData.notifications}
                         onClick={() => setFormData({ ...formData, notifications: !formData.notifications })}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          formData.notifications ? 'bg-black dark:bg-white' : 'bg-gray-300 dark:bg-gray-600'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
-                            formData.notifications ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
+                      />
                     </div>
                   </div>
                 </div>
@@ -211,41 +234,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Security Settings</h3>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                      <div>
+                    <div className="flex items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                      <div className="min-w-0">
                         <h4 className="font-semibold text-gray-900 dark:text-white">Two-Factor Authentication</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Add an extra layer of security</p>
                       </div>
-                      <button
+                      <ToggleSwitch
+                        label="Toggle two-factor authentication"
+                        checked={formData.twoFactor}
                         onClick={() => setFormData({ ...formData, twoFactor: !formData.twoFactor })}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          formData.twoFactor ? 'bg-black dark:bg-white' : 'bg-gray-300 dark:bg-gray-600'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
-                            formData.twoFactor ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
+                      />
                     </div>
-                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                      <div>
+                    <div className="flex items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                      <div className="min-w-0">
                         <h4 className="font-semibold text-gray-900 dark:text-white">Biometric Login</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Use fingerprint or face recognition</p>
                       </div>
-                      <button
+                      <ToggleSwitch
+                        label="Toggle biometric login"
+                        checked={formData.biometric}
                         onClick={() => setFormData({ ...formData, biometric: !formData.biometric })}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          formData.biometric ? 'bg-black dark:bg-white' : 'bg-gray-300 dark:bg-gray-600'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
-                            formData.biometric ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
+                      />
                     </div>
                   </div>
                 </div>

@@ -315,6 +315,7 @@ function App() {
                   setActiveSection(section);
                   setIsMobileMenuOpen(false);
                 }}
+                onClose={() => setIsMobileMenuOpen(false)}
                 user={user}
                 onSettingsClick={() => {
                   setShowSettingsModal(true);

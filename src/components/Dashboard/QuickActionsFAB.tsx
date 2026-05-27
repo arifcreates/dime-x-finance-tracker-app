@@ -45,43 +45,40 @@ export const QuickActionsFAB: React.FC<QuickActionsFABProps> = ({ onAction }) =>
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 z-40"
+          className="fixed inset-0 bg-black/25 backdrop-blur-[1px] z-40"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Action Buttons */}
       {isOpen && (
-        <div className="fixed bottom-[calc(8rem+var(--mobile-browser-bottom,0px))] right-4 z-50 space-y-3">
-          {actions.map((action, index) => {
+        <div className="fixed inset-x-3 bottom-[calc(6.75rem+var(--mobile-browser-bottom,0px))] z-50 rounded-2xl border border-gray-200 bg-white/95 p-3 shadow-2xl backdrop-blur-xl dark:border-gray-800 dark:bg-gray-900/95">
+          <div className="grid grid-cols-2 gap-2">
+          {actions.map((action) => {
             const Icon = action.icon;
             return (
-              <div
+              <button
                 key={action.id}
-                className="flex items-center space-x-3 animate-in slide-in-from-bottom-2 duration-200"
-                style={{ animationDelay: `${index * 50}ms` }}
+                onClick={() => handleAction(action.id)}
+                className="flex min-h-[56px] items-center gap-3 rounded-xl border border-gray-100 bg-white px-3 py-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
               >
-                <div className="bg-white px-3 py-2 rounded-xl shadow-lg border border-gray-100">
-                  <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                    {action.label}
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleAction(action.id)}
-                  className={`w-12 h-12 ${action.color} text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110`}
-                >
-                  <Icon className="h-6 w-6" />
-                </button>
-              </div>
+                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-black text-white dark:bg-white dark:text-black">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-semibold leading-tight text-gray-900 dark:text-white">
+                  {action.label}
+                </span>
+              </button>
             );
           })}
+          </div>
         </div>
       )}
 
       {/* Main FAB - Positioned above mobile nav */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-[calc(5rem+var(--mobile-browser-bottom,0px))] right-4 z-50 w-14 h-14 bg-black text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 ${
+        className={`fixed bottom-[calc(5rem+var(--mobile-browser-bottom,0px))] right-4 z-50 w-12 h-12 bg-black text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-105 ${
           isOpen ? 'rotate-45' : ''
         }`}
       >
