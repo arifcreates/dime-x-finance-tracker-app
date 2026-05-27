@@ -9,6 +9,7 @@ import {
   FileText,
   BarChart3,
   X,
+  User,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -98,6 +99,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </ul>
       </nav>
+
+      <div className="p-4 lg:p-6 border-t border-gray-100 dark:border-gray-800">
+        <button
+          onClick={onSettingsClick}
+          className="w-full flex items-center space-x-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-all"
+        >
+          <div className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center">
+            <User className="h-5 w-5 text-white dark:text-black" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">{user?.name || 'User'}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Settings & profile</p>
+          </div>
+        </button>
+      </div>
     </div>
   );
 };

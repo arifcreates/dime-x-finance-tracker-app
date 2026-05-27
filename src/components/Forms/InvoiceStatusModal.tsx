@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, DollarSign } from 'lucide-react';
 import { Invoice, Account } from '../../types';
 import { dataService } from '../../services/dataService';
-import { generateId } from '../../utils/formatters';
 
 interface InvoiceStatusModalProps {
   isOpen: boolean;
@@ -28,6 +27,11 @@ export const InvoiceStatusModal: React.FC<InvoiceStatusModalProps> = ({
   }, [isOpen]);
 
   const handleMarkAsPaid = async () => {
+    if (invoice.status === 'paid') {
+      onClose();
+      return;
+    }
+
     if (!selectedAccount) {
       alert('Please select an account to credit the payment to');
       return;
@@ -38,7 +42,7 @@ export const InvoiceStatusModal: React.FC<InvoiceStatusModalProps> = ({
     try {
       // Update invoice status
       const updatedInvoice = { ...invoice, status: 'paid' as const };
-      dataService.saveInvoice(updatedInvoice);
+      await dataService.saveInvoice(updatedInvoice);
 
       // Find the selected account
       const account = accounts.find(acc => acc.id === selectedAccount);
@@ -48,11 +52,11 @@ export const InvoiceStatusModal: React.FC<InvoiceStatusModalProps> = ({
           ...account,
           balance: account.balance + invoice.amount
         };
-        dataService.saveAccount(updatedAccount);
+        await dataService.saveAccount(updatedAccount);
 
         // Create income transaction
         const transaction = {
-          id: generateId(),
+          id: `invoice-payment-${invoice.id}`,
           date: new Date().toISOString().split('T')[0],
           description: `Invoice Payment - ${invoice.invoiceNumber}`,
           amount: invoice.amount,
@@ -61,7 +65,7 @@ export const InvoiceStatusModal: React.FC<InvoiceStatusModalProps> = ({
           account: account.name,
           status: 'completed' as const,
         };
-        dataService.saveTransaction(transaction);
+        await dataService.saveTransaction(transaction);
       }
 
       onUpdate();

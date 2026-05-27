@@ -6,7 +6,7 @@ import { UpcomingAlerts } from '../components/Dashboard/UpcomingAlerts';
 import { TransactionForm } from '../components/Forms/TransactionForm';
 import { InvoiceForm } from '../components/Forms/InvoiceForm';
 import { TransactionsModal } from '../components/Dashboard/TransactionsModal';
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, Plus, DollarSign, Activity, PieChart } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Plus, DollarSign, Activity, PieChart } from 'lucide-react';
 import { getDaysUntilDate } from '../utils/formatters';
 import { Transaction, Account, EMI, CreditCard, RecurringPayment } from '../types';
 import { dataService } from '../services/dataService';
@@ -229,69 +229,63 @@ export const Dashboard: React.FC<DashboardProps> = ({
       title: 'Balance Overview',
       className: 'lg:col-span-12',
       component: (
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-4 sm:p-6 lg:p-8 text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-40 h-40 sm:w-80 sm:h-80 bg-amber-400/10 rounded-full -translate-y-20 translate-x-20 sm:-translate-y-40 sm:translate-x-40"></div>
-          <div className="absolute bottom-0 left-0 w-28 h-28 sm:w-56 sm:h-56 bg-amber-400/5 rounded-full translate-y-14 -translate-x-14 sm:translate-y-28 sm:-translate-x-28"></div>
-          
-          <div className="relative z-10">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 sm:p-6 lg:p-8 text-gray-950 dark:text-white border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div>
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-400 rounded-xl flex items-center justify-center">
-                  <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-black" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+                  <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700 dark:text-gray-200" />
                 </div>
                 <div>
-                  <p className="text-white/70 text-xs font-medium">Total Balance</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-xs font-medium">Total Balance</p>
                   <p className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">{fmt(totalBalance)}</p>
                 </div>
               </div>
               <div className="text-right">
-                <div className="flex items-center space-x-1 text-amber-400 mb-1">
-                  <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="font-bold text-xs">+12.5%</span>
-                </div>
-                <p className="text-white/70 text-xs font-medium">vs last month</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs font-medium">Cash Flow</p>
+                <p className={`text-lg font-semibold ${cashFlow >= 0 ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                  {fmt(cashFlow)}
+                </p>
               </div>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
                 <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-6 h-6 bg-green-400/20 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="h-3 w-3 text-green-400" />
+                  <div className="w-6 h-6 bg-white dark:bg-gray-900 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="h-3 w-3 text-gray-600 dark:text-gray-300" />
                   </div>
-                  <span className="text-green-400 text-xs font-bold bg-green-400/20 px-2 py-1 rounded-full">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs font-bold bg-white dark:bg-gray-900 px-2 py-1 rounded-full">
                     +{incomeChange}%
                   </span>
                 </div>
-                <p className="text-white/70 text-xs font-medium mb-1">Monthly Income</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Monthly Income</p>
                 <p className="text-lg font-bold">{fmt(thisMonthIncome)}</p>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
                 <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-6 h-6 bg-red-400/20 rounded-lg flex items-center justify-center">
-                    <TrendingDown className="h-3 w-3 text-red-400" />
+                  <div className="w-6 h-6 bg-white dark:bg-gray-900 rounded-lg flex items-center justify-center">
+                    <TrendingDown className="h-3 w-3 text-gray-600 dark:text-gray-300" />
                   </div>
-                  <span className="text-red-400 text-xs font-bold bg-red-400/20 px-2 py-1 rounded-full">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs font-bold bg-white dark:bg-gray-900 px-2 py-1 rounded-full">
                     +{expenseChange}%
                   </span>
                 </div>
-                <p className="text-white/70 text-xs font-medium mb-1">Monthly Expenses</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Monthly Expenses</p>
                 <p className="text-lg font-bold">{fmt(thisMonthExpenses)}</p>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
                 <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-6 h-6 bg-amber-400/20 rounded-lg flex items-center justify-center">
-                    <Activity className="h-3 w-3 text-amber-400" />
+                  <div className="w-6 h-6 bg-white dark:bg-gray-900 rounded-lg flex items-center justify-center">
+                    <Activity className="h-3 w-3 text-gray-600 dark:text-gray-300" />
                   </div>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                    cashFlow > 0 ? 'text-green-400 bg-green-400/20' : 'text-red-400 bg-red-400/20'
-                  }`}>
+                  <span className="text-xs font-bold px-2 py-1 rounded-full text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">
                     {cashFlow > 0 ? 'Positive' : 'Negative'}
                   </span>
                 </div>
-                <p className="text-white/70 text-xs font-medium mb-1">Cash Flow</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Cash Flow</p>
                 <p className="text-lg font-bold">{fmt(Math.abs(cashFlow))}</p>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, Search, User, Menu, Settings } from 'lucide-react';
+import { Bell, Search, Menu } from 'lucide-react';
 import { NotificationDropdown } from './NotificationDropdown';
 
 interface HeaderProps {
@@ -7,13 +7,15 @@ interface HeaderProps {
   onMenuClick?: () => void;
   user?: any;
   onSettingsClick?: () => void;
+  onSearch?: (query: string) => void;
+  searchQuery?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
   sectionTitle, 
   onMenuClick, 
-  user,
-  onSettingsClick 
+  onSearch,
+  searchQuery = ''
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -50,6 +52,8 @@ export const Header: React.FC<HeaderProps> = ({
             <input
               type="text"
               placeholder="Search transactions..."
+              value={searchQuery}
+              onChange={(e) => onSearch?.(e.target.value)}
               className="pl-12 pr-6 py-3 bg-gray-50 dark:bg-gray-800 border-0 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:bg-white dark:focus:bg-gray-700 transition-all w-80 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-medium"
             />
           </div>
@@ -69,20 +73,6 @@ export const Header: React.FC<HeaderProps> = ({
               onClose={() => setShowNotifications(false)} 
             />
           </div>
-
-          {/* Profile */}
-          <button 
-            onClick={onSettingsClick}
-            className="flex items-center space-x-3 p-2 sm:p-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-all"
-          >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-black dark:bg-white rounded-2xl flex items-center justify-center shadow-lg">
-              <User className="h-5 w-5 sm:h-6 sm:w-6 text-white dark:text-black" />
-            </div>
-            <div className="hidden lg:block text-left">
-              <p className="font-bold text-gray-900 dark:text-white text-sm">{user?.name || 'User'}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Freelancer</p>
-            </div>
-          </button>
         </div>
       </div>
     </header>

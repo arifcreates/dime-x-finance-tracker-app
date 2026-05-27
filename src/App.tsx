@@ -70,6 +70,7 @@ function App() {
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [quickActionRequest, setQuickActionRequest] = useState<{ action: string; id: number } | null>(null);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
 
   // Initialize theme
   useTheme();
@@ -191,6 +192,14 @@ function App() {
     setQuickActionRequest({ action, id: Date.now() });
   };
 
+  const handleSearch = (query: string) => {
+    setGlobalSearchQuery(query);
+    if (query.trim()) {
+      setSelectedAccountId(null);
+      setActiveSection('reports');
+    }
+  };
+
   const handleAccountSelect = (accountId: string) => {
     setSelectedAccountId(accountId);
   };
@@ -233,7 +242,7 @@ function App() {
       case 'recurring':
         return <Recurring onUpdate={refreshTransactions} />;
       case 'reports':
-        return <Reports />;
+        return <Reports searchQuery={globalSearchQuery} />;
       default:
         return <Dashboard {...props} onUpdate={refreshTransactions} />;
     }
@@ -294,6 +303,8 @@ function App() {
             onMenuClick={() => setIsMobileMenuOpen(true)}
             user={user}
             onSettingsClick={() => setShowSettingsModal(true)}
+            onSearch={handleSearch}
+            searchQuery={globalSearchQuery}
           />
           
           <main className="flex-1 overflow-y-auto">

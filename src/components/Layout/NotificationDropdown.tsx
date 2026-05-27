@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, CheckCircle, AlertCircle, Calendar, CreditCard, X } from 'lucide-react';
+import { Bell, Calendar, CreditCard, X } from 'lucide-react';
 import { formatCurrency, formatDate, getDaysUntilDate } from '../../utils/formatters';
 import { useCurrencyFormat } from '../../hooks/useCurrencyFormat';
 import { dataService } from '../../services/dataService';
@@ -54,26 +54,6 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
         icon: CreditCard,
       };
     }),
-    // Recent transactions
-    {
-      id: 'recent-income',
-      type: 'transaction' as const,
-      title: 'New Income Recorded',
-      message: 'You received a payment of $2,500 from TechCorp Solutions',
-      time: new Date().toISOString().split('T')[0],
-      urgency: 'low' as const,
-      icon: CheckCircle,
-    },
-    // System notifications
-    {
-      id: 'backup-reminder',
-      type: 'system' as const,
-      title: 'Backup Reminder',
-      message: 'Your financial data was last backed up 3 days ago',
-      time: new Date().toISOString().split('T')[0],
-      urgency: 'low' as const,
-      icon: AlertCircle,
-    },
   ].sort((a, b) => {
     // Sort by urgency first, then by date
     const urgencyOrder = { high: 3, medium: 2, low: 1 };

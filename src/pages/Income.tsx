@@ -60,6 +60,8 @@ export const Income: React.FC = () => {
   };
 
   const handleStatusChange = (invoice: Invoice, newStatus: string) => {
+    if (invoice.status === newStatus) return;
+
     if (newStatus === 'paid') {
       setSelectedInvoice(invoice);
       setShowStatusModal(true);
@@ -353,7 +355,7 @@ export const Income: React.FC = () => {
           type="income"
         />
 
-        {selectedInvoice && (
+        {selectedInvoice && selectedInvoice.status !== 'paid' && (
           <InvoiceStatusModal
             isOpen={showStatusModal}
             onClose={() => {

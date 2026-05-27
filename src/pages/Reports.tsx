@@ -1,17 +1,56 @@
-import React, { useState } from 'react';
-import { TrendingUp, Download, Filter, FileSpreadsheet, Calendar } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { TrendingUp, Download, FileSpreadsheet, Calendar, Search } from 'lucide-react';
 import { dataService } from '../services/dataService';
-import { formatCurrency } from '../utils/formatters';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
+import { Account, Invoice, Transaction } from '../types';
 import * as XLSX from 'xlsx';
 
-export const Reports: React.FC = () => {
+interface ReportsProps {
+  searchQuery?: string;
+}
+
+export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
   const fmt = useCurrencyFormat();
   const [isExporting, setIsExporting] = useState(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
     to: new Date().toISOString().split('T')[0],
   });
+
+  useEffect(() => {
+    Promise.all([
+      dataService.getTransactions(),
+      dataService.getAccounts(),
+      dataService.getInvoices(),
+    ]).then(([txns, accs, invs]) => {
+      setTransactions(txns);
+      setAccounts(accs);
+      setInvoices(invs);
+    });
+  }, []);
+
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const transactionMatches = normalizedSearch
+    ? transactions.filter(item =>
+        [item.description, item.category, item.account, item.type, item.status]
+          .some(value => value.toLowerCase().includes(normalizedSearch))
+      )
+    : [];
+  const accountMatches = normalizedSearch
+    ? accounts.filter(item =>
+        [item.name, item.type, item.currency]
+          .some(value => value.toLowerCase().includes(normalizedSearch))
+      )
+    : [];
+  const invoiceMatches = normalizedSearch
+    ? invoices.filter(item =>
+        [item.invoiceNumber, item.status]
+          .some(value => value.toLowerCase().includes(normalizedSearch))
+      )
+    : [];
 
   const exportToExcel = async () => {
     setIsExporting(true);
@@ -240,6 +279,51 @@ export const Reports: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {normalizedSearch && (
+          <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
+            <div className="flex items-center gap-3 mb-4">
+              <Search className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <div>
+                <h4 className="text-base font-bold text-gray-900 dark:text-white">Search Results</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Results for "{searchQuery}"
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {[...transactionMatches.slice(0, 6).map(item => ({
+                id: `txn-${item.id}`,
+                title: item.description,
+                meta: `${item.type} · ${item.category} · ${item.account}`,
+                value: fmt(item.amount),
+              })), ...accountMatches.slice(0, 4).map(item => ({
+                id: `acc-${item.id}`,
+                title: item.name,
+                meta: `${item.type} · ${item.currency}`,
+                value: fmt(item.balance),
+              })), ...invoiceMatches.slice(0, 4).map(item => ({
+                id: `inv-${item.id}`,
+                title: item.invoiceNumber,
+                meta: `invoice · ${item.status}`,
+                value: fmt(item.amount),
+              }))].map(result => (
+                <div key={result.id} className="flex items-center justify-between gap-4 border border-gray-100 dark:border-gray-800 rounded-xl p-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900 dark:text-white truncate">{result.title}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{result.meta}</p>
+                  </div>
+                  <p className="font-semibold text-gray-900 dark:text-white whitespace-nowrap">{result.value}</p>
+                </div>
+              ))}
+
+              {transactionMatches.length + accountMatches.length + invoiceMatches.length === 0 && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">No matches found.</p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Date Range Selector */}
         <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
