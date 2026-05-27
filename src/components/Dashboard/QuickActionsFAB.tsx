@@ -52,7 +52,7 @@ export const QuickActionsFAB: React.FC<QuickActionsFABProps> = ({ onAction }) =>
 
       {/* Action Buttons */}
       {isOpen && (
-        <div className="fixed bottom-32 right-4 z-50 space-y-3">
+        <div className="fixed bottom-[calc(8rem+var(--mobile-browser-bottom,0px))] right-4 z-50 space-y-3">
           {actions.map((action, index) => {
             const Icon = action.icon;
             return (
@@ -81,7 +81,7 @@ export const QuickActionsFAB: React.FC<QuickActionsFABProps> = ({ onAction }) =>
       {/* Main FAB - Positioned above mobile nav */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-20 right-4 z-50 w-14 h-14 bg-black text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 ${
+        className={`fixed bottom-[calc(5rem+var(--mobile-browser-bottom,0px))] right-4 z-50 w-14 h-14 bg-black text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 ${
           isOpen ? 'rotate-45' : ''
         }`}
       >

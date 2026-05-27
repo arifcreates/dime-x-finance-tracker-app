@@ -76,6 +76,28 @@ function App() {
   useTheme();
 
   useEffect(() => {
+    const updateVisualViewportOffset = () => {
+      const visualViewport = window.visualViewport;
+      const bottomOffset = visualViewport
+        ? Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop)
+        : 0;
+
+      document.documentElement.style.setProperty('--mobile-browser-bottom', `${bottomOffset}px`);
+    };
+
+    updateVisualViewportOffset();
+    window.visualViewport?.addEventListener('resize', updateVisualViewportOffset);
+    window.visualViewport?.addEventListener('scroll', updateVisualViewportOffset);
+    window.addEventListener('resize', updateVisualViewportOffset);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', updateVisualViewportOffset);
+      window.visualViewport?.removeEventListener('scroll', updateVisualViewportOffset);
+      window.removeEventListener('resize', updateVisualViewportOffset);
+    };
+  }, []);
+
+  useEffect(() => {
     // Check for existing Supabase session
     const checkSession = async () => {
       setIsLoading(true);
@@ -313,12 +335,12 @@ function App() {
             searchQuery={globalSearchQuery}
           />
           
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto pb-[calc(5.75rem+var(--mobile-browser-bottom,0px))] lg:pb-0">
             {renderContent()}
           </main>
 
           {/* Mobile Bottom Navigation */}
-          <div className="lg:hidden">
+          <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden">
             <MobileNav 
               activeSection={activeSection} 
               onSectionChange={setActiveSection} 

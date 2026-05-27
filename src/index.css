@@ -5,6 +5,7 @@
 @layer base {
   :root {
     color-scheme: light;
+    --mobile-browser-bottom: 0px;
   }
   
   * {
