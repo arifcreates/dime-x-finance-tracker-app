@@ -231,64 +231,64 @@ export const Dashboard: React.FC<DashboardProps> = ({
       title: 'Balance Overview',
       className: 'lg:col-span-12',
       component: (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 sm:p-6 lg:p-8 text-gray-950 dark:text-white border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl p-3 sm:p-6 lg:p-8 text-gray-950 dark:text-white border border-gray-100 dark:border-gray-800 shadow-sm">
           <div>
-            <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <div className="flex items-center justify-between gap-3 mb-3 sm:mb-6">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+                <div className="w-9 h-9 sm:w-12 sm:h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
                   <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700 dark:text-gray-200" />
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 text-xs font-medium">Total Balance</p>
-                  <p className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">{fmt(totalBalance)}</p>
+                  <p className="text-xl sm:text-3xl lg:text-4xl font-bold tracking-tight">{fmt(totalBalance)}</p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-gray-500 dark:text-gray-400 text-xs font-medium">Cash Flow</p>
-                <p className={`text-lg font-semibold ${cashFlow >= 0 ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                <p className={`text-base sm:text-lg font-semibold ${cashFlow >= 0 ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                   {fmt(cashFlow)}
                 </p>
               </div>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
-                <div className="flex items-center space-x-2 mb-2">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-2.5 sm:p-3 border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center space-x-2 mb-1.5 sm:mb-2">
                   <div className="w-6 h-6 bg-white dark:bg-gray-900 rounded-lg flex items-center justify-center">
                     <TrendingUp className="h-3 w-3 text-gray-600 dark:text-gray-300" />
                   </div>
-                  <span className="text-gray-500 dark:text-gray-400 text-xs font-bold bg-white dark:bg-gray-900 px-2 py-1 rounded-full">
+                  <span className="hidden sm:inline-flex text-gray-500 dark:text-gray-400 text-xs font-bold bg-white dark:bg-gray-900 px-2 py-1 rounded-full">
                     +{incomeChange}%
                   </span>
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Monthly Income</p>
-                <p className="text-lg font-bold">{fmt(thisMonthIncome)}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-[11px] sm:text-xs font-medium mb-1 leading-tight">Income</p>
+                <p className="text-sm sm:text-lg font-bold truncate">{fmt(thisMonthIncome)}</p>
               </div>
 
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
-                <div className="flex items-center space-x-2 mb-2">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-2.5 sm:p-3 border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center space-x-2 mb-1.5 sm:mb-2">
                   <div className="w-6 h-6 bg-white dark:bg-gray-900 rounded-lg flex items-center justify-center">
                     <TrendingDown className="h-3 w-3 text-gray-600 dark:text-gray-300" />
                   </div>
-                  <span className="text-gray-500 dark:text-gray-400 text-xs font-bold bg-white dark:bg-gray-900 px-2 py-1 rounded-full">
+                  <span className="hidden sm:inline-flex text-gray-500 dark:text-gray-400 text-xs font-bold bg-white dark:bg-gray-900 px-2 py-1 rounded-full">
                     +{expenseChange}%
                   </span>
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Monthly Expenses</p>
-                <p className="text-lg font-bold">{fmt(thisMonthExpenses)}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-[11px] sm:text-xs font-medium mb-1 leading-tight">Expenses</p>
+                <p className="text-sm sm:text-lg font-bold truncate">{fmt(thisMonthExpenses)}</p>
               </div>
 
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
-                <div className="flex items-center space-x-2 mb-2">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-2.5 sm:p-3 border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center space-x-2 mb-1.5 sm:mb-2">
                   <div className="w-6 h-6 bg-white dark:bg-gray-900 rounded-lg flex items-center justify-center">
                     <Activity className="h-3 w-3 text-gray-600 dark:text-gray-300" />
                   </div>
-                  <span className="text-xs font-bold px-2 py-1 rounded-full text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">
+                  <span className="hidden sm:inline-flex text-xs font-bold px-2 py-1 rounded-full text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">
                     {cashFlow > 0 ? 'Positive' : 'Negative'}
                   </span>
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Cash Flow</p>
-                <p className="text-lg font-bold">{fmt(Math.abs(cashFlow))}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-[11px] sm:text-xs font-medium mb-1 leading-tight">Flow</p>
+                <p className="text-sm sm:text-lg font-bold truncate">{fmt(Math.abs(cashFlow))}</p>
               </div>
             </div>
           </div>
@@ -299,7 +299,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       id: 'quick-actions',
       type: 'actions',
       title: 'Quick Actions',
-      className: 'lg:col-span-6',
+      className: 'hidden lg:block lg:col-span-6',
       component: (
         <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 h-full">
           <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4 tracking-tight">Quick Actions</h3>
@@ -642,21 +642,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-3 sm:p-4 lg:p-6 pb-32 lg:pb-6">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-3 sm:p-4 lg:p-6 pb-28 lg:pb-6">
+      <div className="max-w-7xl mx-auto space-y-3 sm:space-y-6">
         
         {/* Welcome Header */}
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">
+        <div className="mb-2 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2 tracking-tight">
             Good morning, {user?.name || 'John'} 👋
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">
+          <p className="text-gray-500 dark:text-gray-400 font-medium text-sm hidden sm:block">
             Here's what's happening with your finances today
           </p>
         </div>
 
         {/* Draggable Dashboard Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6">
           {cardOrder.map((cardId, index) => {
             const card = dashboardCards[cardId];
             if (!card) return null;

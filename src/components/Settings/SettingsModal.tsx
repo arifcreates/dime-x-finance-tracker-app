@@ -103,7 +103,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       aria-label={label}
       aria-pressed={checked}
       onClick={onClick}
-      className={`relative inline-flex h-8 w-14 flex-shrink-0 items-center rounded-full border p-1 transition-all ${
+      className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full border p-0.5 transition-all ${
         checked
           ? 'border-black bg-black dark:border-white dark:bg-white'
           : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
@@ -112,7 +112,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <span
         className={`h-6 w-6 rounded-full shadow-sm transition-transform ${
           checked
-            ? 'translate-x-6 bg-white dark:bg-black'
+            ? 'translate-x-5 bg-white dark:bg-black'
             : 'translate-x-0 bg-gray-300 dark:bg-gray-600'
         }`}
       />
@@ -121,9 +121,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-2xl h-[calc(100dvh-var(--mobile-browser-bottom,0px))] sm:h-auto sm:max-h-[90vh] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-900 w-[calc(100%-1rem)] sm:w-full sm:max-w-2xl h-[calc(100dvh-var(--mobile-browser-bottom,0px)-0.75rem)] sm:h-auto sm:max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col mb-2 sm:mb-0">
         {/* Header */}
-        <div className="bg-gradient-to-r from-black to-gray-800 dark:from-gray-800 dark:to-gray-900 px-5 py-5 sm:p-6 text-white flex-shrink-0">
+        <div className="bg-gradient-to-r from-black to-gray-800 dark:from-gray-800 dark:to-gray-900 px-5 py-4 sm:p-6 text-white flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="min-w-0">
               <h2 className="text-xl sm:text-2xl font-bold">Settings</h2>
@@ -140,7 +140,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         <div className="flex min-h-0 flex-1 flex-col sm:flex-row overflow-hidden">
           {/* Sidebar Tabs */}
-          <div className="w-full sm:w-1/3 bg-gray-50 dark:bg-gray-800 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-gray-700 p-3 sm:p-4 overflow-x-auto sm:overflow-y-auto">
+          <div className="w-full sm:w-1/3 bg-gray-50 dark:bg-gray-800 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-gray-700 px-4 py-3 sm:p-4 overflow-x-auto sm:overflow-y-auto">
             <nav className="flex sm:block gap-2 sm:space-y-2 sm:gap-0 min-w-max sm:min-w-0">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
@@ -163,7 +163,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* Content */}
-          <div className="flex-1 p-5 sm:p-6 overflow-y-auto bg-white dark:bg-gray-900">
+          <div className="flex-1 px-5 py-5 sm:p-6 overflow-y-auto bg-white dark:bg-gray-900">
             {activeTab === 'profile' && (
               <div className="space-y-6">
                 <div>
