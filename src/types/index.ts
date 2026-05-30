@@ -26,6 +26,23 @@ export interface Invoice {
   amount: number;
   status: 'draft' | 'sent' | 'paid' | 'overdue';
   items: InvoiceItem[];
+  currency?: string;
+  companyName?: string;
+  companyEmail?: string;
+  companyPhone?: string;
+  companyAddress?: string;
+  billToName?: string;
+  billToEmail?: string;
+  billToPhone?: string;
+  billToAddress?: string;
+  notes?: string;
+  bankDetails?: string;
+  taxRate?: number;
+  taxAmount?: number;
+  discountType?: 'fixed' | 'percentage';
+  discountValue?: number;
+  discountAmount?: number;
+  subtotal?: number;
 }
 
 export interface InvoiceItem {

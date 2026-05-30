@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Plus, DollarSign, Edit, Trash2, Eye, CheckCircle } from 'lucide-react';
+import { Download, FileText, Plus, DollarSign, Edit, Trash2 } from 'lucide-react';
 import { InvoiceForm } from '../components/Forms/InvoiceForm';
 import { TransactionForm } from '../components/Forms/TransactionForm';
 import { InvoiceStatusModal } from '../components/Forms/InvoiceStatusModal';
 import { Invoice, Transaction } from '../types';
 import { dataService } from '../services/dataService';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { formatDate } from '../utils/formatters';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
+import { downloadInvoicePdf, formatInvoiceMoney } from '../utils/invoiceUtils';
 
 interface IncomeProps {
   onUpdate?: () => void;
@@ -62,6 +63,11 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
   const handleEditInvoice = (invoice: Invoice) => {
     setEditingInvoice(invoice);
     setShowInvoiceForm(true);
+  };
+
+  const handleDownloadInvoice = (invoice: Invoice) => {
+    const client = clients.find(c => c.id === invoice.clientId);
+    downloadInvoicePdf(invoice, client);
   };
 
   const handleStatusChange = (invoice: Invoice, newStatus: string) => {
@@ -216,7 +222,7 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
                               </select>
                             </div>
                             <div className="flex justify-between items-center mb-3">
-                              <span className="text-lg font-bold text-gray-900 dark:text-white">{fmt(invoice.amount)}</span>
+                              <span className="text-lg font-bold text-gray-900 dark:text-white">{formatInvoiceMoney(invoice.amount, invoice.currency)}</span>
                               <span className="text-sm text-gray-500 dark:text-gray-400">Due: {formatDate(invoice.dueDate)}</span>
                             </div>
                             <div className="flex space-x-2">
@@ -225,6 +231,12 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
                                 className="flex-1 p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                               >
                                 <Edit className="h-4 w-4 mx-auto" />
+                              </button>
+                              <button
+                                onClick={() => handleDownloadInvoice(invoice)}
+                                className="flex-1 p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              >
+                                <Download className="h-4 w-4 mx-auto" />
                               </button>
                               <button
                                 onClick={() => handleDeleteInvoice(invoice.id)}
@@ -259,7 +271,7 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
                               <tr key={invoice.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                                 <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{invoice.invoiceNumber}</td>
                                 <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{client?.name || 'Unknown Client'}</td>
-                                <td className="py-3 px-4 font-semibold text-gray-900 dark:text-white">{fmt(invoice.amount)}</td>
+                                <td className="py-3 px-4 font-semibold text-gray-900 dark:text-white">{formatInvoiceMoney(invoice.amount, invoice.currency)}</td>
                                 <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{formatDate(invoice.date)}</td>
                                 <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{formatDate(invoice.dueDate)}</td>
                                 <td className="py-3 px-4">
@@ -281,6 +293,13 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
                                       className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                     >
                                       <Edit className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDownloadInvoice(invoice)}
+                                      className="p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                      title="Download PDF"
+                                    >
+                                      <Download className="h-4 w-4" />
                                     </button>
                                     <button
                                       onClick={() => handleDeleteInvoice(invoice.id)}

@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { Transaction, Account, Invoice, Client, EMI, CreditCard, RecurringPayment } from '../types';
+import { getInvoiceMetadata } from '../utils/invoiceUtils';
 
 class SupabaseService {
   // Auth methods
@@ -212,19 +213,31 @@ class SupabaseService {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data?.map(invoice => ({
-      id: invoice.id,
-      clientId: invoice.client_id,
-      invoiceNumber: invoice.invoice_number,
-      date: invoice.date,
-      dueDate: invoice.due_date,
-      amount: invoice.amount,
-      status: invoice.status,
-      items: invoice.items,
-    })) || [];
+    return data?.map(invoice => {
+      const storedItems = invoice.items || [];
+      const items = Array.isArray(storedItems) ? storedItems : storedItems.lineItems || [];
+      const metadata = Array.isArray(storedItems) ? {} : storedItems.metadata || {};
+
+      return {
+        id: invoice.id,
+        clientId: invoice.client_id,
+        invoiceNumber: invoice.invoice_number,
+        date: invoice.date,
+        dueDate: invoice.due_date,
+        amount: invoice.amount,
+        status: invoice.status,
+        items,
+        ...metadata,
+      };
+    }) || [];
   }
 
   async saveInvoice(userId: string, invoice: Invoice) {
+    const invoicePayload = {
+      lineItems: invoice.items,
+      metadata: getInvoiceMetadata(invoice),
+    };
+
     const invoiceData = {
       id: invoice.id,
       user_id: userId,
@@ -234,7 +247,7 @@ class SupabaseService {
       due_date: invoice.dueDate,
       amount: invoice.amount,
       status: invoice.status,
-      items: invoice.items,
+      items: invoicePayload,
     };
 
     const { data, error } = await supabase
