@@ -121,7 +121,7 @@ function App() {
             id: session.user.id,
             name: profile.name,
             email: profile.email,
-            avatar: null,
+            avatar: profile.preferences?.avatar || null,
             preferences: profile.preferences || {
               theme: 'light',
               currency: 'USD',

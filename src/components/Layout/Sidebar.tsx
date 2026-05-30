@@ -39,6 +39,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   user,
   onSettingsClick 
 }) => {
+  const avatar = user?.avatar || user?.preferences?.avatar;
+  const avatarInitial = (user?.name || user?.email || 'U').trim().charAt(0).toUpperCase();
+
   return (
     <div className="w-80 lg:w-80 bg-[#f7f7f4] dark:bg-gray-900 h-[calc(100dvh-var(--mobile-browser-bottom,0px))] lg:h-screen flex flex-col border-r border-black/[0.07] dark:border-gray-800">
       {/* Header */}
@@ -90,8 +93,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={onSettingsClick}
           className="w-full flex items-center space-x-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 rounded-xl transition-all"
         >
-          <div className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center">
-            <User className="h-5 w-5 text-white dark:text-black" />
+          <div className="flex h-10 w-10 overflow-hidden rounded-full bg-black text-white dark:bg-white dark:text-black">
+            {avatar ? (
+              <img src={avatar} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-sm font-semibold">
+                {avatarInitial || <User className="h-5 w-5" />}
+              </div>
+            )}
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">{user?.name || 'User'}</p>

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { X, User, Bell, Shield, Palette, LogOut } from 'lucide-react';
+import { X, User, Bell, Shield, Palette, LogOut, Camera, Trash2 } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { SelectField } from '../Forms/SelectField';
+import { supabaseConfigured } from '../../lib/supabase';
+import { supabaseService } from '../../services/supabaseService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -22,37 +24,137 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [activeTab, setActiveTab] = useState('profile');
   const { theme, setTheme } = useTheme();
   const { setCurrency } = useCurrency();
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     phone: user?.phone || '',
+    avatar: user?.avatar || user?.preferences?.avatar || '',
     currency: user?.preferences?.currency || 'USD',
     notifications: user?.preferences?.notifications ?? true,
     biometric: user?.preferences?.biometric ?? false,
     twoFactor: user?.preferences?.twoFactor ?? false,
   });
 
-  const handleSave = () => {
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    setFormData({
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+      avatar: user?.avatar || user?.preferences?.avatar || '',
+      currency: user?.preferences?.currency || 'USD',
+      notifications: user?.preferences?.notifications ?? true,
+      biometric: user?.preferences?.biometric ?? false,
+      twoFactor: user?.preferences?.twoFactor ?? false,
+    });
+    setSaveError(null);
+    setAvatarError(null);
+  }, [isOpen, user]);
+
+  const avatarInitial = (formData.name || formData.email || 'U').trim().charAt(0).toUpperCase();
+
+  const resizeAvatar = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        reject(new Error('Choose an image file.'));
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        reject(new Error('Use an image under 5 MB.'));
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read that image.'));
+      reader.onload = () => {
+        const image = new Image();
+        image.onerror = () => reject(new Error('Could not load that image.'));
+        image.onload = () => {
+          const size = 256;
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const context = canvas.getContext('2d');
+
+          if (!context) {
+            reject(new Error('Could not prepare that image.'));
+            return;
+          }
+
+          const sourceSize = Math.min(image.width, image.height);
+          const sourceX = (image.width - sourceSize) / 2;
+          const sourceY = (image.height - sourceSize) / 2;
+          context.drawImage(image, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
+          resolve(canvas.toDataURL('image/jpeg', 0.82));
+        };
+        image.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setAvatarError(null);
+    try {
+      const avatar = await resizeAvatar(file);
+      setFormData({ ...formData, avatar });
+    } catch (error: any) {
+      setAvatarError(error.message || 'Could not use that image.');
+    }
+  };
+
+  const handleSave = async () => {
+    const preferences = {
+      ...user?.preferences,
+      currency: formData.currency,
+      theme: theme,
+      notifications: formData.notifications,
+      biometric: formData.biometric,
+      twoFactor: formData.twoFactor,
+      avatar: formData.avatar || null,
+    };
+
     const updatedUser = {
       ...user,
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
-      preferences: {
-        ...user?.preferences,
-        currency: formData.currency,
-        theme: theme,
-        notifications: formData.notifications,
-        biometric: formData.biometric,
-        twoFactor: formData.twoFactor,
-      }
+      avatar: formData.avatar || null,
+      preferences,
     };
-    
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    onUpdateUser(updatedUser);
-    setCurrency(formData.currency);
-    onClose();
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      if (supabaseConfigured && user?.id && user.id !== 'guest') {
+        await supabaseService.updateProfile(user.id, {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          preferences,
+        });
+      }
+
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      onUpdateUser(updatedUser);
+      setCurrency(formData.currency);
+      onClose();
+    } catch (error: any) {
+      setSaveError(error.message || 'Could not save your profile.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleLogout = () => {
@@ -170,6 +272,43 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Profile Information</h3>
                   <div className="space-y-4">
+                    <div className="flex flex-col gap-4 rounded-xl border border-black/[0.07] bg-[#fbfbf8] p-4 dark:border-gray-700 dark:bg-gray-800 sm:flex-row sm:items-center">
+                      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-full bg-black text-white dark:bg-white dark:text-black">
+                        {formData.avatar ? (
+                          <img src={formData.avatar} alt="Profile" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-2xl font-semibold">
+                            {avatarInitial}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">Profile picture</p>
+                        <p className="mt-1 text-sm leading-5 text-gray-500 dark:text-gray-400">
+                          Use a square image. It will be resized for the app.
+                        </p>
+                        {avatarError && (
+                          <p className="mt-2 text-sm font-medium text-red-600 dark:text-red-400">{avatarError}</p>
+                        )}
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <label className="inline-flex min-h-[40px] cursor-pointer items-center gap-2 rounded-xl bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100">
+                            <Camera className="h-4 w-4" />
+                            <span>{formData.avatar ? 'Change photo' : 'Upload photo'}</span>
+                            <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                          </label>
+                          {formData.avatar && (
+                            <button
+                              type="button"
+                              onClick={() => setFormData({ ...formData, avatar: '' })}
+                              className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-black/[0.11] bg-white px-4 py-2 text-sm font-medium text-[#374151] transition-colors hover:bg-[#efefeb] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span>Remove</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Full Name
@@ -296,6 +435,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Footer */}
         <div className="border-t border-black/[0.07] dark:border-gray-700 px-5 py-4 sm:p-6 flex-shrink-0 bg-[#fbfbf8] dark:bg-gray-900">
+          {saveError && (
+            <p className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+              {saveError}
+            </p>
+          )}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_1fr]">
             <button
               onClick={handleLogout}
@@ -312,9 +456,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
             <button
               onClick={handleSave}
+              disabled={isSaving}
               className="min-h-[48px] rounded-xl bg-black px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100"
             >
-              Save Changes
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>
