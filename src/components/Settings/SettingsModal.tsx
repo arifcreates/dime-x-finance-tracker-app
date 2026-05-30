@@ -223,7 +223,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-      <div className="bg-white dark:bg-gray-900 w-[calc(100%-1rem)] sm:w-full sm:max-w-2xl h-[calc(100dvh-var(--mobile-browser-bottom,0px)-0.75rem)] sm:h-auto sm:max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col mb-2 sm:mb-0 border border-black/[0.08] dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 w-[calc(100%-1rem)] sm:w-full sm:max-w-2xl h-[calc(100dvh-var(--mobile-browser-bottom,0px)-0.75rem)] sm:h-[720px] sm:max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col mb-2 sm:mb-0 border border-black/[0.08] dark:border-gray-800">
         {/* Header */}
         <div className="bg-[#f7f7f4] dark:bg-gray-900 border-b border-black/[0.07] dark:border-gray-800 px-5 py-4 sm:p-6 text-[#111318] dark:text-white flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -266,7 +266,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* Content */}
-          <div className="flex-1 px-5 py-5 sm:p-6 overflow-y-auto bg-white dark:bg-gray-900">
+          <div className="min-h-0 flex-1 px-5 py-5 sm:p-6 overflow-y-auto bg-white dark:bg-gray-900">
             {activeTab === 'profile' && (
               <div className="space-y-6">
                 <div>
