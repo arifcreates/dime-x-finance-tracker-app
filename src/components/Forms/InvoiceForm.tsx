@@ -15,6 +15,9 @@ interface InvoiceFormProps {
 
 const currencyOptions = ['USD', 'INR', 'EUR', 'GBP', 'AED', 'CAD', 'AUD', 'SGD'];
 const fieldClass = 'w-full rounded-[10px] border border-gray-200 bg-white px-4 py-3 text-gray-950 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:focus:border-gray-500 dark:focus:ring-gray-800';
+const selectClass = `${fieldClass} pr-10`;
+const dateClass = `${fieldClass} pr-10`;
+const sectionCardClass = 'rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 sm:p-5';
 const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2';
 
 export const InvoiceForm: React.FC<InvoiceFormProps> = ({
@@ -185,7 +188,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     required
                     value={formData.clientId}
                     onChange={(e) => applyClientToBillTo(e.target.value)}
-                    className={fieldClass}
+                    className={selectClass}
                   >
                     <option value="">Select client</option>
                     {clients.map(client => (
@@ -219,7 +222,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 <select
                   value={formData.currency}
                   onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                  className={fieldClass}
+                  className={selectClass}
                 >
                   {currencyOptions.map((currency) => (
                     <option key={currency} value={currency}>{currency}</option>
@@ -234,7 +237,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   required
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className={fieldClass}
+                  className={dateClass}
                 />
               </div>
 
@@ -245,7 +248,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   required
                   value={formData.dueDate}
                   onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  className={fieldClass}
+                  className={dateClass}
                 />
               </div>
 
@@ -254,7 +257,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as Invoice['status'] })}
-                  className={fieldClass}
+                  className={selectClass}
                 >
                   <option value="draft">Draft</option>
                   <option value="sent">Sent</option>
@@ -266,24 +269,28 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           </section>
 
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div className="space-y-4 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
+            <div className={sectionCardClass}>
               <h4 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">From / Company Details</h4>
+              <div className="mt-4 space-y-4">
               <input className={fieldClass} placeholder="Company name" value={formData.companyName} onChange={(e) => setFormData({ ...formData, companyName: e.target.value })} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input className={fieldClass} placeholder="Company email" type="email" value={formData.companyEmail} onChange={(e) => setFormData({ ...formData, companyEmail: e.target.value })} />
                 <input className={fieldClass} placeholder="Company phone" value={formData.companyPhone} onChange={(e) => setFormData({ ...formData, companyPhone: e.target.value })} />
               </div>
               <textarea className={fieldClass} placeholder="Company address" rows={3} value={formData.companyAddress} onChange={(e) => setFormData({ ...formData, companyAddress: e.target.value })} />
+              </div>
             </div>
 
-            <div className="space-y-4 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
+            <div className={sectionCardClass}>
               <h4 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Bill To</h4>
+              <div className="mt-4 space-y-4">
               <input className={fieldClass} placeholder="Client or company name" value={formData.billToName} onChange={(e) => setFormData({ ...formData, billToName: e.target.value })} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input className={fieldClass} placeholder="Billing email" type="email" value={formData.billToEmail} onChange={(e) => setFormData({ ...formData, billToEmail: e.target.value })} />
                 <input className={fieldClass} placeholder="Billing phone" value={formData.billToPhone} onChange={(e) => setFormData({ ...formData, billToPhone: e.target.value })} />
               </div>
               <textarea className={fieldClass} placeholder="Billing address" rows={3} value={formData.billToAddress} onChange={(e) => setFormData({ ...formData, billToAddress: e.target.value })} />
+              </div>
             </div>
           </section>
 
@@ -370,86 +377,89 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
             </div>
           </section>
 
-          <section className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
-            <div className="space-y-4">
-              <div>
+          <section className="space-y-4">
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Payment & Adjustments</h4>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+              <div className={sectionCardClass}>
                 <label className={labelClass}>Bank Account Details</label>
                 <textarea
-                  className={fieldClass}
-                  rows={4}
+                  className={`${fieldClass} min-h-[170px]`}
+                  rows={6}
                   placeholder="Account name, bank, IBAN/account number, payment instructions"
                   value={formData.bankDetails}
                   onChange={(e) => setFormData({ ...formData, bankDetails: e.target.value })}
                 />
               </div>
-              <div>
-                <label className={labelClass}>Notes</label>
-                <textarea
-                  className={fieldClass}
-                  rows={4}
-                  placeholder="Payment terms, project notes, thank-you message"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                />
+
+              <div className={sectionCardClass}>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className={labelClass}>Discount</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.discountValue || ''}
+                      onChange={(e) => setFormData({ ...formData, discountValue: parseFloat(e.target.value) || 0 })}
+                      className={fieldClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Type</label>
+                    <select
+                      value={formData.discountType}
+                      onChange={(e) => setFormData({ ...formData, discountType: e.target.value as Invoice['discountType'] })}
+                      className={selectClass}
+                    >
+                      <option value="fixed">Fixed</option>
+                      <option value="percentage">Percent</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Tax Rate (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.taxRate || ''}
+                      onChange={(e) => setFormData({ ...formData, taxRate: parseFloat(e.target.value) || 0 })}
+                      className={fieldClass}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-xl bg-gray-50 p-4 dark:bg-gray-800/70">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                      <span>Subtotal</span>
+                      <span>{money(totals.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                      <span>Discount</span>
+                      <span>-{money(totals.discountAmount)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                      <span>Tax</span>
+                      <span>{money(totals.taxAmount)}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-3 text-lg font-semibold text-gray-950 dark:text-white">
+                      <span>Total</span>
+                      <span>{money(totals.total)}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-gray-100 dark:border-gray-800 p-4 space-y-4 h-fit">
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Totals</h4>
-              <div className="grid grid-cols-[1fr_1fr] gap-3">
-                <div>
-                  <label className={labelClass}>Discount</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.discountValue || ''}
-                    onChange={(e) => setFormData({ ...formData, discountValue: parseFloat(e.target.value) || 0 })}
-                    className={fieldClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Type</label>
-                  <select
-                    value={formData.discountType}
-                    onChange={(e) => setFormData({ ...formData, discountType: e.target.value as Invoice['discountType'] })}
-                    className={fieldClass}
-                  >
-                    <option value="fixed">Fixed</option>
-                    <option value="percentage">Percent</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className={labelClass}>Tax Rate (%)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.taxRate || ''}
-                  onChange={(e) => setFormData({ ...formData, taxRate: parseFloat(e.target.value) || 0 })}
-                  className={fieldClass}
-                />
-              </div>
-
-              <div className="space-y-2 pt-2 text-sm">
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Subtotal</span>
-                  <span>{money(totals.subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Discount</span>
-                  <span>-{money(totals.discountAmount)}</span>
-                </div>
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Tax</span>
-                  <span>{money(totals.taxAmount)}</span>
-                </div>
-                <div className="flex justify-between border-t border-gray-200 dark:border-gray-800 pt-3 text-lg font-semibold text-gray-950 dark:text-white">
-                  <span>Total</span>
-                  <span>{money(totals.total)}</span>
-                </div>
-              </div>
+            <div className={sectionCardClass}>
+              <label className={labelClass}>Notes</label>
+              <textarea
+                className={`${fieldClass} min-h-[120px]`}
+                rows={4}
+                placeholder="Payment terms, project notes, thank-you message"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              />
             </div>
           </section>
 

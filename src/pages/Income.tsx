@@ -213,7 +213,7 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
                               <select
                                 value={invoice.status}
                                 onChange={(e) => handleStatusChange(invoice, e.target.value)}
-                                className={`px-2 py-1 rounded-full text-xs font-medium border-0 ${getStatusColor(invoice.status)}`}
+                                className={`rounded-full border-0 px-2 py-1 pr-8 text-xs font-medium ${getStatusColor(invoice.status)}`}
                               >
                                 <option value="draft">Draft</option>
                                 <option value="sent">Sent</option>
@@ -278,7 +278,7 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
                                   <select
                                     value={invoice.status}
                                     onChange={(e) => handleStatusChange(invoice, e.target.value)}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium border-0 cursor-pointer ${getStatusColor(invoice.status)}`}
+                                    className={`cursor-pointer rounded-full border-0 px-3 py-1 pr-8 text-xs font-medium ${getStatusColor(invoice.status)}`}
                                   >
                                     <option value="draft">Draft</option>
                                     <option value="sent">Sent</option>

@@ -74,7 +74,7 @@ export const downloadInvoicePdf = (invoice: Invoice, client?: Client) => {
   const billToEmail = invoice.billToEmail || client?.email || '';
   const billToPhone = invoice.billToPhone || client?.phone || '';
   const billToAddress = invoice.billToAddress || client?.address || '';
-  const win = window.open('', '_blank', 'noopener,noreferrer,width=900,height=1000');
+  const win = window.open('', '_blank', 'width=900,height=1000');
 
   if (!win) {
     alert('Please allow pop-ups to download the invoice PDF.');
@@ -117,13 +117,19 @@ export const downloadInvoicePdf = (invoice: Invoice, client?: Client) => {
           .total-row { display: flex; justify-content: space-between; padding: 9px 0; color: #374151; }
           .grand { margin-top: 8px; padding-top: 16px; border-top: 1px solid #111827; color: #111827; font-size: 22px; font-weight: 700; }
           .notes { padding: 18px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fafafa; }
+          .print-actions { position: sticky; top: 0; display: flex; justify-content: center; padding: 14px; background: rgba(247,247,245,.94); backdrop-filter: blur(12px); z-index: 2; }
+          .print-actions button { border: 0; border-radius: 10px; background: #111827; color: #fff; cursor: pointer; font: inherit; font-weight: 700; padding: 12px 18px; }
           @media print {
             body { padding: 0; background: #fff; }
             .page { border: 0; border-radius: 0; max-width: none; }
+            .print-actions { display: none; }
           }
         </style>
       </head>
       <body>
+        <div class="print-actions">
+          <button onclick="window.print()">Save as PDF</button>
+        </div>
         <main class="page">
           <section class="top">
             <div>
@@ -180,7 +186,10 @@ export const downloadInvoicePdf = (invoice: Invoice, client?: Client) => {
           ${invoice.notes ? `<section class="section"><h2>Notes</h2><div class="notes">${blockLines(invoice.notes)}</div></section>` : ''}
         </main>
         <script>
-          window.onload = () => setTimeout(() => window.print(), 250);
+          window.onload = () => {
+            window.focus();
+            setTimeout(() => window.print(), 350);
+          };
         </script>
       </body>
     </html>
