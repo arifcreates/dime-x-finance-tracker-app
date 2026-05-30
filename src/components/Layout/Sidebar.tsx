@@ -10,6 +10,7 @@ import {
   BarChart3,
   X,
   User,
+  UsersRound,
 } from 'lucide-react';
 import dimeXWordmarkDark from '../../assets/brand/dimex-wordmark-dark.svg';
 import dimeXWordmarkLight from '../../assets/brand/dimex-wordmark-light.svg';
@@ -25,6 +26,7 @@ interface SidebarProps {
 const navigationItems = [
   { id: 'dashboard', label: 'Overview', icon: LayoutGrid },
   { id: 'income', label: 'Income', icon: FileText },
+  { id: 'clients', label: 'Clients', icon: UsersRound },
   { id: 'expenses', label: 'Expenses', icon: Receipt },
   { id: 'accounts', label: 'Accounts', icon: Wallet },
   { id: 'emi', label: 'Loans', icon: CreditCard },

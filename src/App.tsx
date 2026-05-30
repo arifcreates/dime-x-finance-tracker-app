@@ -10,6 +10,7 @@ import { SettingsModal } from './components/Settings/SettingsModal';
 import { QuickActionsFAB } from './components/Dashboard/QuickActionsFAB';
 import { Dashboard } from './pages/Dashboard';
 import { Income } from './pages/Income';
+import { Clients } from './pages/Clients';
 import { Expenses } from './pages/Expenses';
 import { Accounts } from './pages/Accounts';
 import { EMI } from './pages/EMI';
@@ -26,6 +27,7 @@ import { Transaction } from './types';
 const sectionTitles: Record<string, string> = {
   dashboard: 'Dashboard',
   income: 'Income & Invoices',
+  clients: 'Clients',
   expenses: 'Expenses & Receipts',
   accounts: 'Accounts & Cash',
   emi: 'Loans & Credit',
@@ -264,6 +266,8 @@ function App() {
         return <Dashboard {...props} onUpdate={refreshTransactions} />;
       case 'income':
         return <Income onUpdate={refreshTransactions} onCreateAccount={handleCreateAccountFromQuickAction} />;
+      case 'clients':
+        return <Clients />;
       case 'expenses':
         return <Expenses onUpdate={refreshTransactions} />;
       case 'accounts':
