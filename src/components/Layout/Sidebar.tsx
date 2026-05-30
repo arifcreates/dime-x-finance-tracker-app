@@ -45,8 +45,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className="w-80 lg:w-80 bg-[#f7f7f4] dark:bg-gray-900 h-[calc(100dvh-var(--mobile-browser-bottom,0px))] lg:h-screen flex flex-col border-r border-black/[0.07] dark:border-gray-800">
       {/* Header */}
-      <div className="px-5 py-5 lg:px-7 lg:py-6 border-b border-black/[0.07] dark:border-gray-800 flex-shrink-0">
-        <div className="flex min-h-[64px] items-center justify-between">
+      <div className="flex h-[96px] flex-shrink-0 items-center border-b border-black/[0.07] px-5 py-0 dark:border-gray-800 lg:h-[112px] lg:px-7">
+        <div className="flex w-full items-center justify-between">
           <div className="flex min-w-0 items-center">
             <img src={dimeXWordmarkDark} alt="Dime-x" className="h-8 w-auto max-w-[150px] dark:hidden" />
             <img src={dimeXWordmarkLight} alt="Dime-x" className="hidden h-8 w-auto max-w-[150px] dark:block" />

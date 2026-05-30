@@ -20,8 +20,8 @@ export const Header: React.FC<HeaderProps> = ({
   const [showNotifications, setShowNotifications] = useState(false);
 
   return (
-    <header className="bg-[#f7f7f4] dark:bg-gray-900 border-b border-black/[0.07] dark:border-gray-800 px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
-      <div className="flex min-h-[64px] items-center justify-between">
+    <header className="flex h-[96px] items-center border-b border-black/[0.07] bg-[#f7f7f4] px-4 py-0 dark:border-gray-800 dark:bg-gray-900 sm:px-6 lg:h-[112px] lg:px-8">
+      <div className="flex w-full items-center justify-between">
         <div className="flex items-center space-x-4">
           {/* Mobile Menu Button */}
           <button
