@@ -58,6 +58,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [transactionType, setTransactionType] = useState<'income' | 'expense'>('income');
   const [cardOrder, setCardOrder] = useState<string[]>([]);
 
+  const getAccountShare = (balance: number) => {
+    if (totalBalance <= 0 || balance <= 0) return 0;
+    return Math.min((balance / totalBalance) * 100, 100);
+  };
+
   const loadData = async () => {
     const [
       txns, accs, emiList, cards, payments,
@@ -400,7 +405,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className="text-right">
                         <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                          {totalBalance > 0 ? ((account.balance / totalBalance) * 100).toFixed(1) : 0}%
+                          {getAccountShare(account.balance).toFixed(1)}%
                         </p>
                       </div>
                     </div>
@@ -424,7 +429,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             account.type === 'cash' ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' :
                             'bg-gradient-to-r from-purple-400 to-purple-500'
                           }`}
-                          style={{ width: `${Math.min((account.balance / totalBalance) * 100, 100)}%` }}
+                          style={{ width: `${getAccountShare(account.balance)}%` }}
                         ></div>
                       </div>
                     </div>
@@ -448,7 +453,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className="text-right">
                         <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                          {totalBalance > 0 ? ((account.balance / totalBalance) * 100).toFixed(1) : 0}%
+                          {getAccountShare(account.balance).toFixed(1)}%
                         </p>
                       </div>
                     </div>
@@ -472,7 +477,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             account.type === 'cash' ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' :
                             'bg-gradient-to-r from-purple-400 to-purple-500'
                           }`}
-                          style={{ width: `${Math.min((account.balance / totalBalance) * 100, 100)}%` }}
+                          style={{ width: `${getAccountShare(account.balance)}%` }}
                         ></div>
                       </div>
                     </div>
@@ -509,7 +514,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       
                       <div className="space-y-1">
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                          {totalBalance > 0 ? ((account.balance / totalBalance) * 100).toFixed(1) : 0}%
+                          {getAccountShare(account.balance).toFixed(1)}%
                         </p>
                         <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-1">
                           <div 
@@ -519,7 +524,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               account.type === 'cash' ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' :
                               'bg-gradient-to-r from-purple-400 to-purple-500'
                             }`}
-                            style={{ width: `${Math.min((account.balance / totalBalance) * 100, 100)}%` }}
+                            style={{ width: `${getAccountShare(account.balance)}%` }}
                           ></div>
                         </div>
                       </div>

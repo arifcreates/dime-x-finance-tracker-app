@@ -122,7 +122,6 @@ export const AccountForm: React.FC<AccountFormProps> = ({
             <input
               type="number"
               required
-              min="0"
               step="0.01"
               value={formData.balance}
               onChange={(e) => setFormData({ ...formData, balance: e.target.value })}
