@@ -5,6 +5,7 @@ import { useCurrency } from '../../contexts/CurrencyContext';
 import { SelectField } from '../Forms/SelectField';
 import { supabaseConfigured } from '../../lib/supabase';
 import { supabaseService } from '../../services/supabaseService';
+import { currencyService } from '../../services/currencyService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -172,18 +173,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     { id: 'preferences', label: 'Preferences', icon: Palette },
   ];
 
-  const currencyOptions = [
-    { value: 'USD', label: 'USD - US Dollar' },
-    { value: 'EUR', label: 'EUR - Euro' },
-    { value: 'GBP', label: 'GBP - British Pound' },
-    { value: 'INR', label: 'INR - Indian Rupee' },
-    { value: 'CAD', label: 'CAD - Canadian Dollar' },
-    { value: 'AUD', label: 'AUD - Australian Dollar' },
-    { value: 'JPY', label: 'JPY - Japanese Yen' },
-    { value: 'CHF', label: 'CHF - Swiss Franc' },
-    { value: 'CNY', label: 'CNY - Chinese Yuan' },
-    { value: 'SGD', label: 'SGD - Singapore Dollar' },
-  ];
+  const currencyOptions = currencyService.getSupportedCurrencies()
+    .map(({ code, name }) => ({ value: code, label: `${code} - ${name}` }));
 
   const themeOptions = [
     { value: 'light', label: 'Light' },

@@ -5,6 +5,7 @@ import { generateId } from '../../utils/formatters';
 import { dataService } from '../../services/dataService';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { calculateInvoiceTotals, downloadInvoicePdf, formatInvoiceMoney } from '../../utils/invoiceUtils';
+import { currencyService } from '../../services/currencyService';
 
 interface InvoiceFormProps {
   isOpen: boolean;
@@ -13,7 +14,7 @@ interface InvoiceFormProps {
   invoice?: Invoice;
 }
 
-const currencyOptions = ['USD', 'INR', 'EUR', 'GBP', 'AED', 'CAD', 'AUD', 'SGD'];
+const currencyOptions = currencyService.getSupportedCurrencies().map((currency) => currency.code);
 const fieldClass = 'w-full rounded-[10px] border border-gray-200 bg-white px-4 py-3 text-gray-950 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:focus:border-gray-500 dark:focus:ring-gray-800';
 const selectClass = `${fieldClass} pr-10`;
 const dateClass = `${fieldClass} pr-10`;

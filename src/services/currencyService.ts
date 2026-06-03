@@ -6,6 +6,7 @@ class CurrencyService {
     EUR: 0.85,
     GBP: 0.73,
     INR: 83.12,
+    AED: 3.67,
     CAD: 1.35,
     AUD: 1.52,
     JPY: 149.50,
@@ -32,22 +33,21 @@ class CurrencyService {
 
   private async updateExchangeRates(): Promise<void> {
     try {
-      // In a real app, you would fetch from a currency API
-      // For demo purposes, we'll simulate with slight variations
-      const variation = () => 1 + (Math.random() - 0.5) * 0.02; // ±1% variation
-      
-      this.exchangeRates = {
-        USD: 1,
-        EUR: 0.85 * variation(),
-        GBP: 0.73 * variation(),
-        INR: 83.12 * variation(),
-        CAD: 1.35 * variation(),
-        AUD: 1.52 * variation(),
-        JPY: 149.50 * variation(),
-        CHF: 0.88 * variation(),
-        CNY: 7.24 * variation(),
-        SGD: 1.34 * variation(),
-      };
+      const response = await fetch('https://open.er-api.com/v6/latest/USD');
+      if (!response.ok) {
+        throw new Error('Exchange rate service unavailable');
+      }
+
+      const data = await response.json();
+      if (data.result !== 'success' || !data.rates) {
+        throw new Error('Exchange rate response was invalid');
+      }
+
+      const supportedCurrencies = this.getSupportedCurrencies().map((currency) => currency.code);
+      this.exchangeRates = supportedCurrencies.reduce<Record<string, number>>((rates, currency) => {
+        rates[currency] = Number(data.rates[currency]) || this.exchangeRates[currency];
+        return rates;
+      }, {});
       
       this.lastUpdated = new Date();
       localStorage.setItem('exchangeRates', JSON.stringify({
@@ -62,7 +62,7 @@ class CurrencyService {
 
   async convertCurrency(amount: number, fromCurrency: string, toCurrency: string): Promise<number> {
     try {
-      if (!amount || isNaN(amount)) {
+      if (!Number.isFinite(amount)) {
         throw new Error('Invalid amount for currency conversion');
       }
       
@@ -88,6 +88,7 @@ class CurrencyService {
       { code: 'EUR', name: 'Euro', symbol: '€' },
       { code: 'GBP', name: 'British Pound', symbol: '£' },
       { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
+      { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ' },
       { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
       { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
       { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },

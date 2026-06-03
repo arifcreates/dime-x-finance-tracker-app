@@ -5,6 +5,7 @@ import { generateId } from '../../utils/formatters';
 import { dataService } from '../../services/dataService';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { SelectField } from './SelectField';
+import { currencyService } from '../../services/currencyService';
 
 interface AccountFormProps {
   isOpen: boolean;
@@ -69,8 +70,8 @@ export const AccountForm: React.FC<AccountFormProps> = ({
     { value: 'investment', label: 'Investment' },
   ];
 
-  const currencyOptions = ['USD', 'EUR', 'GBP', 'INR', 'CAD', 'AUD', 'JPY', 'CHF', 'CNY', 'SGD']
-    .map(value => ({ value, label: value }));
+  const currencyOptions = currencyService.getSupportedCurrencies()
+    .map(({ code, name }) => ({ value: code, label: `${code} - ${name}` }));
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overscroll-contain">

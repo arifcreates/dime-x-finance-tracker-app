@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, DollarSign } from 'lucide-react';
 import { Invoice, Account } from '../../types';
 import { dataService } from '../../services/dataService';
+import { currencyService } from '../../services/currencyService';
+import { formatCurrency } from '../../utils/formatters';
 
 interface InvoiceStatusModalProps {
   isOpen: boolean;
@@ -19,12 +21,44 @@ export const InvoiceStatusModal: React.FC<InvoiceStatusModalProps> = ({
   const [selectedAccount, setSelectedAccount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>(() => dataService.getCachedAccounts());
+  const [convertedAmount, setConvertedAmount] = useState(invoice.amount);
+  const [conversionError, setConversionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       dataService.getAccounts().then(setAccounts);
     }
   }, [isOpen]);
+
+  const selectedAccountDetails = accounts.find(acc => acc.id === selectedAccount);
+  const invoiceCurrency = invoice.currency || 'USD';
+
+  useEffect(() => {
+    if (!isOpen || !selectedAccountDetails) {
+      setConvertedAmount(invoice.amount);
+      setConversionError(null);
+      return;
+    }
+
+    let isMounted = true;
+    setConversionError(null);
+
+    currencyService
+      .convertCurrency(invoice.amount, invoiceCurrency, selectedAccountDetails.currency)
+      .then((amount) => {
+        if (isMounted) setConvertedAmount(amount);
+      })
+      .catch(() => {
+        if (isMounted) {
+          setConvertedAmount(invoice.amount);
+          setConversionError('Could not convert the invoice amount. The original amount will be used.');
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [invoice.amount, invoiceCurrency, isOpen, selectedAccountDetails]);
 
   const handleMarkAsPaid = async () => {
     if (invoice.status === 'paid') {
@@ -47,19 +81,23 @@ export const InvoiceStatusModal: React.FC<InvoiceStatusModalProps> = ({
       // Find the selected account
       const account = accounts.find(acc => acc.id === selectedAccount);
       if (account) {
+        const creditedAmount = await currencyService.convertCurrency(invoice.amount, invoiceCurrency, account.currency);
         // Update account balance
         const updatedAccount = {
           ...account,
-          balance: account.balance + invoice.amount
+          balance: account.balance + creditedAmount
         };
         await dataService.saveAccount(updatedAccount);
 
         // Create income transaction
+        const convertedLabel = invoiceCurrency === account.currency
+          ? ''
+          : ` (${formatCurrency(invoice.amount, invoiceCurrency)} converted to ${formatCurrency(creditedAmount, account.currency)})`;
         const transaction = {
           id: `invoice-payment-${invoice.id}`,
           date: new Date().toISOString().split('T')[0],
-          description: `Invoice Payment - ${invoice.invoiceNumber}`,
-          amount: invoice.amount,
+          description: `Invoice Payment - ${invoice.invoiceNumber}${convertedLabel}`,
+          amount: creditedAmount,
           type: 'income' as const,
           category: 'Invoice Payment',
           account: account.name,
@@ -116,7 +154,7 @@ export const InvoiceStatusModal: React.FC<InvoiceStatusModalProps> = ({
                 </div>
               </div>
               <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                ${invoice.amount.toLocaleString()}
+                {formatCurrency(invoice.amount, invoiceCurrency)}
               </p>
             </div>
           </div>
@@ -134,20 +172,38 @@ export const InvoiceStatusModal: React.FC<InvoiceStatusModalProps> = ({
               <option value="">Select account to credit</option>
               {accounts.map(account => (
                 <option key={account.id} value={account.id}>
-                  {account.name} - ${account.balance.toLocaleString()} ({account.type})
+                  {account.name} - {formatCurrency(account.balance, account.currency)} ({account.currency})
                 </option>
               ))}
             </select>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              The payment amount will be added to the selected account balance
+              The converted payment amount will be added to the selected account balance.
             </p>
+            {selectedAccountDetails && (
+              <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-700 dark:bg-gray-800">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-gray-600 dark:text-gray-400">Account credit</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {formatCurrency(convertedAmount, selectedAccountDetails.currency)}
+                  </span>
+                </div>
+                {invoiceCurrency !== selectedAccountDetails.currency && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Converted from {formatCurrency(invoice.amount, invoiceCurrency)} to {selectedAccountDetails.currency}.
+                  </p>
+                )}
+                {conversionError && (
+                  <p className="mt-2 text-xs font-medium text-red-600 dark:text-red-400">{conversionError}</p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800 mb-6">
             <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">What happens next:</h4>
             <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
               <li>• Invoice status will be updated to "Paid"</li>
-              <li>• Payment amount will be added to selected account</li>
+              <li>• Converted payment amount will be added to selected account</li>
               <li>• Income transaction will be automatically created</li>
               <li>• Account balance will be updated immediately</li>
             </ul>
