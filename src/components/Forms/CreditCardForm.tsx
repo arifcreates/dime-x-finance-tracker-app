@@ -86,6 +86,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
   const creditLimit = Number(formData.creditLimit);
   const currentBalance = Number(formData.currentBalance);
   const utilizationPercentage = creditLimit > 0 ? (currentBalance / creditLimit) * 100 : 0;
+  const absoluteUtilization = Math.abs(utilizationPercentage);
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overscroll-contain">
@@ -141,7 +142,6 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
               <input
                 type="number"
                 required
-                min="0"
                 step="1"
                 value={formData.currentBalance}
                 onChange={(e) => setFormData({ ...formData, currentBalance: e.target.value })}
@@ -203,8 +203,8 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-semibold text-gray-700">Credit Utilization</span>
                   <span className={`text-sm font-bold ${
-                    utilizationPercentage > 80 ? 'text-red-600' :
-                    utilizationPercentage > 50 ? 'text-yellow-600' :
+                    absoluteUtilization > 80 ? 'text-red-600' :
+                    absoluteUtilization > 50 ? 'text-yellow-600' :
                     'text-green-600'
                   }`}>
                     {utilizationPercentage.toFixed(1)}%
@@ -213,15 +213,16 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div 
                     className={`h-3 rounded-full transition-all duration-300 ${
-                      utilizationPercentage > 80 ? 'bg-red-500' :
-                      utilizationPercentage > 50 ? 'bg-yellow-500' :
+                      absoluteUtilization > 80 ? 'bg-red-500' :
+                      absoluteUtilization > 50 ? 'bg-yellow-500' :
                       'bg-green-500'
                     }`}
-                    style={{ width: `${Math.min(utilizationPercentage, 100)}%` }}
+                    style={{ width: `${Math.min(absoluteUtilization, 100)}%` }}
                   ></div>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  {utilizationPercentage > 80 ? 'High utilization - consider paying down balance' :
+                  {currentBalance < 0 ? 'Negative balance recorded for unpaid or adjusted credit.' :
+                   utilizationPercentage > 80 ? 'High utilization - consider paying down balance' :
                    utilizationPercentage > 50 ? 'Moderate utilization - monitor spending' :
                    'Good utilization - keep it up!'}
                 </p>

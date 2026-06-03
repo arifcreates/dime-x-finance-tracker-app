@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard as CreditCardIcon, Plus, Calculator, Edit, Trash2, Calendar, TrendingDown, AlertCircle, Target } from 'lucide-react';
+import { CreditCard as CreditCardIcon, Plus, Calculator, Edit, Trash2, Calendar, TrendingDown, AlertCircle, Target, HandCoins } from 'lucide-react';
 import { EMIForm } from '../components/Forms/EMIForm';
 import { CreditCardForm } from '../components/Forms/CreditCardForm';
 import { EMI as EMIType, CreditCard } from '../types';
@@ -13,6 +13,7 @@ export const EMI: React.FC = () => {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [showEMIForm, setShowEMIForm] = useState(false);
   const [showCreditCardForm, setShowCreditCardForm] = useState(false);
+  const [emiFormMode, setEMIFormMode] = useState<'emi' | 'credit'>('emi');
   const [editingEMI, setEditingEMI] = useState<EMIType | undefined>();
   const [editingCard, setEditingCard] = useState<CreditCard | undefined>();
   const [activeTab, setActiveTab] = useState<'emis' | 'cards'>('emis');
@@ -30,6 +31,7 @@ export const EMI: React.FC = () => {
   const handleEMISave = () => {
     refreshData();
     setEditingEMI(undefined);
+    setEMIFormMode('emi');
   };
 
   const handleCreditCardSave = () => {
@@ -53,6 +55,7 @@ export const EMI: React.FC = () => {
 
   const handleEditEMI = (emi: EMIType) => {
     setEditingEMI(emi);
+    setEMIFormMode(emi.debtType || 'emi');
     setShowEMIForm(true);
   };
 
@@ -65,7 +68,7 @@ export const EMI: React.FC = () => {
   const totalEMIAmount = emis.reduce((sum, emi) => sum + emi.monthlyAmount, 0);
   const totalRemainingBalance = emis.reduce((sum, emi) => sum + emi.remainingBalance, 0);
   const totalCreditLimit = creditCards.reduce((sum, card) => sum + card.creditLimit, 0);
-  const totalCreditUsed = creditCards.reduce((sum, card) => sum + card.currentBalance, 0);
+  const totalCreditUsed = creditCards.reduce((sum, card) => sum + Math.abs(card.currentBalance), 0);
   const totalMinimumDue = creditCards.reduce((sum, card) => sum + card.minimumDue, 0);
   const snowballDebts = [
     ...emis
@@ -73,18 +76,18 @@ export const EMI: React.FC = () => {
       .map(emi => ({
         id: `emi-${emi.id}`,
         name: emi.name,
-        type: 'Loan',
+        type: emi.debtType === 'credit' ? 'Borrowed Credit' : 'Loan',
         balance: emi.remainingBalance,
         minimumPayment: emi.monthlyAmount,
         rate: emi.interestRate,
       })),
     ...creditCards
-      .filter(card => card.currentBalance > 0)
+      .filter(card => Math.abs(card.currentBalance) > 0)
       .map(card => ({
         id: `card-${card.id}`,
         name: card.name,
         type: 'Card',
-        balance: card.currentBalance,
+        balance: Math.abs(card.currentBalance),
         minimumPayment: card.minimumDue,
         rate: card.interestRate,
       })),
@@ -115,11 +118,26 @@ export const EMI: React.FC = () => {
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <button
-              onClick={() => setShowEMIForm(true)}
+              onClick={() => {
+                setEditingEMI(undefined);
+                setEMIFormMode('emi');
+                setShowEMIForm(true);
+              }}
               className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-800 transition-all font-semibold shadow-lg shadow-blue-500/25 hover:scale-[1.02] transform duration-200"
             >
               <Plus className="h-4 w-4" />
               <span>Add EMI</span>
+            </button>
+            <button
+              onClick={() => {
+                setEditingEMI(undefined);
+                setEMIFormMode('credit');
+                setShowEMIForm(true);
+              }}
+              className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-black text-white rounded-2xl hover:bg-gray-800 transition-all font-semibold shadow-lg shadow-black/10 hover:scale-[1.02] transform duration-200"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Credit</span>
             </button>
             <button
               onClick={() => setShowCreditCardForm(true)}
@@ -289,7 +307,10 @@ export const EMI: React.FC = () => {
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">No EMIs Added</h3>
                     <p className="text-gray-500 dark:text-gray-400 mb-6">Start tracking your loans and EMI payments</p>
                     <button
-                      onClick={() => setShowEMIForm(true)}
+                      onClick={() => {
+                        setEMIFormMode('emi');
+                        setShowEMIForm(true);
+                      }}
                       className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-800 transition-all font-semibold shadow-lg shadow-blue-500/25"
                     >
                       Add Your First EMI
@@ -301,18 +322,23 @@ export const EMI: React.FC = () => {
                       const remainingMonths = getRemainingMonths(emi);
                       const daysUntilDue = getDaysUntilDate(emi.nextDueDate);
                       const progressPercentage = ((emi.principal - emi.remainingBalance) / emi.principal) * 100;
+                      const isBorrowedCredit = emi.debtType === 'credit';
                       
                       return (
                         <div key={emi.id} className="group bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-700/50 p-5 rounded-[1.5rem] border border-gray-200/50 dark:border-gray-700/50 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-800/50 transition-all duration-200 hover:-translate-y-1">
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center space-x-3">
                               <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
-                                <Calculator className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                {isBorrowedCredit ? (
+                                  <HandCoins className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                ) : (
+                                  <Calculator className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                )}
                               </div>
                               <div>
                                 <h4 className="font-bold text-gray-900 dark:text-white">{emi.name}</h4>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {remainingMonths} months remaining
+                                  {isBorrowedCredit ? 'Borrowed credit' : `${remainingMonths} months remaining`}
                                 </p>
                               </div>
                             </div>
@@ -343,6 +369,23 @@ export const EMI: React.FC = () => {
                                 <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{fmt(emi.remainingBalance)}</p>
                               </div>
                             </div>
+
+                            {isBorrowedCredit && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl bg-white/70 p-3 dark:bg-gray-900/40">
+                                <div>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Credit Taken</p>
+                                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    {emi.creditTakenDate ? formatDate(emi.creditTakenDate) : 'Not set'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Added To</p>
+                                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    {emi.creditedAccountName || 'No account linked'}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
 
                             <div>
                               <div className="flex justify-between items-center mb-2">
@@ -399,6 +442,7 @@ export const EMI: React.FC = () => {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {creditCards.map((card) => {
                       const utilizationPercentage = (card.currentBalance / card.creditLimit) * 100;
+                      const absoluteUtilization = Math.abs(utilizationPercentage);
                       const daysUntilDue = getDaysUntilDate(card.dueDate);
                       const availableCredit = card.creditLimit - card.currentBalance;
                       
@@ -447,18 +491,18 @@ export const EMI: React.FC = () => {
                             <div>
                               <div className="flex justify-between items-center mb-2">
                                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Credit Utilization</span>
-                                <span className={`text-xs font-bold px-2 py-1 rounded-full ${getUtilizationColor(utilizationPercentage)}`}>
+                                <span className={`text-xs font-bold px-2 py-1 rounded-full ${getUtilizationColor(absoluteUtilization)}`}>
                                   {utilizationPercentage.toFixed(1)}%
                                 </span>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                                 <div 
                                   className={`h-2 rounded-full transition-all duration-500 ${
-                                    utilizationPercentage > 80 ? 'bg-gradient-to-r from-red-500 to-red-600' :
-                                    utilizationPercentage > 50 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
+                                    absoluteUtilization > 80 ? 'bg-gradient-to-r from-red-500 to-red-600' :
+                                    absoluteUtilization > 50 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
                                     'bg-gradient-to-r from-green-500 to-green-600'
                                   }`}
-                                  style={{ width: `${Math.min(utilizationPercentage, 100)}%` }}
+                                  style={{ width: `${Math.min(absoluteUtilization, 100)}%` }}
                                 ></div>
                               </div>
                             </div>
@@ -495,9 +539,11 @@ export const EMI: React.FC = () => {
           onClose={() => {
             setShowEMIForm(false);
             setEditingEMI(undefined);
+            setEMIFormMode('emi');
           }}
           onSave={handleEMISave}
           emi={editingEMI}
+          mode={emiFormMode}
         />
 
         <CreditCardForm

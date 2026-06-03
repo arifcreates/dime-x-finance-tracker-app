@@ -69,6 +69,10 @@ export interface EMI {
   monthlyAmount: number;
   remainingBalance: number;
   nextDueDate: string;
+  debtType?: 'emi' | 'credit';
+  creditTakenDate?: string;
+  creditedAccountId?: string;
+  creditedAccountName?: string;
 }
 
 export interface CreditCard {

@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
-import { EMI } from '../../types';
+import { Account, EMI } from '../../types';
 import { generateId } from '../../utils/formatters';
 import { dataService } from '../../services/dataService';
+import { SelectField } from './SelectField';
 
 interface EMIFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (emi: EMI) => void;
   emi?: EMI;
+  mode?: 'emi' | 'credit';
 }
 
 export const EMIForm: React.FC<EMIFormProps> = ({
@@ -16,7 +18,9 @@ export const EMIForm: React.FC<EMIFormProps> = ({
   onClose,
   onSave,
   emi,
+  mode = 'emi',
 }) => {
+  const formMode = emi?.debtType || mode;
   const [formData, setFormData] = useState({
     name: emi?.name || '',
     principal: emi?.principal ? String(emi.principal) : '',
@@ -25,7 +29,10 @@ export const EMIForm: React.FC<EMIFormProps> = ({
     monthlyAmount: emi?.monthlyAmount ? String(emi.monthlyAmount) : '',
     remainingBalance: emi?.remainingBalance ? String(emi.remainingBalance) : '',
     nextDueDate: emi?.nextDueDate || new Date().toISOString().split('T')[0],
+    creditTakenDate: emi?.creditTakenDate || new Date().toISOString().split('T')[0],
+    creditedAccountId: emi?.creditedAccountId || '',
   });
+  const [accounts, setAccounts] = useState<Account[]>(() => dataService.getCachedAccounts());
 
   useEffect(() => {
     if (!isOpen) return;
@@ -38,7 +45,10 @@ export const EMIForm: React.FC<EMIFormProps> = ({
       monthlyAmount: emi?.monthlyAmount ? String(emi.monthlyAmount) : '',
       remainingBalance: emi?.remainingBalance ? String(emi.remainingBalance) : '',
       nextDueDate: emi?.nextDueDate || new Date().toISOString().split('T')[0],
+      creditTakenDate: emi?.creditTakenDate || new Date().toISOString().split('T')[0],
+      creditedAccountId: emi?.creditedAccountId || '',
     });
+    dataService.getAccounts().then(setAccounts);
   }, [emi, isOpen]);
 
   const calculateEMI = () => {
@@ -58,7 +68,7 @@ export const EMIForm: React.FC<EMIFormProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const principal = Number(formData.principal);
@@ -66,6 +76,12 @@ export const EMIForm: React.FC<EMIFormProps> = ({
     const tenure = Number(formData.tenure);
     const monthlyAmount = Number(formData.monthlyAmount);
     const remainingBalance = Number(formData.remainingBalance);
+    const creditedAccount = accounts.find(account => account.id === formData.creditedAccountId);
+
+    if (!emi && formMode === 'credit' && !creditedAccount) {
+      alert('Please select the account where this credit was received.');
+      return;
+    }
     
     const newEMI: EMI = {
       id: emi?.id || generateId(),
@@ -76,9 +92,20 @@ export const EMIForm: React.FC<EMIFormProps> = ({
       monthlyAmount,
       remainingBalance,
       nextDueDate: formData.nextDueDate,
+      debtType: formMode,
+      creditTakenDate: formMode === 'credit' ? formData.creditTakenDate : undefined,
+      creditedAccountId: formMode === 'credit' ? creditedAccount?.id : undefined,
+      creditedAccountName: formMode === 'credit' ? creditedAccount?.name : undefined,
     };
 
-    dataService.saveEMI(newEMI);
+    if (!emi && formMode === 'credit' && creditedAccount) {
+      await dataService.saveAccount({
+        ...creditedAccount,
+        balance: creditedAccount.balance + principal,
+      });
+    }
+
+    await dataService.saveEMI(newEMI);
     onSave(newEMI);
     onClose();
     
@@ -91,17 +118,25 @@ export const EMIForm: React.FC<EMIFormProps> = ({
       monthlyAmount: '',
       remainingBalance: '',
       nextDueDate: new Date().toISOString().split('T')[0],
+      creditTakenDate: new Date().toISOString().split('T')[0],
+      creditedAccountId: '',
     });
   };
 
   if (!isOpen) return null;
+
+  const accountOptions = accounts.map(account => ({
+    value: account.id,
+    label: `${account.name} (${account.currency})`,
+  }));
+  const isCredit = formMode === 'credit';
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overscroll-contain">
       <div className="bg-white dark:bg-gray-900 rounded-3xl w-[calc(100%-0.75rem)] sm:w-full max-w-2xl h-[calc(100dvh-var(--mobile-browser-bottom,0px)-0.75rem)] sm:h-auto sm:max-h-[90vh] mx-0 sm:mx-4 mb-1.5 sm:mb-0 overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-5 py-5 sm:px-8 sm:py-6 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {emi ? 'Edit EMI' : 'Add New EMI'}
+            {emi ? `Edit ${isCredit ? 'Credit' : 'EMI'}` : `Add ${isCredit ? 'Credit' : 'New EMI'}`}
           </h3>
           <button
             onClick={onClose}
@@ -127,9 +162,44 @@ export const EMIForm: React.FC<EMIFormProps> = ({
               />
             </div>
 
+            {isCredit && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    Credit Taken Date
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.creditTakenDate}
+                    onChange={(e) => setFormData({ ...formData, creditTakenDate: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    Credit Added To
+                  </label>
+                  <SelectField
+                    value={formData.creditedAccountId}
+                    onChange={(value) => setFormData({ ...formData, creditedAccountId: value })}
+                    options={accountOptions}
+                    placeholder="Select account"
+                    required={accounts.length > 0}
+                  />
+                  {!emi && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      The borrowed amount is added to this account once, when the credit is first saved.
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Principal Amount
+                {isCredit ? 'Borrowed Amount' : 'Principal Amount'}
               </label>
               <input
                 type="number"
@@ -181,7 +251,7 @@ export const EMIForm: React.FC<EMIFormProps> = ({
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Monthly EMI Amount
+                {isCredit ? 'Planned Monthly Payment' : 'Monthly EMI Amount'}
               </label>
               <input
                 type="number"
@@ -194,7 +264,7 @@ export const EMIForm: React.FC<EMIFormProps> = ({
                 placeholder="0"
                 readOnly
               />
-              <p className="text-xs text-gray-500 mt-2">Calculated automatically based on principal, rate, and tenure</p>
+              <p className="text-xs text-gray-500 mt-2">Calculated automatically based on amount, rate, and tenure</p>
             </div>
 
             <div>
@@ -239,7 +309,7 @@ export const EMIForm: React.FC<EMIFormProps> = ({
               type="submit"
               className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-800 transition-colors font-semibold shadow-lg shadow-blue-500/25"
             >
-              {emi ? 'Update EMI' : 'Add EMI'}
+              {emi ? `Update ${isCredit ? 'Credit' : 'EMI'}` : `Add ${isCredit ? 'Credit' : 'EMI'}`}
             </button>
           </div>
         </form>

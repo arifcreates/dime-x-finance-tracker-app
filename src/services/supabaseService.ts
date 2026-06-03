@@ -285,6 +285,10 @@ class SupabaseService {
       monthlyAmount: emi.monthly_amount,
       remainingBalance: emi.remaining_balance,
       nextDueDate: emi.next_due_date,
+      debtType: emi.debt_type || 'emi',
+      creditTakenDate: emi.credit_taken_date || undefined,
+      creditedAccountId: emi.credited_account_id || undefined,
+      creditedAccountName: emi.credited_account_name || undefined,
     })) || [];
   }
 
@@ -299,6 +303,10 @@ class SupabaseService {
       monthly_amount: emi.monthlyAmount,
       remaining_balance: emi.remainingBalance,
       next_due_date: emi.nextDueDate,
+      debt_type: emi.debtType || 'emi',
+      credit_taken_date: emi.creditTakenDate || null,
+      credited_account_id: emi.creditedAccountId || null,
+      credited_account_name: emi.creditedAccountName || null,
     };
 
     const { data, error } = await supabase

@@ -196,6 +196,10 @@ export interface Database {
           monthly_amount: number
           remaining_balance: number
           next_due_date: string
+          debt_type?: 'emi' | 'credit'
+          credit_taken_date?: string | null
+          credited_account_id?: string | null
+          credited_account_name?: string | null
           created_at: string
           updated_at: string
         }
@@ -209,6 +213,10 @@ export interface Database {
           monthly_amount: number
           remaining_balance: number
           next_due_date: string
+          debt_type?: 'emi' | 'credit'
+          credit_taken_date?: string | null
+          credited_account_id?: string | null
+          credited_account_name?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -222,6 +230,10 @@ export interface Database {
           monthly_amount?: number
           remaining_balance?: number
           next_due_date?: string
+          debt_type?: 'emi' | 'credit'
+          credit_taken_date?: string | null
+          credited_account_id?: string | null
+          credited_account_name?: string | null
           updated_at?: string
         }
       }
