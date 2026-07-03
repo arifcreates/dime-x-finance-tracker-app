@@ -4,8 +4,9 @@ import { Client, Invoice, InvoiceItem } from '../../types';
 import { generateId } from '../../utils/formatters';
 import { dataService } from '../../services/dataService';
 import { useCurrency } from '../../contexts/CurrencyContext';
-import { calculateInvoiceTotals, downloadInvoicePdf, formatInvoiceMoney } from '../../utils/invoiceUtils';
+import { calculateInvoiceTotals, downloadInvoicePdf, formatInvoiceMoney, getNextInvoiceNumber } from '../../utils/invoiceUtils';
 import { currencyService } from '../../services/currencyService';
+import { businessProfileService } from '../../services/businessProfileService';
 
 interface InvoiceFormProps {
   isOpen: boolean;
@@ -29,27 +30,30 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 }) => {
   const { currency: defaultCurrency } = useCurrency();
 
-  const createInitialFormData = (source?: Invoice) => ({
-    clientId: source?.clientId || '',
-    invoiceNumber: source?.invoiceNumber || `INV-${Date.now()}`,
-    date: source?.date || new Date().toISOString().split('T')[0],
-    dueDate: source?.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    status: source?.status || 'draft' as Invoice['status'],
-    currency: source?.currency || defaultCurrency || 'USD',
-    companyName: source?.companyName || '',
-    companyEmail: source?.companyEmail || '',
-    companyPhone: source?.companyPhone || '',
-    companyAddress: source?.companyAddress || '',
-    billToName: source?.billToName || '',
-    billToEmail: source?.billToEmail || '',
-    billToPhone: source?.billToPhone || '',
-    billToAddress: source?.billToAddress || '',
-    notes: source?.notes || '',
-    bankDetails: source?.bankDetails || '',
-    taxRate: source?.taxRate ?? 0,
-    discountType: source?.discountType || 'fixed' as Invoice['discountType'],
-    discountValue: source?.discountValue ?? 0,
-  });
+  const createInitialFormData = (source?: Invoice) => {
+    const profile = businessProfileService.getProfile();
+    return {
+      clientId: source?.clientId || '',
+      invoiceNumber: source?.invoiceNumber || getNextInvoiceNumber(dataService.getCachedInvoices(), profile.invoicePrefix),
+      date: source?.date || new Date().toISOString().split('T')[0],
+      dueDate: source?.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: source?.status || 'draft' as Invoice['status'],
+      currency: source?.currency || defaultCurrency || 'USD',
+      companyName: source?.companyName || profile.companyName,
+      companyEmail: source?.companyEmail || profile.companyEmail,
+      companyPhone: source?.companyPhone || profile.companyPhone,
+      companyAddress: source?.companyAddress || profile.companyAddress,
+      billToName: source?.billToName || '',
+      billToEmail: source?.billToEmail || '',
+      billToPhone: source?.billToPhone || '',
+      billToAddress: source?.billToAddress || '',
+      notes: source?.notes || profile.defaultNotes,
+      bankDetails: source?.bankDetails || profile.bankDetails,
+      taxRate: source?.taxRate ?? profile.defaultTaxRate ?? 0,
+      discountType: source?.discountType || 'fixed' as Invoice['discountType'],
+      discountValue: source?.discountValue ?? 0,
+    };
+  };
 
   const [formData, setFormData] = useState(createInitialFormData(invoice));
   const [items, setItems] = useState<InvoiceItem[]>(
@@ -63,13 +67,47 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     address: '',
   });
   const [clients, setClients] = useState<Client[]>(() => dataService.getCachedClients());
+  const [pastInvoices, setPastInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
     if (!isOpen) return;
     setFormData(createInitialFormData(invoice));
     setItems(invoice?.items?.length ? invoice.items : [{ description: '', quantity: 1, rate: 0, amount: 0 }]);
     dataService.getClients().then(setClients);
+    if (!invoice) {
+      // Cache may be cold on first open; recompute the number once invoices load.
+      dataService.getInvoices().then((invoices) => {
+        const prefix = businessProfileService.getProfile().invoicePrefix;
+        setPastInvoices([...invoices].sort((a, b) => b.date.localeCompare(a.date)));
+        setFormData((prev) => ({ ...prev, invoiceNumber: getNextInvoiceNumber(invoices, prefix) }));
+      });
+    }
   }, [isOpen, invoice, defaultCurrency]);
+
+  // Copy everything except number, dates, and status from a past invoice.
+  const applyPastInvoice = (invoiceId: string) => {
+    const source = pastInvoices.find((item) => item.id === invoiceId);
+    if (!source) return;
+    setFormData((prev) => ({
+      ...prev,
+      clientId: source.clientId,
+      currency: source.currency || prev.currency,
+      companyName: source.companyName || prev.companyName,
+      companyEmail: source.companyEmail || prev.companyEmail,
+      companyPhone: source.companyPhone || prev.companyPhone,
+      companyAddress: source.companyAddress || prev.companyAddress,
+      billToName: source.billToName || '',
+      billToEmail: source.billToEmail || '',
+      billToPhone: source.billToPhone || '',
+      billToAddress: source.billToAddress || '',
+      notes: source.notes || prev.notes,
+      bankDetails: source.bankDetails || prev.bankDetails,
+      taxRate: source.taxRate ?? prev.taxRate,
+      discountType: source.discountType || prev.discountType,
+      discountValue: source.discountValue ?? prev.discountValue,
+    }));
+    setItems(source.items?.length ? source.items.map((item) => ({ ...item })) : [{ description: '', quantity: 1, rate: 0, amount: 0 }]);
+  };
 
   const selectedClient = clients.find((client) => client.id === formData.clientId);
 
@@ -179,6 +217,28 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto overscroll-contain modal-scroll px-5 py-5 sm:px-6 space-y-6">
+          {!invoice && pastInvoices.length > 0 && (
+            <section className="rounded-xl border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-4">
+              <label className={labelClass}>Start from a past invoice (optional)</label>
+              <select
+                defaultValue=""
+                onChange={(e) => e.target.value && applyPastInvoice(e.target.value)}
+                className={selectClass}
+              >
+                <option value="">Start fresh</option>
+                {pastInvoices.map((past) => {
+                  const pastClient = clients.find((c) => c.id === past.clientId);
+                  return (
+                    <option key={past.id} value={past.id}>
+                      {past.invoiceNumber} · {pastClient?.name || past.billToName || 'Client'} · {formatInvoiceMoney(past.amount, past.currency)}
+                    </option>
+                  );
+                })}
+              </select>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Copies the client, items, and terms. Number, dates, and status stay new.</p>
+            </section>
+          )}
+
           <section className="space-y-4">
             <h4 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Invoice Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

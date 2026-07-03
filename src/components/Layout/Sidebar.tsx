@@ -30,7 +30,7 @@ const navigationItems = [
   { id: 'expenses', label: 'Expenses', icon: Receipt },
   { id: 'accounts', label: 'Accounts', icon: Wallet },
   { id: 'emi', label: 'Loans', icon: CreditCard },
-  { id: 'recurring', label: 'Recurring', icon: Calendar },
+  { id: 'recurring', label: 'Subscriptions', icon: Calendar },
   { id: 'reports', label: 'Reports', icon: BarChart3 },
 ];
 

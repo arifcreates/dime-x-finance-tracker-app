@@ -85,7 +85,7 @@ export const Recurring: React.FC = () => {
         <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl sm:rounded-[1.75rem] border border-gray-100 dark:border-gray-800">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Recurring Payments</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Subscriptions & Bills</h3>
               <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm sm:text-base">Manage your subscriptions and recurring expenses</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">

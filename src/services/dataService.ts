@@ -144,11 +144,21 @@ class DataService {
   }
 
   async getInvoices(): Promise<Invoice[]> {
-    this.cache.invoices = await this.fetchFromSupabaseOrStorage(
+    const invoices = await this.fetchFromSupabaseOrStorage<Invoice>(
       () => supabaseService.getInvoices(this.currentUserId!),
       'invoices'
     );
+    this.cache.invoices = invoices.map(invoice => this.applyOverdueStatus(invoice));
     return this.cache.invoices;
+  }
+
+  // Sent invoices past their due date become overdue automatically.
+  private applyOverdueStatus(invoice: Invoice): Invoice {
+    const today = new Date().toISOString().split('T')[0];
+    if (invoice.status !== 'sent' || !invoice.dueDate || invoice.dueDate >= today) return invoice;
+    const overdueInvoice: Invoice = { ...invoice, status: 'overdue' };
+    this.saveInvoice(overdueInvoice).catch(error => console.error('Error persisting overdue status:', error));
+    return overdueInvoice;
   }
 
   async getClients(): Promise<Client[]> {

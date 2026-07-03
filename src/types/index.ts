@@ -52,6 +52,19 @@ export interface InvoiceItem {
   amount: number;
 }
 
+export interface BusinessProfile {
+  companyName: string;
+  companyEmail: string;
+  companyPhone: string;
+  companyAddress: string;
+  bankDetails: string;
+  defaultNotes: string;
+  defaultTaxRate: number;
+  invoicePrefix: string;
+  accentColor: string;
+  logoDataUrl: string;
+}
+
 export interface Client {
   id: string;
   name: string;

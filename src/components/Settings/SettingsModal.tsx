@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { X, User, Bell, Shield, Palette, LogOut, Camera, Trash2 } from 'lucide-react';
+import { X, User, Bell, Shield, Palette, LogOut, Camera, Trash2, Briefcase, ImagePlus } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { SelectField } from '../Forms/SelectField';
 import { supabaseConfigured } from '../../lib/supabase';
 import { supabaseService } from '../../services/supabaseService';
 import { currencyService } from '../../services/currencyService';
+import { businessProfileService } from '../../services/businessProfileService';
+import { BusinessProfile } from '../../types';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -28,6 +30,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile>(() => businessProfileService.getProfile());
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -55,6 +59,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     });
     setSaveError(null);
     setAvatarError(null);
+    setLogoError(null);
+    setBusinessProfile(businessProfileService.getProfile());
   }, [isOpen, user]);
 
   const avatarInitial = (formData.name || formData.email || 'U').trim().charAt(0).toUpperCase();
@@ -114,6 +120,59 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
+  const resizeLogo = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        reject(new Error('Choose an image file.'));
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        reject(new Error('Use an image under 5 MB.'));
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read that image.'));
+      reader.onload = () => {
+        const image = new Image();
+        image.onerror = () => reject(new Error('Could not load that image.'));
+        image.onload = () => {
+          const maxSize = 480;
+          const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(image.width * scale);
+          canvas.height = Math.round(image.height * scale);
+          const context = canvas.getContext('2d');
+
+          if (!context) {
+            reject(new Error('Could not prepare that image.'));
+            return;
+          }
+
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        image.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleLogoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setLogoError(null);
+    try {
+      const logoDataUrl = await resizeLogo(file);
+      setBusinessProfile({ ...businessProfile, logoDataUrl });
+    } catch (error: any) {
+      setLogoError(error.message || 'Could not use that image.');
+    }
+  };
+
   const handleSave = async () => {
     const preferences = {
       ...user?.preferences,
@@ -147,6 +206,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         });
       }
 
+      businessProfileService.saveProfile({
+        ...businessProfile,
+        invoicePrefix: businessProfile.invoicePrefix.trim() || 'INV',
+      });
       localStorage.setItem('user', JSON.stringify(updatedUser));
       onUpdateUser(updatedUser);
       setCurrency(formData.currency);
@@ -168,6 +231,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
+    { id: 'business', label: 'Business', icon: Briefcase },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'preferences', label: 'Preferences', icon: Palette },
@@ -234,7 +298,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="flex min-h-0 flex-1 flex-col sm:flex-row overflow-hidden">
           {/* Sidebar Tabs */}
           <div className="w-full sm:w-1/3 bg-[#f7f7f4] dark:bg-gray-800 border-b sm:border-b-0 sm:border-r border-black/[0.07] dark:border-gray-700 px-4 py-3 sm:p-4 overflow-x-auto sm:overflow-y-auto">
-            <nav className="grid grid-cols-4 gap-2 sm:block sm:space-y-2 sm:gap-0">
+            <nav className="grid grid-cols-5 gap-2 sm:block sm:space-y-2 sm:gap-0">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -333,6 +397,150 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         placeholder="Enter your phone number"
                       />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'business' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Business Profile</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Saved once, used on every invoice you create. You can still override details per invoice.
+                  </p>
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-4 rounded-xl border border-black/[0.07] bg-[#fbfbf8] p-4 dark:border-gray-700 dark:bg-gray-800 sm:flex-row sm:items-center">
+                      <div className="flex h-20 w-28 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-black/[0.07] bg-white dark:border-gray-700 dark:bg-gray-900">
+                        {businessProfile.logoDataUrl ? (
+                          <img src={businessProfile.logoDataUrl} alt="Business logo" className="max-h-full max-w-full object-contain" />
+                        ) : (
+                          <ImagePlus className="h-6 w-6 text-gray-300 dark:text-gray-600" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">Logo</p>
+                        <p className="mt-1 text-sm leading-5 text-gray-500 dark:text-gray-400">
+                          Appears in the invoice PDF header. PNG with transparency works best.
+                        </p>
+                        {logoError && (
+                          <p className="mt-2 text-sm font-medium text-red-600 dark:text-red-400">{logoError}</p>
+                        )}
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <label className="inline-flex min-h-[40px] cursor-pointer items-center gap-2 rounded-xl bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100">
+                            <Camera className="h-4 w-4" />
+                            <span>{businessProfile.logoDataUrl ? 'Change logo' : 'Upload logo'}</span>
+                            <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                          </label>
+                          {businessProfile.logoDataUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setBusinessProfile({ ...businessProfile, logoDataUrl: '' })}
+                              className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-black/[0.11] bg-white px-4 py-2 text-sm font-medium text-[#374151] transition-colors hover:bg-[#efefeb] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span>Remove</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Business Name</label>
+                      <input
+                        type="text"
+                        value={businessProfile.companyName}
+                        onChange={(e) => setBusinessProfile({ ...businessProfile, companyName: e.target.value })}
+                        placeholder="Your studio or company name"
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Business Email</label>
+                        <input
+                          type="email"
+                          value={businessProfile.companyEmail}
+                          onChange={(e) => setBusinessProfile({ ...businessProfile, companyEmail: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Business Phone</label>
+                        <input
+                          type="tel"
+                          value={businessProfile.companyPhone}
+                          onChange={(e) => setBusinessProfile({ ...businessProfile, companyPhone: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Business Address</label>
+                      <textarea
+                        rows={3}
+                        value={businessProfile.companyAddress}
+                        onChange={(e) => setBusinessProfile({ ...businessProfile, companyAddress: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Payment Details</label>
+                      <textarea
+                        rows={3}
+                        value={businessProfile.bankDetails}
+                        onChange={(e) => setBusinessProfile({ ...businessProfile, bankDetails: e.target.value })}
+                        placeholder="Account name, bank, IBAN/account number, payment instructions"
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Invoice Notes</label>
+                      <textarea
+                        rows={2}
+                        value={businessProfile.defaultNotes}
+                        onChange={(e) => setBusinessProfile({ ...businessProfile, defaultNotes: e.target.value })}
+                        placeholder="Payment terms, thank-you message"
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Invoice Prefix</label>
+                        <input
+                          type="text"
+                          value={businessProfile.invoicePrefix}
+                          onChange={(e) => setBusinessProfile({ ...businessProfile, invoicePrefix: e.target.value.toUpperCase() })}
+                          placeholder="INV"
+                          className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Tax Rate (%)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={businessProfile.defaultTaxRate || ''}
+                          onChange={(e) => setBusinessProfile({ ...businessProfile, defaultTaxRate: parseFloat(e.target.value) || 0 })}
+                          className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Brand Accent</label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="color"
+                            value={businessProfile.accentColor}
+                            onChange={(e) => setBusinessProfile({ ...businessProfile, accentColor: e.target.value })}
+                            className="h-12 w-14 flex-shrink-0 cursor-pointer rounded-xl border border-gray-200 bg-white p-1 dark:border-gray-600 dark:bg-gray-800"
+                            aria-label="Brand accent color"
+                          />
+                          <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{businessProfile.accentColor.toUpperCase()}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

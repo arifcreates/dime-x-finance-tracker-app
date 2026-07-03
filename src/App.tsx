@@ -31,7 +31,7 @@ const sectionTitles: Record<string, string> = {
   expenses: 'Expenses & Receipts',
   accounts: 'Accounts & Cash',
   emi: 'Loans & Credit',
-  recurring: 'Recurring Payments',
+  recurring: 'Subscriptions & Bills',
   reports: 'Reports & Analytics',
 };
 

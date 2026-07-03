@@ -235,7 +235,7 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
 
       // Generate filename with timestamp
       const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `FinanceFlow_Report_${timestamp}.xlsx`;
+      const filename = `Dime-x_Report_${timestamp}.xlsx`;
 
       // Write and download file
       XLSX.writeFile(workbook, filename);

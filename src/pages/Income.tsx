@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Download, FileText, Plus, DollarSign, Edit, Trash2 } from 'lucide-react';
+import { Copy, Download, FileText, Plus, DollarSign, Edit, Trash2 } from 'lucide-react';
 import { InvoiceForm } from '../components/Forms/InvoiceForm';
 import { TransactionForm } from '../components/Forms/TransactionForm';
 import { InvoiceStatusModal } from '../components/Forms/InvoiceStatusModal';
 import { Invoice, Transaction } from '../types';
 import { dataService } from '../services/dataService';
-import { formatDate } from '../utils/formatters';
+import { formatDate, generateId } from '../utils/formatters';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
-import { downloadInvoicePdf, formatInvoiceMoney } from '../utils/invoiceUtils';
+import { downloadInvoicePdf, formatInvoiceMoney, getNextInvoiceNumber } from '../utils/invoiceUtils';
+import { businessProfileService } from '../services/businessProfileService';
 
 interface IncomeProps {
   onUpdate?: () => void;
@@ -62,6 +63,21 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
 
   const handleEditInvoice = (invoice: Invoice) => {
     setEditingInvoice(invoice);
+    setShowInvoiceForm(true);
+  };
+
+  const handleDuplicateInvoice = async (invoice: Invoice) => {
+    const copy: Invoice = {
+      ...invoice,
+      id: generateId(),
+      invoiceNumber: getNextInvoiceNumber(invoices, businessProfileService.getProfile().invoicePrefix),
+      date: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'draft',
+    };
+    await dataService.saveInvoice(copy);
+    await refreshData();
+    setEditingInvoice(copy);
     setShowInvoiceForm(true);
   };
 
@@ -233,6 +249,12 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
                                 <Edit className="h-4 w-4 mx-auto" />
                               </button>
                               <button
+                                onClick={() => handleDuplicateInvoice(invoice)}
+                                className="flex-1 p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              >
+                                <Copy className="h-4 w-4 mx-auto" />
+                              </button>
+                              <button
                                 onClick={() => handleDownloadInvoice(invoice)}
                                 className="flex-1 p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                               >
@@ -293,6 +315,13 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
                                       className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                     >
                                       <Edit className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDuplicateInvoice(invoice)}
+                                      className="p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                      title="Duplicate invoice"
+                                    >
+                                      <Copy className="h-4 w-4" />
                                     </button>
                                     <button
                                       onClick={() => handleDownloadInvoice(invoice)}

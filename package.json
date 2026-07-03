@@ -1,5 +1,5 @@
 {
-  "name": "freelancer-finance-tracker",
+  "name": "dime-x",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -12,6 +12,8 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",
     "chart.js": "^4.4.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.2.0",

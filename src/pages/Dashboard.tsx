@@ -8,7 +8,7 @@ import { InvoiceForm } from '../components/Forms/InvoiceForm';
 import { TransactionsModal } from '../components/Dashboard/TransactionsModal';
 import { TrendingUp, TrendingDown, Wallet, Plus, DollarSign, Activity, PieChart } from 'lucide-react';
 import { getDaysUntilDate } from '../utils/formatters';
-import { Transaction, Account, EMI, CreditCard, RecurringPayment } from '../types';
+import { Transaction, Account, EMI, CreditCard, RecurringPayment, Invoice } from '../types';
 import { dataService } from '../services/dataService';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
@@ -45,6 +45,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [emis, setEmis] = useState<EMI[]>([]);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [recurringPayments, setRecurringPayments] = useState<RecurringPayment[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [thisMonthIncome, setThisMonthIncome] = useState(0);
   const [thisMonthExpenses, setThisMonthExpenses] = useState(0);
   const [cashFlow, setCashFlow] = useState(0);
@@ -65,7 +66,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const loadData = async () => {
     const [
-      txns, accs, emiList, cards, payments,
+      txns, accs, emiList, cards, payments, invs,
       income, expenses, flow, balance,
       lmIncome, lmExpenses, incByCat
     ] = await Promise.all([
@@ -74,6 +75,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       dataService.getEMIs(),
       dataService.getCreditCards(),
       dataService.getRecurringPayments(),
+      dataService.getInvoices(),
       dataService.getMonthlyIncome(),
       dataService.getMonthlyExpenses(),
       dataService.getCashFlow(),
@@ -88,6 +90,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     setEmis(emiList);
     setCreditCards(cards);
     setRecurringPayments(payments);
+    setInvoices(invs);
     setThisMonthIncome(income);
     setThisMonthExpenses(expenses);
     setCashFlow(flow);
@@ -195,8 +198,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
   }, []);
 
-  const incomeChange = lastMonthIncome > 0 ? ((thisMonthIncome - lastMonthIncome) / lastMonthIncome * 100).toFixed(1) : '0';
-  const expenseChange = lastMonthExpenses > 0 ? ((thisMonthExpenses - lastMonthExpenses) / lastMonthExpenses * 100).toFixed(1) : '0';
+  const formatChange = (current: number, previous: number) => {
+    if (previous <= 0) return '0%';
+    const change = ((current - previous) / previous) * 100;
+    return `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+  };
+  const incomeChange = formatChange(thisMonthIncome, lastMonthIncome);
+  const expenseChange = formatChange(thisMonthExpenses, lastMonthExpenses);
+
+  const greeting = (() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  })();
 
   const totalIncome = Object.values(incomeByCategory).reduce((sum, amount) => sum + amount, 0);
 
@@ -225,6 +240,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
       amount: payment.amount,
       dueDate: payment.nextDate,
       urgency: getDaysUntilDate(payment.nextDate) <= 3 ? 'high' as const : 'low' as const,
+    })),
+    ...invoices.filter(inv => inv.status === 'sent' || inv.status === 'overdue').map(inv => ({
+      id: inv.id,
+      type: 'invoice' as const,
+      title: `Invoice ${inv.invoiceNumber} due`,
+      amount: inv.amount,
+      dueDate: inv.dueDate,
+      urgency: getDaysUntilDate(inv.dueDate) <= 3 ? 'high' as const : 'medium' as const,
     })),
   ].sort((a, b) => getDaysUntilDate(a.dueDate) - getDaysUntilDate(b.dueDate));
 
@@ -263,7 +286,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <TrendingUp className="h-3 w-3 text-gray-600 dark:text-gray-300" />
                   </div>
                   <span className="hidden sm:inline-flex text-gray-500 dark:text-gray-400 text-xs font-bold bg-white dark:bg-gray-900 px-2 py-1 rounded-full">
-                    +{incomeChange}%
+                    {incomeChange}
                   </span>
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 text-[11px] sm:text-xs font-medium mb-1 leading-tight">Income</p>
@@ -276,7 +299,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <TrendingDown className="h-3 w-3 text-gray-600 dark:text-gray-300" />
                   </div>
                   <span className="hidden sm:inline-flex text-gray-500 dark:text-gray-400 text-xs font-bold bg-white dark:bg-gray-900 px-2 py-1 rounded-full">
-                    +{expenseChange}%
+                    {expenseChange}
                   </span>
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 text-[11px] sm:text-xs font-medium mb-1 leading-tight">Expenses</p>
@@ -653,7 +676,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Welcome Header */}
         <div className="mb-2 sm:mb-6">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2 tracking-tight">
-            Good morning, {user?.name || 'John'} 👋
+            {greeting}, {user?.name || 'there'} 👋
           </h1>
           <p className="text-gray-500 dark:text-gray-400 font-medium text-sm hidden sm:block">
             Here's what's happening with your finances today

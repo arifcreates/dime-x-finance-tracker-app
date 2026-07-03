@@ -1,11 +1,11 @@
 import React from 'react';
-import { AlertTriangle, Calendar, CreditCard } from 'lucide-react';
+import { AlertTriangle, Calendar, CreditCard, FileText } from 'lucide-react';
 import { formatCurrency, getDaysUntilDate, formatDate } from '../../utils/formatters';
 import { useCurrencyFormat } from '../../hooks/useCurrencyFormat';
 
 interface Alert {
   id: string;
-  type: 'emi' | 'credit-card' | 'subscription';
+  type: 'emi' | 'credit-card' | 'subscription' | 'invoice';
   title: string;
   amount: number;
   dueDate: string;
@@ -25,6 +25,8 @@ export const UpcomingAlerts: React.FC<UpcomingAlertsProps> = ({ alerts }) => {
         return Calendar;
       case 'credit-card':
         return CreditCard;
+      case 'invoice':
+        return FileText;
       default:
         return AlertTriangle;
     }
