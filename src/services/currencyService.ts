@@ -13,6 +13,7 @@ class CurrencyService {
     CHF: 0.88,
     CNY: 7.24,
     SGD: 1.34,
+    RUB: 77.700707,
   };
 
   private lastUpdated: Date = new Date();
@@ -95,6 +96,7 @@ class CurrencyService {
       { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
       { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
       { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
+      { code: 'RUB', name: 'Russian Ruble', symbol: '₽' },
     ];
   }
 

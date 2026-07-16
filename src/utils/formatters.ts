@@ -1,5 +1,9 @@
 export const formatCurrency = (amount: number, currency: string = 'USD'): string => {
-  const locale = currency === 'INR' ? 'en-IN' : 'en-US';
+  const localeMap: Record<string, string> = {
+    INR: 'en-IN',
+    RUB: 'ru-RU',
+  };
+  const locale = localeMap[currency] || 'en-US';
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
