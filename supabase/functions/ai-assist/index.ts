@@ -6,7 +6,11 @@ export async function handleRequest(req: Request) {
   try {
     const user=await authenticate(req);
     // Trial API keys are deliberately not enabled for customer financial data.
-    if(Deno.env.get('AI_PRODUCTION_APPROVED')!=='true') return json({error:'AI is not enabled yet. Your finance workspace is available.'},503,req);
+    const configured = ['AI_API_KEY','AI_MODEL','AI_API_URL'].every(name=>Deno.env.get(name)?.trim());
+    if(!configured || Deno.env.get('AI_PRODUCTION_APPROVED')!=='true') return json({
+      code:'AI_NOT_CONFIGURED',
+      error:'AI drafting is not available yet. The platform owner needs to finish connecting the AI provider. You can create invoices and reminders manually.',
+    },503,req);
     const input=await body(req);
     if(input.consent!==true) return json({error:'Review the AI data-sharing notice first.'},400,req);
     const task=input.task;

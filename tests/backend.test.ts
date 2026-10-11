@@ -8,6 +8,6 @@ test('webhook HMAC authenticates exact body and rejects tampering',async()=>{con
 test('AI disabled response never contacts a model',async()=>{
  const original=globalThis.fetch;let calls=0;
  globalThis.fetch=async()=>{calls++;return new Response(JSON.stringify({id:'11111111-1111-4111-8111-111111111111',email:'test@example.com',email_confirmed_at:new Date().toISOString()}),{headers:{'Content-Type':'application/json'}});};
- try {const {handleRequest}=await import('../supabase/functions/ai-assist/index.ts');const response=await handleRequest(new Request('https://example.test',{method:'POST',headers:{Authorization:'Bearer test-token','Content-Type':'application/json'},body:'{"task":"invoice-draft","description":"Synthetic work","consent":true}'}));assert.equal(response.status,503);assert.equal(calls,1);}
+ try {const {handleRequest}=await import('../supabase/functions/ai-assist/index.ts');const response=await handleRequest(new Request('https://example.test',{method:'POST',headers:{Authorization:'Bearer test-token','Content-Type':'application/json'},body:'{"task":"invoice-draft","description":"Synthetic work","consent":true}'}));assert.equal(response.status,503);assert.equal((await response.json()).code,'AI_NOT_CONFIGURED');assert.equal(calls,1);}
  finally {globalThis.fetch=original;}
 });
