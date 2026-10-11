@@ -28,11 +28,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 }) => {
   const { currency } = useCurrency();
   const currencySymbol = currencyService.getCurrencySymbol(currency);
+  const draftId = React.useRef(generateId());
+  React.useEffect(() => { if (isOpen) draftId.current = generateId(); }, [isOpen]);
   const [formData, setFormData] = useState({
     description: transaction?.description || initialDescription,
     amount: transaction?.amount ? String(transaction.amount) : '',
     category: transaction?.category || '',
-    account: transaction?.account || '',
+    account: transaction?.accountId || '',
     date: transaction?.date || new Date().toISOString().split('T')[0],
   });
 
@@ -44,7 +46,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         description: transaction?.description || initialDescription || '',
         amount: transaction?.amount ? String(transaction.amount) : '',
         category: transaction?.category || '',
-        account: transaction?.account || prev.account,
+        account: transaction?.accountId || prev.account,
         date: transaction?.date || new Date().toISOString().split('T')[0],
       }));
 
@@ -52,7 +54,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         setAccounts(loadedAccounts);
         setFormData((prev) => ({
           ...prev,
-          account: transaction?.account || prev.account || loadedAccounts[0]?.name || '',
+          account: transaction?.accountId || prev.account || loadedAccounts[0]?.id || '',
         }));
       });
     }
@@ -67,7 +69,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     label: category,
   }));
   const accountOptions = accounts.map(account => ({
-    value: account.name,
+    value: account.id,
     label: account.name,
   }));
 
@@ -86,25 +88,18 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     }
     
     const newTransaction: Transaction = {
-      id: transaction?.id || generateId(),
+      id: transaction?.id || draftId.current,
       ...formData,
       amount,
       type,
       status: 'completed',
     };
 
-    const selectedAccount = accounts.find(account => account.name === newTransaction.account);
-    if (selectedAccount) {
-      const previousAmount =
-        transaction?.account === selectedAccount.name && transaction.type === type
-          ? transaction.amount
-          : 0;
-      const direction = type === 'income' ? 1 : -1;
-      await dataService.saveAccount({
-        ...selectedAccount,
-        balance: selectedAccount.balance - direction * previousAmount + direction * amount,
-      });
-    }
+    const selectedAccount = accounts.find(account => account.id === formData.account);
+    if (!selectedAccount) throw new Error('Select a valid account.');
+    newTransaction.account = selectedAccount.name;
+    newTransaction.accountId = selectedAccount.id;
+    newTransaction.currency = selectedAccount.currency;
 
     await dataService.saveTransaction(newTransaction);
     onSave(newTransaction);
@@ -115,7 +110,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       description: '',
       amount: '',
       category: '',
-      account: accounts.length > 0 ? accounts[0].name : '',
+      account: accounts.length > 0 ? accounts[0].id : '',
       date: new Date().toISOString().split('T')[0],
     });
   };

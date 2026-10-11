@@ -1,3 +1,4 @@
+import { businessProfileService } from '../services/businessProfileService';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const CurrencyContext = createContext<{
@@ -14,17 +15,18 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode; initialCurr
     try {
       const user = localStorage.getItem('user');
       if (user) return JSON.parse(user).preferences?.currency || 'USD';
-    } catch {}
+    } catch { /* Use the default for invalid browser preferences. */ }
     return 'USD';
   });
 
   useEffect(() => {
-    if (initialCurrency && initialCurrency !== currency) {
+    if (initialCurrency) {
+      businessProfileService.setReportCurrency(initialCurrency);
       setCurrencyState(initialCurrency);
     }
   }, [initialCurrency]);
 
-  const setCurrency = (c: string) => setCurrencyState(c);
+  const setCurrency = (c: string) => { businessProfileService.setReportCurrency(c); setCurrencyState(c); };
 
   return (
     <CurrencyContext.Provider value={{ currency, setCurrency }}>
@@ -33,4 +35,5 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode; initialCurr
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCurrency = () => useContext(CurrencyContext);

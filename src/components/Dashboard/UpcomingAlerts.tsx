@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertTriangle, Calendar, CreditCard, FileText } from 'lucide-react';
-import { formatCurrency, getDaysUntilDate, formatDate } from '../../utils/formatters';
+import { getDaysUntilDate, formatDate } from '../../utils/formatters';
 import { useCurrencyFormat } from '../../hooks/useCurrencyFormat';
 
 interface Alert {

@@ -16,6 +16,8 @@ export const TransferForm: React.FC<TransferFormProps> = ({
   onTransfer,
   accounts,
 }) => {
+  const requestId = React.useRef(crypto.randomUUID());
+  React.useEffect(() => { if (isOpen) requestId.current = crypto.randomUUID(); }, [isOpen]);
   const [formData, setFormData] = useState({
     fromAccount: '',
     toAccount: '',
@@ -23,7 +25,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
     description: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (formData.fromAccount === formData.toAccount) {
@@ -44,46 +46,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
       return;
     }
 
-    // Update account balances
-    const updatedFromAccount = {
-      ...fromAccount,
-      balance: fromAccount.balance - formData.amount
-    };
-
-    const updatedToAccount = {
-      ...toAccount,
-      balance: toAccount.balance + formData.amount
-    };
-
-    // Save updated accounts
-    dataService.saveAccount(updatedFromAccount);
-    dataService.saveAccount(updatedToAccount);
-
-    // Create transfer transactions
-    const transferOutTransaction = {
-      id: `transfer-out-${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
-      description: `Transfer to ${toAccount.name}${formData.description ? ` - ${formData.description}` : ''}`,
-      amount: formData.amount,
-      type: 'expense' as const,
-      category: 'Transfer',
-      account: fromAccount.name,
-      status: 'completed' as const,
-    };
-
-    const transferInTransaction = {
-      id: `transfer-in-${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
-      description: `Transfer from ${fromAccount.name}${formData.description ? ` - ${formData.description}` : ''}`,
-      amount: formData.amount,
-      type: 'income' as const,
-      category: 'Transfer',
-      account: toAccount.name,
-      status: 'completed' as const,
-    };
-
-    dataService.saveTransaction(transferOutTransaction);
-    dataService.saveTransaction(transferInTransaction);
+    await dataService.transfer(fromAccount.id, toAccount.id, formData.amount, formData.description, requestId.current);
 
     onTransfer();
     onClose();
@@ -137,7 +100,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                 <option value="">Select source account</option>
                 {accounts.map(account => (
                   <option key={account.id} value={account.id}>
-                    {account.name} - ${account.balance.toLocaleString()}
+                    {account.name} - {account.balance.toLocaleString()} {account.currency}
                   </option>
                 ))}
               </select>
@@ -163,7 +126,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                 <option value="">Select destination account</option>
                 {availableToAccounts.map(account => (
                   <option key={account.id} value={account.id}>
-                    {account.name} - ${account.balance.toLocaleString()}
+                    {account.name} - {account.balance.toLocaleString()} {account.currency}
                   </option>
                 ))}
               </select>
@@ -191,7 +154,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
               </div>
               {selectedFromAccount && (
                 <p className="text-sm text-gray-500 mt-2">
-                  Available: ${selectedFromAccount.balance.toLocaleString()}
+                  Available: {selectedFromAccount.balance.toLocaleString()} {selectedFromAccount.currency}
                 </p>
               )}
             </div>

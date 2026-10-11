@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useCurrency } from '../../contexts/CurrencyContext';
+import { currencyService } from '../../services/currencyService';
+import { formatCurrency } from '../../utils/formatters';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,6 +12,8 @@ import {
   Tooltip,
   Legend,
   Filler,
+  type ChartOptions,
+  type TooltipItem,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { Transaction } from '../../types';
@@ -29,6 +34,13 @@ interface CashFlowChartProps {
 }
 
 export const CashFlowChart: React.FC<CashFlowChartProps> = ({ transactions }) => {
+  const { currency } = useCurrency();
+  const [normalized, setNormalized] = useState<Transaction[]>([]);
+  useEffect(() => {
+    let active = true;
+    Promise.all(transactions.filter(t=>t.status==='completed' && t.category!=='Transfer').map(async t=>({ ...t, amount: await currencyService.convertCurrency(t.amount,t.currency || 'USD',currency) }))).then(items=>{if(active)setNormalized(items);}).catch(()=>{if(active)setNormalized([]);});
+    return () => {active=false;};
+  }, [transactions,currency]);
   const months = [];
   const currentDate = new Date();
   
@@ -42,7 +54,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({ transactions }) =>
   }
 
   const chartData = months.map(month => {
-    const monthTransactions = transactions.filter(t => {
+    const monthTransactions = normalized.filter(t => {
       const transactionDate = new Date(t.date);
       return transactionDate.getMonth() === month.month && 
              transactionDate.getFullYear() === month.year;
@@ -79,7 +91,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({ transactions }) =>
     ],
   };
 
-  const options = {
+  const options: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -96,14 +108,14 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({ transactions }) =>
         padding: 12,
         titleFont: {
           size: 12,
-          weight: '600',
+          weight: 600,
         },
         bodyFont: {
           size: 12,
-          weight: '500',
+          weight: 500,
         },
         callbacks: {
-          label: function(context: any) {
+          label: function(context: TooltipItem<'line'>) {
             const value = context.parsed.y;
             const sign = value >= 0 ? '+' : '';
             return `Cash Flow: ${sign}$${value.toLocaleString()}`;
@@ -116,15 +128,14 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({ transactions }) =>
         beginAtZero: true,
         grid: {
           color: 'rgba(0, 0, 0, 0.05)',
-          drawBorder: false,
-        },
+          },
         ticks: {
-          callback: function(value: any) {
-            return '$' + value.toLocaleString();
+          callback: function(value: string | number) {
+            return formatCurrency(Number(value),currency);
           },
           font: {
             size: 11,
-            weight: '500',
+            weight: 500,
           },
           color: '#6B7280',
         },
@@ -136,7 +147,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({ transactions }) =>
         ticks: {
           font: {
             size: 11,
-            weight: '600',
+            weight: 600,
           },
           color: '#374151',
         },

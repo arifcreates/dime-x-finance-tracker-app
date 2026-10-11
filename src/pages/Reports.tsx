@@ -1,9 +1,10 @@
+import { moneySummary } from '../utils/money';
 import React, { useEffect, useState } from 'react';
 import { TrendingUp, Download, FileSpreadsheet, Calendar, Search } from 'lucide-react';
 import { dataService } from '../services/dataService';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 import { Account, Invoice, Transaction } from '../types';
-import * as XLSX from 'xlsx';
+
 
 interface ReportsProps {
   searchQuery?: string;
@@ -56,6 +57,7 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
     setIsExporting(true);
     
     try {
+      const XLSX = await import('xlsx');
       // Get all data
       const [transactions, accounts, invoices, emis, creditCards, recurringPayments, clients] = await Promise.all([
         dataService.getTransactions(),
@@ -72,7 +74,7 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
         const transactionDate = new Date(t.date);
         const fromDate = new Date(dateRange.from);
         const toDate = new Date(dateRange.to);
-        return transactionDate >= fromDate && transactionDate <= toDate;
+        return transactionDate >= fromDate && transactionDate <= toDate && t.status === 'completed' && t.category !== 'Transfer';
       });
 
       // Create workbook
@@ -85,10 +87,10 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
         ['Period:', `${dateRange.from} to ${dateRange.to}`],
         [],
         ['OVERVIEW'],
-        ['Total Income:', fmt(filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0))],
-        ['Total Expenses:', fmt(filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0))],
-        ['Net Cash Flow:', fmt(filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) - filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0))],
-        ['Total Account Balance:', fmt(accounts.reduce((sum, acc) => sum + acc.balance, 0))],
+        ['Total Income:', moneySummary(filteredTransactions.filter(t => t.type === 'income'), t => t.amount)],
+        ['Total Expenses:', moneySummary(filteredTransactions.filter(t => t.type === 'expense'), t => t.amount)],
+        ['Net Cash Flow:', moneySummary(filteredTransactions, t => t.type === 'income' ? t.amount : -t.amount)],
+        ['Total Account Balance:', moneySummary(accounts, a => a.balance)],
         [],
         ['ACCOUNTS BREAKDOWN'],
         ['Account Name', 'Type', 'Balance', 'Currency'],
@@ -99,7 +101,7 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
 
       // Transactions Sheet
       const transactionData = [
-        ['Date', 'Description', 'Amount', 'Type', 'Category', 'Account', 'Status'],
+        ['Date', 'Description', 'Amount', 'Type', 'Category', 'Account', 'Status', 'Currency'],
         ...filteredTransactions.map(t => [
           t.date,
           t.description,
@@ -107,7 +109,8 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
           t.type,
           t.category,
           t.account,
-          t.status
+          t.status,
+          t.currency || 'USD'
         ])
       ];
       const transactionSheet = XLSX.utils.aoa_to_sheet(transactionData);
@@ -115,40 +118,18 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
 
       // Income Analysis Sheet
       const incomeTransactions = filteredTransactions.filter(t => t.type === 'income');
-      const incomeByCategory = incomeTransactions.reduce((acc, t) => {
-        acc[t.category] = (acc[t.category] || 0) + t.amount;
-        return acc;
-      }, {} as Record<string, number>);
-      
       const incomeData = [
-        ['Income Analysis'],
-        [],
-        ['Category', 'Amount', 'Percentage'],
-        ...Object.entries(incomeByCategory).map(([category, amount]) => [
-          category,
-          amount,
-          `${((amount / incomeTransactions.reduce((sum, t) => sum + t.amount, 0)) * 100).toFixed(1)}%`
-        ])
+        ['Income Analysis'], ['Category', 'Amount by currency'],
+        ...[...new Set(incomeTransactions.map(t=>t.category))].map(category=>[category,moneySummary(incomeTransactions.filter(t=>t.category===category),t=>t.amount)])
       ];
       const incomeSheet = XLSX.utils.aoa_to_sheet(incomeData);
       XLSX.utils.book_append_sheet(workbook, incomeSheet, 'Income Analysis');
 
       // Expense Analysis Sheet
       const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense');
-      const expenseByCategory = expenseTransactions.reduce((acc, t) => {
-        acc[t.category] = (acc[t.category] || 0) + t.amount;
-        return acc;
-      }, {} as Record<string, number>);
-      
       const expenseData = [
-        ['Expense Analysis'],
-        [],
-        ['Category', 'Amount', 'Percentage'],
-        ...Object.entries(expenseByCategory).map(([category, amount]) => [
-          category,
-          amount,
-          `${((amount / expenseTransactions.reduce((sum, t) => sum + t.amount, 0)) * 100).toFixed(1)}%`
-        ])
+        ['Expense Analysis'], ['Category', 'Amount by currency'],
+        ...[...new Set(expenseTransactions.map(t=>t.category))].map(category=>[category,moneySummary(expenseTransactions.filter(t=>t.category===category),t=>t.amount)])
       ];
       const expenseSheet = XLSX.utils.aoa_to_sheet(expenseData);
       XLSX.utils.book_append_sheet(workbook, expenseSheet, 'Expense Analysis');
@@ -173,7 +154,7 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
 
       // EMIs & Loans Sheet
       const emiData = [
-        ['Loan Name', 'Principal', 'Interest Rate', 'Tenure (months)', 'Monthly EMI', 'Remaining Balance', 'Next Due Date'],
+        ['Loan Name', 'Principal', 'Interest Rate', 'Tenure (months)', 'Monthly EMI', 'Remaining Balance', 'Next Due Date', 'Currency'],
         ...emis.map(emi => [
           emi.name,
           emi.principal,
@@ -181,7 +162,7 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
           emi.tenure,
           emi.monthlyAmount,
           emi.remainingBalance,
-          emi.nextDueDate
+          emi.nextDueDate, emi.currency || 'USD'
         ])
       ];
       const emiSheet = XLSX.utils.aoa_to_sheet(emiData);
@@ -189,7 +170,7 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
 
       // Credit Cards Sheet
       const creditCardData = [
-        ['Card Name', 'Credit Limit', 'Current Balance', 'Available Credit', 'Utilization %', 'Minimum Due', 'Due Date', 'Interest Rate'],
+        ['Card Name', 'Credit Limit', 'Current Balance', 'Available Credit', 'Utilization %', 'Minimum Due', 'Due Date', 'Interest Rate', 'Currency'],
         ...creditCards.map(card => [
           card.name,
           card.creditLimit,
@@ -198,7 +179,7 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
           `${((card.currentBalance / card.creditLimit) * 100).toFixed(1)}%`,
           card.minimumDue,
           card.dueDate,
-          `${card.interestRate}%`
+          `${card.interestRate}%`, card.currency || 'USD'
         ])
       ];
       const creditCardSheet = XLSX.utils.aoa_to_sheet(creditCardData);
@@ -214,7 +195,7 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
           payment.category,
           payment.nextDate,
           payment.frequency === 'monthly' ? payment.amount * 12 : payment.amount,
-          payment.isActive ? 'Active' : 'Inactive'
+          payment.isActive ? 'Active' : 'Inactive', payment.currency || 'USD'
         ])
       ];
       const recurringSheet = XLSX.utils.aoa_to_sheet(recurringData);
@@ -297,17 +278,17 @@ export const Reports: React.FC<ReportsProps> = ({ searchQuery = '' }) => {
                 id: `txn-${item.id}`,
                 title: item.description,
                 meta: `${item.type} · ${item.category} · ${item.account}`,
-                value: fmt(item.amount),
+                value: fmt(item.amount, item.currency),
               })), ...accountMatches.slice(0, 4).map(item => ({
                 id: `acc-${item.id}`,
                 title: item.name,
                 meta: `${item.type} · ${item.currency}`,
-                value: fmt(item.balance),
+                value: fmt(item.balance, item.currency),
               })), ...invoiceMatches.slice(0, 4).map(item => ({
                 id: `inv-${item.id}`,
                 title: item.invoiceNumber,
                 meta: `invoice · ${item.status}`,
-                value: fmt(item.amount),
+                value: fmt(item.amount, item.currency),
               }))].map(result => (
                 <div key={result.id} className="flex items-center justify-between gap-4 border border-gray-100 dark:border-gray-800 rounded-xl p-3">
                   <div className="min-w-0">

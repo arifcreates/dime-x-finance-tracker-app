@@ -3,5 +3,5 @@ import { formatCurrency } from '../utils/formatters';
 
 export const useCurrencyFormat = () => {
   const { currency } = useCurrency();
-  return (amount: number) => formatCurrency(amount, currency);
+  return (amount: number, sourceCurrency = currency) => formatCurrency(amount, sourceCurrency);
 };

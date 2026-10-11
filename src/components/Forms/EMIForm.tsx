@@ -1,3 +1,4 @@
+import { useCurrency } from '../../contexts/CurrencyContext';
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { Account, EMI } from '../../types';
@@ -21,6 +22,9 @@ export const EMIForm: React.FC<EMIFormProps> = ({
   mode = 'emi',
 }) => {
   const formMode = emi?.debtType || mode;
+  const { currency } = useCurrency();
+  const draftId = React.useRef(generateId());
+  React.useEffect(() => { if (isOpen) draftId.current = generateId(); }, [isOpen]);
   const [formData, setFormData] = useState({
     name: emi?.name || '',
     principal: emi?.principal ? String(emi.principal) : '',
@@ -84,7 +88,8 @@ export const EMIForm: React.FC<EMIFormProps> = ({
     }
     
     const newEMI: EMI = {
-      id: emi?.id || generateId(),
+      id: emi?.id || draftId.current,
+      currency: emi?.currency || creditedAccount?.currency || currency,
       name: formData.name,
       principal,
       interestRate,
@@ -97,13 +102,6 @@ export const EMIForm: React.FC<EMIFormProps> = ({
       creditedAccountId: formMode === 'credit' ? creditedAccount?.id : undefined,
       creditedAccountName: formMode === 'credit' ? creditedAccount?.name : undefined,
     };
-
-    if (!emi && formMode === 'credit' && creditedAccount) {
-      await dataService.saveAccount({
-        ...creditedAccount,
-        balance: creditedAccount.balance + principal,
-      });
-    }
 
     await dataService.saveEMI(newEMI);
     onSave(newEMI);

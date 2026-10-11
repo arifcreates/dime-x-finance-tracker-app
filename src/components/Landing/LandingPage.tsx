@@ -1,3 +1,4 @@
+import type { AppUser } from '../../types';
 import React, { useState } from 'react';
 import {
   ArrowRight,
@@ -14,7 +15,7 @@ import { AuthModal } from '../Auth/AuthModal';
 import dimeXWordmarkDark from '../../assets/brand/dimex-wordmark-dark.svg';
 
 interface LandingPageProps {
-  onLogin: (user: any) => void;
+  onLogin: (user: AppUser) => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {

@@ -1,3 +1,4 @@
+import type { AppUser } from '../../types';
 import React, { useState } from 'react';
 import { X, User, Mail, Lock, Eye, EyeOff, ArrowRight, Users } from 'lucide-react';
 import { supabaseService } from '../../services/supabaseService';
@@ -7,27 +8,16 @@ import dimeXWordmarkDark from '../../assets/brand/dimex-wordmark-dark.svg';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLogin: (user: any) => void;
+  onLogin: (user: AppUser) => void;
   initialMode?: 'login' | 'register' | 'guest';
 }
-
-const createLocalUser = (name: string, email: string) => ({
-  id: `local-${Date.now()}`,
-  name: name || email.split('@')[0] || 'Dime-x User',
-  email,
-  avatar: null,
-  preferences: {
-    theme: 'light',
-    currency: 'USD',
-    notifications: true,
-  },
-});
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, initialMode = 'login' }) => {
   const [mode, setMode] = useState<'login' | 'register' | 'guest'>(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -44,88 +34,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
     setIsLoading(true);
     setError(null);
     
+    setNotice(null);
     try {
-      if (mode === 'register') {
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error('Passwords do not match');
-        }
-
-        if (!supabaseConfigured) {
-          const userData = createLocalUser(formData.name, formData.email);
-          localStorage.setItem('user', JSON.stringify(userData));
-          onLogin(userData);
-          onClose();
-          return;
-        }
-        
-        const { user } = await supabaseService.signUp(formData.email, formData.password, formData.name);
-        
-        if (user) {
-          const userData = {
-            id: user.id,
-            name: formData.name,
-            email: formData.email,
-            avatar: null,
-            preferences: {
-              theme: 'light',
-              currency: 'USD',
-              notifications: true,
-            }
-          };
-          
-          // Initialize sample data for new users
-          await supabaseService.initializeSampleData(user.id);
-          
-          onLogin(userData);
-          onClose();
-        }
-      } else if (mode === 'login') {
-        if (!supabaseConfigured) {
-          let userData = createLocalUser('', formData.email);
-          try {
-            const savedUser = localStorage.getItem('user');
-            if (savedUser) userData = JSON.parse(savedUser);
-          } catch {
-            localStorage.removeItem('user');
-          }
-          localStorage.setItem('user', JSON.stringify(userData));
-          onLogin(userData);
-          onClose();
-          return;
-        }
-
-        const { user } = await supabaseService.signIn(formData.email, formData.password);
-        
-        if (user) {
-          // Get user profile
-          const profile = await supabaseService.getProfile(user.id);
-          
-          const userData = {
-            id: user.id,
-            name: profile.name,
-            email: profile.email,
-            avatar: profile.preferences?.avatar || null,
-            preferences: profile.preferences || {
-              theme: 'light',
-              currency: 'USD',
-              notifications: true,
-            }
-          };
-          
-          onLogin(userData);
-          onClose();
-        }
+      if (!supabaseConfigured) throw new Error('Account creation is unavailable until the backend is configured. You can try Guest mode.');
+      if (mode === 'register' && formData.password !== formData.confirmPassword) throw new Error('Passwords do not match');
+      const data = mode === 'register'
+        ? await supabaseService.signUp(formData.email, formData.password, formData.name)
+        : await supabaseService.signIn(formData.email, formData.password);
+      if (!data.session) {
+        setNotice('Check your email to confirm your account, then sign in.');
+        return;
       }
-    } catch (err: any) {
+      const profile = await supabaseService.getProfile(data.session.user.id);
+      const userData: AppUser = {
+        id: data.session.user.id, name: profile.name, email: data.session.user.email || profile.email,
+        phone: profile.phone || '', avatar: profile.preferences.avatar || null, preferences: profile.preferences,
+      };
+      onLogin(userData);
+      onClose();
+    } catch (err) {
       console.error('Auth error:', err);
-      setError(err.message || 'An error occurred during authentication');
+      setError(err instanceof Error ? err.message : 'An error occurred during authentication');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGuestLogin = () => {
-    const user = {
+    const user: AppUser = {
       id: 'guest',
       name: 'Guest User',
       email: 'guest@dime-x.com',
@@ -196,7 +132,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, 
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
-              {error && (
+              {notice && <p role="status" className="rounded-xl bg-green-50 p-4 text-sm text-green-800">{notice}</p>}
+            {error && (
                 <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
                   <p className="text-red-700 dark:text-red-400 text-sm font-medium">{error}</p>
                 </div>

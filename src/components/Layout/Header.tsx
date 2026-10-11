@@ -1,3 +1,4 @@
+import type { AppUser } from '../../types';
 import React, { useState } from 'react';
 import { Bell, Search, Menu } from 'lucide-react';
 import { NotificationDropdown } from './NotificationDropdown';
@@ -5,7 +6,7 @@ import { NotificationDropdown } from './NotificationDropdown';
 interface HeaderProps {
   sectionTitle: string;
   onMenuClick?: () => void;
-  user?: any;
+  user?: AppUser;
   onSettingsClick?: () => void;
   onSearch?: (query: string) => void;
   searchQuery?: string;

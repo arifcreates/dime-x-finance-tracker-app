@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Edit, Trash2, ArrowUpRight, ArrowDownLeft, Filter, Search } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, ArrowUpRight, ArrowDownLeft, Filter, Search } from 'lucide-react';
 import { Account, Transaction } from '../types';
 import { dataService } from '../services/dataService';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { formatDate } from '../utils/formatters';
 import { TransactionForm } from '../components/Forms/TransactionForm';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
@@ -27,7 +27,7 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ accountId, onBack 
       const foundAccount = accounts.find(acc => acc.id === accountId) || null;
       setAccount(foundAccount);
       const allTransactions = await dataService.getTransactions();
-      const accountTransactions = allTransactions.filter(t => t.account === foundAccount?.name);
+      const accountTransactions = allTransactions.filter(t => t.accountId === foundAccount?.id);
       setTransactions(accountTransactions);
       setFilteredTransactions(accountTransactions);
     };
@@ -56,13 +56,13 @@ export const AccountDetail: React.FC<AccountDetailProps> = ({ accountId, onBack 
     const foundAccount = accounts.find(acc => acc.id === accountId) || null;
     setAccount(foundAccount);
     const allTransactions = await dataService.getTransactions();
-    const accountTransactions = allTransactions.filter(t => t.account === foundAccount?.name);
+    const accountTransactions = allTransactions.filter(t => t.accountId === foundAccount?.id);
     setTransactions(accountTransactions);
   };
 
-  const handleDeleteTransaction = (id: string) => {
+  const handleDeleteTransaction = async (id: string) => {
     if (confirm('Are you sure you want to delete this transaction?')) {
-      dataService.deleteTransaction(id);
+      await dataService.deleteTransaction(id);
       handleTransactionSave();
     }
   };

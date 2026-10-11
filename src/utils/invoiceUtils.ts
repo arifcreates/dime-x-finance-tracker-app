@@ -1,5 +1,3 @@
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { Client, Invoice } from '../types';
 import { formatCurrency, formatDate } from './formatters';
 import { businessProfileService } from '../services/businessProfileService';
@@ -36,14 +34,15 @@ export const getInvoiceMetadata = (invoice: Invoice): InvoiceMetadata => {
 };
 
 export const calculateInvoiceTotals = (invoice: Pick<Invoice, 'items' | 'discountType' | 'discountValue' | 'taxRate'>) => {
-  const subtotal = invoice.items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  const round = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+  const subtotal = round(invoice.items.reduce((sum, item) => sum + round((Number(item.quantity) || 0) * (Number(item.rate) || 0)), 0));
   const discountValue = Math.max(0, Number(invoice.discountValue) || 0);
   const rawDiscount = invoice.discountType === 'percentage' ? subtotal * (discountValue / 100) : discountValue;
-  const discountAmount = Math.min(subtotal, rawDiscount);
+  const discountAmount = round(Math.min(subtotal, rawDiscount));
   const taxableAmount = Math.max(0, subtotal - discountAmount);
   const taxRate = Math.max(0, Number(invoice.taxRate) || 0);
-  const taxAmount = taxableAmount * (taxRate / 100);
-  const total = taxableAmount + taxAmount;
+  const taxAmount = round(taxableAmount * (taxRate / 100));
+  const total = round(taxableAmount + taxAmount);
 
   return { subtotal, discountAmount, taxableAmount, taxAmount, total };
 };
@@ -328,6 +327,7 @@ const ensureInterFont = async () => {
 
 // Renders the invoice offscreen and saves it directly as a .pdf file.
 export const downloadInvoicePdf = async (invoice: Invoice, client?: Client) => {
+  const [{default: html2canvas}, {jsPDF}] = await Promise.all([import('html2canvas'),import('jspdf')]);
   await ensureInterFont();
 
   // Mounted at the top-left behind the app (not offscreen: html2canvas skips

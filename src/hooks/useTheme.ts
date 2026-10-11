@@ -32,6 +32,12 @@ export const useTheme = () => {
     return isTheme(storedTheme) ? storedTheme : 'light';
   });
 
+  useEffect(() => {
+    const reload = () => { const saved = getStoredUser()?.preferences?.theme; setTheme(isTheme(saved) ? saved : 'light'); };
+    window.addEventListener('dimex-theme-changed', reload);
+    return () => window.removeEventListener('dimex-theme-changed', reload);
+  }, []);
+
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
@@ -74,6 +80,7 @@ export const useTheme = () => {
         theme: newTheme
       };
       localStorage.setItem('user', JSON.stringify(userData));
+      window.dispatchEvent(new Event('dimex-theme-changed'));
     }
   };
 

@@ -1,9 +1,10 @@
+import { moneySummary } from '../utils/money';
 import React, { useState, useEffect } from 'react';
 import { Receipt, Plus, Edit, Trash2 } from 'lucide-react';
 import { TransactionForm } from '../components/Forms/TransactionForm';
 import { Transaction } from '../types';
 import { dataService } from '../services/dataService';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { formatDate } from '../utils/formatters';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
 export const Expenses: React.FC = () => {
@@ -14,12 +15,12 @@ export const Expenses: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
-    dataService.getTransactions().then(txns => setExpenses(txns.filter(t => t.type === 'expense')));
+    dataService.getTransactions().then(txns => setExpenses(txns.filter(t => t.type === 'expense' && t.status === 'completed' && t.category !== 'Transfer')));
   }, []);
 
   const handleExpenseSave = async () => {
     const txns = await dataService.getTransactions();
-    setExpenses(txns.filter(t => t.type === 'expense'));
+    setExpenses(txns.filter(t => t.type === 'expense' && t.status === 'completed' && t.category !== 'Transfer'));
     setEditingExpense(undefined);
   };
 
@@ -27,7 +28,7 @@ export const Expenses: React.FC = () => {
     if (confirm('Are you sure you want to delete this expense?')) {
       await dataService.deleteTransaction(id);
       const txns = await dataService.getTransactions();
-      setExpenses(txns.filter(t => t.type === 'expense'));
+      setExpenses(txns.filter(t => t.type === 'expense' && t.status === 'completed' && t.category !== 'Transfer'));
     }
   };
 
@@ -36,20 +37,14 @@ export const Expenses: React.FC = () => {
     setShowExpenseForm(true);
   };
 
-  const categories = ['all', ...Array.from(new Set(expenses.map(e => e.category)))];
+
   const filteredExpenses = selectedCategory === 'all' 
     ? expenses 
     : expenses.filter(e => e.category === selectedCategory);
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-  const thisMonthExpenses = expenses
-    .filter(e => new Date(e.date).getMonth() === new Date().getMonth())
-    .reduce((sum, exp) => sum + exp.amount, 0);
-
-  const categoryTotals = expenses.reduce((acc, expense) => {
-    acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-    return acc;
-  }, {} as Record<string, number>);
+  const totalExpenses = moneySummary(expenses, t => t.amount);
+  const thisMonthExpenses = moneySummary(expenses.filter(e => e.date.slice(0,7) === new Date().toISOString().slice(0,7)), t => t.amount);
+  const categoryTotals = Object.fromEntries([...new Set(expenses.map(e=>e.category))].map(category => [category, moneySummary(expenses.filter(e=>e.category===category),e=>e.amount)]));
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
@@ -80,11 +75,11 @@ export const Expenses: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Expenses</h4>
-            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">{fmt(totalExpenses)}</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">{totalExpenses}</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">This Month</h4>
-            <p className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">{fmt(thisMonthExpenses)}</p>
+            <p className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">{thisMonthExpenses}</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Categories</h4>
@@ -105,7 +100,7 @@ export const Expenses: React.FC = () => {
               >
                 <div className="flex justify-between">
                   <span className="text-sm sm:text-base text-gray-900 dark:text-white">All Expenses</span>
-                  <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{fmt(totalExpenses)}</span>
+                  <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{totalExpenses}</span>
                 </div>
               </button>
               {Object.entries(categoryTotals).map(([category, total]) => (
@@ -118,7 +113,7 @@ export const Expenses: React.FC = () => {
                 >
                   <div className="flex justify-between">
                     <span className="text-sm sm:text-base truncate text-gray-900 dark:text-white">{category}</span>
-                    <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{fmt(total)}</span>
+                    <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{total}</span>
                   </div>
                 </button>
               ))}
@@ -160,7 +155,7 @@ export const Expenses: React.FC = () => {
                             </p>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <p className="font-semibold text-red-600 dark:text-red-400">{fmt(expense.amount)}</p>
+                            <p className="font-semibold text-red-600 dark:text-red-400">{fmt(expense.amount, expense.currency)}</p>
                             <div className="flex space-x-1">
                               <button
                                 onClick={() => handleEditExpense(expense)}

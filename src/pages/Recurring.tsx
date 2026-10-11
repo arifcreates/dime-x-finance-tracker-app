@@ -1,9 +1,10 @@
+import { moneySummary } from '../utils/money';
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Settings, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Calendar, Plus, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { RecurringPaymentForm } from '../components/Forms/RecurringPaymentForm';
 import { RecurringPayment } from '../types';
 import { dataService } from '../services/dataService';
-import { formatCurrency, formatDate, getDaysUntilDate } from '../utils/formatters';
+import { formatDate, getDaysUntilDate } from '../utils/formatters';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
 export const Recurring: React.FC = () => {
@@ -26,9 +27,9 @@ export const Recurring: React.FC = () => {
     setEditingPayment(undefined);
   };
 
-  const handleDeletePayment = (id: string) => {
+  const handleDeletePayment = async (id: string) => {
     if (confirm('Are you sure you want to delete this recurring payment?')) {
-      dataService.deleteRecurringPayment(id);
+      await dataService.deleteRecurringPayment(id);
       refreshData();
     }
   };
@@ -38,9 +39,9 @@ export const Recurring: React.FC = () => {
     setShowPaymentForm(true);
   };
 
-  const handleToggleActive = (payment: RecurringPayment) => {
+  const handleToggleActive = async (payment: RecurringPayment) => {
     const updatedPayment = { ...payment, isActive: !payment.isActive };
-    dataService.saveRecurringPayment(updatedPayment);
+    await dataService.saveRecurringPayment(updatedPayment);
     refreshData();
   };
 
@@ -50,13 +51,9 @@ export const Recurring: React.FC = () => {
     : payments.filter(p => p.category === selectedCategory);
 
   const activePayments = payments.filter(p => p.isActive);
-  const totalMonthlyAmount = activePayments
-    .filter(p => p.frequency === 'monthly')
-    .reduce((sum, p) => sum + p.amount, 0);
-  const totalYearlyAmount = activePayments
-    .filter(p => p.frequency === 'yearly')
-    .reduce((sum, p) => sum + p.amount, 0);
-  const totalAnnualCost = totalMonthlyAmount * 12 + totalYearlyAmount;
+  const totalMonthlyAmount = moneySummary(activePayments.filter(p=>p.frequency==='monthly'),p=>p.amount);
+  const totalYearlyAmount = moneySummary(activePayments.filter(p=>p.frequency==='yearly'),p=>p.amount);
+  const totalAnnualCost = moneySummary(activePayments,p=>p.amount*(p.frequency==='monthly'?12:1));
 
   const getFrequencyColor = (frequency: string) => {
     return frequency === 'monthly' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400';
@@ -109,17 +106,17 @@ export const Recurring: React.FC = () => {
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Monthly Cost</h4>
-            <p className="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{fmt(totalMonthlyAmount)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{totalMonthlyAmount}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Recurring monthly</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Yearly Cost</h4>
-            <p className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">{fmt(totalYearlyAmount)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">{totalYearlyAmount}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Annual payments</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Annual</h4>
-            <p className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">{fmt(totalAnnualCost)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">{totalAnnualCost}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All subscriptions</p>
           </div>
         </div>
@@ -131,10 +128,7 @@ export const Recurring: React.FC = () => {
             <div className="space-y-2">
               {categories.map((category) => {
                 const categoryPayments = category === 'all' ? payments : payments.filter(p => p.category === category);
-                const categoryTotal = categoryPayments
-                  .filter(p => p.isActive)
-                  .reduce((sum, p) => sum + (p.frequency === 'monthly' ? p.amount * 12 : p.amount), 0);
-                
+                const categoryTotal = moneySummary(categoryPayments.filter(p=>p.isActive),p=>p.amount*(p.frequency==='monthly'?12:1));
                 return (
                   <button
                     key={category}
@@ -148,7 +142,7 @@ export const Recurring: React.FC = () => {
                         {category === 'all' ? 'All Categories' : category}
                       </span>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{fmt(categoryTotal)}</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{categoryTotal}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{categoryPayments.length} items</p>
                       </div>
                     </div>
@@ -230,7 +224,7 @@ export const Recurring: React.FC = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                               <div>
                                 <p className="text-gray-500 dark:text-gray-400 font-medium">Amount</p>
-                                <p className="font-bold text-gray-900 dark:text-white text-lg">{fmt(payment.amount)}</p>
+                                <p className="font-bold text-gray-900 dark:text-white text-lg">{fmt(payment.amount, payment.currency)}</p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">per {payment.frequency.slice(0, -2)}</p>
                               </div>
                               <div>
@@ -246,7 +240,7 @@ export const Recurring: React.FC = () => {
                               </div>
                               <div>
                                 <p className="text-gray-500 dark:text-gray-400 font-medium">Annual Cost</p>
-                                <p className="font-bold text-gray-900 dark:text-white text-lg">{fmt(annualCost)}</p>
+                                <p className="font-bold text-gray-900 dark:text-white text-lg">{fmt(annualCost, payment.currency)}</p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">total per year</p>
                               </div>
                             </div>

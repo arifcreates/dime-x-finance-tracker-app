@@ -1,0 +1,11 @@
+project_id = "hwmdicbhzxjdvwmvmuix"
+
+# Both user endpoints validate the access token with Auth.getUser themselves.
+# This supports modern publishable keys as well as legacy JWT keys.
+[functions.ai-assist]
+verify_jwt = false
+[functions.billing]
+verify_jwt = false
+# Provider webhooks authenticate via an HMAC over the exact request body.
+[functions.billing-webhook]
+verify_jwt = false

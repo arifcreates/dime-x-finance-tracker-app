@@ -56,7 +56,13 @@ export const ErrorToastContainer: React.FC = () => {
 
   useEffect(() => {
     const unsubscribe = errorService.subscribe(setErrors);
-    return unsubscribe;
+    const onRejected = (event: PromiseRejectionEvent) => {
+      const reason = event.reason as { message?: string } | undefined;
+      errorService.addError(reason?.message || 'The operation failed. Please retry.');
+      event.preventDefault();
+    };
+    window.addEventListener('unhandledrejection', onRejected);
+    return () => { unsubscribe(); window.removeEventListener('unhandledrejection', onRejected); };
   }, []);
 
   if (errors.length === 0) return null;

@@ -1,446 +1,257 @@
 import { Transaction, Account, Invoice, Client, EMI, CreditCard, RecurringPayment } from '../types';
 import { supabaseService } from './supabaseService';
-import { supabase, supabaseConfigured } from '../lib/supabase';
+import { supabaseConfigured } from '../lib/supabase';
+import { businessProfileService } from './businessProfileService';
+import { calculateInvoiceTotals } from '../utils/invoiceUtils';
+import { errorService } from './errorService';
+import { applyTransactionChange, type FinanceState } from '../utils/finance';
+import { currencyService } from './currencyService';
 
-class DataService {
+const emptyState = (): FinanceState => ({ transactions: [], accounts: [], invoices: [], clients: [], emis: [], creditCards: [], recurringPayments: [] });
+type Collection = keyof FinanceState;
+
+export class DataService {
   private currentUserId: string | null = null;
-  private isOnline = true;
-
-  // In-memory cache — populated on first async load, updated after every save/delete
-  private cache: {
-    transactions: Transaction[];
-    accounts: Account[];
-    invoices: Invoice[];
-    clients: Client[];
-    emis: EMI[];
-    creditCards: CreditCard[];
-    recurringPayments: RecurringPayment[];
-  } = {
-    transactions: [],
-    accounts: [],
-    invoices: [],
-    clients: [],
-    emis: [],
-    creditCards: [],
-    recurringPayments: [],
-  };
-
-  constructor() {
-    if (supabaseConfigured) {
-      try {
-        supabase.auth.onAuthStateChange((event, session) => {
-          this.setCurrentUserId(session?.user?.id || null);
-          if (event === 'SIGNED_IN' && this.currentUserId) {
-            this.syncLocalDataToSupabase();
-          }
-        });
-      } catch (error) {
-        console.error('Supabase auth init error:', error);
-      }
-    }
-
-    window.addEventListener('online', () => {
-      this.isOnline = true;
-      if (this.currentUserId) this.syncLocalDataToSupabase();
-    });
-
-    window.addEventListener('offline', () => { this.isOnline = false; });
-  }
+  private cache = emptyState();
+  private revision = 0;
+  private reads = new Map<string, Promise<unknown>>();
+  private pending: Promise<unknown> = Promise.resolve();
 
   setCurrentUserId(userId: string | null) {
     if (this.currentUserId === userId) return;
     this.currentUserId = userId;
-    this.clearCache();
-
-    if (userId && supabaseConfigured && this.isOnline) {
-      this.syncLocalDataToSupabase();
-    }
+    this.revision++;
+    this.reads.clear();
+    this.cache = emptyState();
+    businessProfileService.setCurrentUserId(userId);
   }
 
-  private clearCache() {
-    this.cache = { transactions: [], accounts: [], invoices: [], clients: [], emis: [], creditCards: [], recurringPayments: [] };
-  }
+  private get localKey() { return `dimex:${this.currentUserId || 'guest'}:workspace`; }
+  private get remote() { return !!this.currentUserId; }
 
-  private async syncLocalDataToSupabase() {
-    if (!supabaseConfigured || !this.currentUserId || !this.isOnline) return;
+  private readLocal() {
     try {
-      const localAccounts = this.getFromStorage<Account>('accounts');
-      for (const account of localAccounts) await supabaseService.saveAccount(this.currentUserId, account);
-      const localTransactions = this.getFromStorage<Transaction>('transactions');
-      for (const transaction of localTransactions) await supabaseService.saveTransaction(this.currentUserId, transaction);
-    } catch (error) {
-      console.error('Error syncing local data to Supabase:', error);
+      const raw = localStorage.getItem(this.localKey);
+      if (raw) return { ...emptyState(), ...JSON.parse(raw) } as FinanceState;
+    } catch { errorService.addError('Could not read the browser workspace.', 'error'); }
+    return emptyState();
+  }
+
+  private persistLocal(state: FinanceState) {
+    // Persist a guest operation as one snapshot before exposing it as successful.
+    localStorage.setItem(this.localKey, JSON.stringify(state));
+    this.cache = state;
+  }
+
+  private async load<K extends Collection>(key: K, fetcher: (id: string) => Promise<FinanceState[K]>): Promise<FinanceState[K]> {
+    const userId = this.currentUserId;
+    const revision = this.revision;
+    if (!userId) { this.cache = this.readLocal(); return this.cache[key]; }
+    if (!supabaseConfigured) throw new Error('The backend is not configured. Real accounts require Supabase.');
+    const readKey = `${userId}:${key}`;
+    let request = this.reads.get(readKey) as Promise<FinanceState[K]> | undefined;
+    if (!request) {
+      request = fetcher(userId);
+      this.reads.set(readKey, request);
+      const activeRequest = request;
+      void request.finally(() => { if (this.reads.get(readKey) === activeRequest) this.reads.delete(readKey); }).catch(() => {});
     }
+    const items = await request;
+    if (revision !== this.revision) return emptyState()[key];
+    this.cache[key] = items;
+    return items;
   }
 
-  private getFromStorage<T>(key: string): T[] {
-    try {
-      const data = localStorage.getItem(key);
-      return data ? JSON.parse(data) : [];
-    } catch (error) {
-      console.warn(`Ignoring invalid ${key} data:`, error);
-      localStorage.removeItem(key);
-      return [];
-    }
+  getTransactions() { return this.load('transactions', id => supabaseService.getTransactions(id)); }
+  getAccounts() { return this.load('accounts', id => supabaseService.getAccounts(id)); }
+  async getInvoices() {
+    const items = await this.load('invoices', id => supabaseService.getInvoices(id));
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    return items.map(invoice => invoice.status === 'sent' && invoice.dueDate < today ? { ...invoice, status: 'overdue' as const } : invoice);
+  }
+  getClients() { return this.load('clients', id => supabaseService.getClients(id)); }
+  getEMIs() { return this.load('emis', id => supabaseService.getEMIs(id)); }
+  getCreditCards() { return this.load('creditCards', id => supabaseService.getCreditCards(id)); }
+  getRecurringPayments() { return this.load('recurringPayments', id => supabaseService.getRecurringPayments(id)); }
+
+  getCachedTransactions() { return this.cache.transactions; }
+  getCachedAccounts() { return this.cache.accounts; }
+  getCachedInvoices() { return this.cache.invoices; }
+  getCachedClients() { return this.cache.clients; }
+  getCachedEMIs() { return this.cache.emis; }
+  getCachedCreditCards() { return this.cache.creditCards; }
+  getCachedRecurringPayments() { return this.cache.recurringPayments; }
+
+  private mutate(operation: (state: FinanceState, userId: string | null) => Promise<void>) {
+    const revision = this.revision;
+    const userId = this.currentUserId;
+    const run = this.pending.then(async () => {
+      if (revision !== this.revision) throw new Error('Your account changed. Please retry.');
+      if (userId && (!supabaseConfigured || !navigator.onLine)) throw new Error('Reconnect to save to your account. Your changes have not been saved.');
+      const state = this.remote ? structuredClone(this.cache) : this.readLocal();
+      await operation(state, userId);
+      if (revision !== this.revision) return;
+      if (userId) this.cache = state;
+      else this.persistLocal(state);
+    });
+    this.pending = run.catch(() => {});
+    return run;
   }
 
-  private saveToStorage<T>(key: string, data: T[]): void {
-    localStorage.setItem(key, JSON.stringify(data));
+  private async save<K extends Collection>(key: K, item: FinanceState[K][number], remoteSave: (id: string) => Promise<unknown>) {
+    await this.mutate(async (state, id) => {
+      if (id) await remoteSave(id);
+      const items = state[key] as Array<{ id: string }>;
+      const index = items.findIndex(existing => existing.id === item.id);
+      if (index >= 0) items[index] = item;
+      else items.push(item);
+    });
+  }
+  private async remove<K extends Collection>(key: K, itemId: string, remoteDelete: () => Promise<unknown>) {
+    await this.mutate(async (state, id) => {
+      if (id) await remoteDelete();
+      state[key] = state[key].filter(item => item.id !== itemId) as FinanceState[K];
+    });
   }
 
-  private upsertStorageItem<T extends { id: string }>(key: string, item: T): void {
-    const items = this.getFromStorage<T>(key);
-    const index = items.findIndex(existing => existing.id === item.id);
-    if (index >= 0) items[index] = item;
-    else items.push(item);
-    this.saveToStorage(key, items);
+  async saveTransaction(transaction: Transaction) {
+    await this.mutate(async (state, id) => {
+      if (id) {
+        await supabaseService.saveTransaction(id, transaction);
+        try {
+          state.transactions = await supabaseService.getTransactions(id);
+          state.accounts = await supabaseService.getAccounts(id);
+        } catch { errorService.addError('Saved to your account. Refresh to reload the latest balances.', 'info'); }
+      } else applyTransactionChange(state, transaction.id, transaction);
+    });
   }
-
-  private deleteStorageItem<T extends { id: string }>(key: string, id: string): void {
-    this.saveToStorage(key, this.getFromStorage<T>(key).filter(item => item.id !== id));
+  async deleteTransaction(transactionId: string) {
+    await this.mutate(async (state, id) => {
+      const item = state.transactions.find(t => t.id === transactionId);
+      if (item?.invoiceId || item?.transferId) throw new Error('Invoice payments and transfers cannot be removed as individual transactions.');
+      if (id) {
+        await supabaseService.deleteTransaction(transactionId);
+        try {
+          state.transactions = await supabaseService.getTransactions(id);
+          state.accounts = await supabaseService.getAccounts(id);
+        } catch { errorService.addError('Saved to your account. Refresh to reload the latest balances.', 'info'); }
+      } else applyTransactionChange(state, transactionId);
+    });
   }
-
-  private mergeById<T extends { id: string }>(remoteItems: T[], localItems: T[]): T[] {
-    const items = new Map<string, T>();
-    for (const item of remoteItems) items.set(item.id, item);
-    for (const item of localItems) items.set(item.id, item);
-    return Array.from(items.values());
+  async saveAccount(item: Account) {
+    await this.mutate(async (state, id) => {
+      const old = state.accounts.find(a => a.id === item.id);
+      if (!Number.isFinite(item.balance)) throw new Error('Enter a valid account balance.');
+      if (!id && old && old.currency !== item.currency && (state.transactions.some(t => t.accountId === item.id) || state.emis.some(e => e.creditedAccountId === item.id))) throw new Error('Keep the original currency for accounts with financial history.');
+      if (id) await supabaseService.saveAccount(id, item);
+      state.accounts = [...state.accounts.filter(a => a.id !== item.id), item];
+    });
   }
-
-  private async fetchFromSupabaseOrStorage<T>(
-    supabaseMethod: () => Promise<T[]>,
-    storageKey: string
-  ): Promise<T[]> {
-    const localItems = this.getFromStorage<T>(storageKey);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try {
-        const remoteItems = await supabaseMethod();
-        return this.mergeById(remoteItems as Array<T & { id: string }>, localItems as Array<T & { id: string }>) as T[];
-      } catch (error) {
-        console.error('Supabase error, falling back to localStorage:', error);
-        return localItems;
+  async deleteAccount(accountId: string) {
+    await this.mutate(async (state, id) => {
+      if (id) await supabaseService.deleteAccount(accountId);
+      else if (state.transactions.some(t => t.accountId === accountId) || state.emis.some(e => e.creditedAccountId === accountId)) throw new Error('Keep accounts that have financial history.');
+      state.accounts = state.accounts.filter(a => a.id !== accountId);
+    });
+  }
+  async saveInvoice(item: Invoice) {
+    const totals = calculateInvoiceTotals(item);
+    const invoice = { ...item, amount: totals.total, subtotal: totals.subtotal, taxAmount: totals.taxAmount, discountAmount: totals.discountAmount };
+    const old = this.cache.invoices.find(i => i.id === item.id);
+    if (old?.status === 'paid') throw new Error('Paid invoices are locked to preserve payment history.');
+    if (item.status === 'paid') throw new Error('Use Record payment to mark an invoice paid.');
+    return this.save('invoices', invoice, id => supabaseService.saveInvoice(id, invoice));
+  }
+  async deleteInvoice(id: string) {
+    if (this.cache.invoices.find(i => i.id === id)?.status === 'paid') throw new Error('Paid invoices cannot be deleted.');
+    return this.remove('invoices', id, () => supabaseService.deleteInvoice(id));
+  }
+  saveClient(item: Client) { return this.save('clients', item, id => supabaseService.saveClient(id, item)); }
+  async deleteClient(clientId: string) {
+    await this.mutate(async (state, id) => {
+      if (id) await supabaseService.deleteClient(clientId);
+      state.clients = state.clients.filter(c => c.id !== clientId);
+      state.invoices = state.invoices.map(i => i.clientId === clientId ? { ...i, clientId: null } : i);
+    });
+  }
+  async saveEMI(item: EMI) {
+    await this.mutate(async (state, id) => {
+      if (id) {
+        await supabaseService.saveEMI(id, item);
+        try { state.accounts = await supabaseService.getAccounts(id); } catch { errorService.addError('Credit saved. Refresh to reload balances.', 'info'); }
+      } else if (item.debtType === 'credit' && !state.emis.some(e => e.id === item.id)) {
+        const account = state.accounts.find(a => a.id === item.creditedAccountId);
+        if (!account) throw new Error('Choose the account that received this credit.');
+        account.balance += item.principal;
       }
-    }
-    return localItems;
+      state.emis = [...state.emis.filter(e => e.id !== item.id), item];
+    });
   }
+  deleteEMI(id: string) { return this.remove('emis', id, () => supabaseService.deleteEMI(id)); }
+  saveCreditCard(item: CreditCard) { return this.save('creditCards', item, id => supabaseService.saveCreditCard(id, item)); }
+  deleteCreditCard(id: string) { return this.remove('creditCards', id, () => supabaseService.deleteCreditCard(id)); }
+  saveRecurringPayment(item: RecurringPayment) { return this.save('recurringPayments', item, id => supabaseService.saveRecurringPayment(id, item)); }
+  deleteRecurringPayment(id: string) { return this.remove('recurringPayments', id, () => supabaseService.deleteRecurringPayment(id)); }
 
-  // ── Async fetch methods (update cache) ──────────────────────────────────────
-
-  async getTransactions(): Promise<Transaction[]> {
-    this.cache.transactions = await this.fetchFromSupabaseOrStorage(
-      () => supabaseService.getTransactions(this.currentUserId!),
-      'transactions'
-    );
-    return this.cache.transactions;
-  }
-
-  async getAccounts(): Promise<Account[]> {
-    this.cache.accounts = await this.fetchFromSupabaseOrStorage(
-      () => supabaseService.getAccounts(this.currentUserId!),
-      'accounts'
-    );
-    return this.cache.accounts;
-  }
-
-  async getInvoices(): Promise<Invoice[]> {
-    const invoices = await this.fetchFromSupabaseOrStorage<Invoice>(
-      () => supabaseService.getInvoices(this.currentUserId!),
-      'invoices'
-    );
-    this.cache.invoices = invoices.map(invoice => this.applyOverdueStatus(invoice));
-    return this.cache.invoices;
-  }
-
-  // Sent invoices past their due date become overdue automatically.
-  private applyOverdueStatus(invoice: Invoice): Invoice {
-    const today = new Date().toISOString().split('T')[0];
-    if (invoice.status !== 'sent' || !invoice.dueDate || invoice.dueDate >= today) return invoice;
-    const overdueInvoice: Invoice = { ...invoice, status: 'overdue' };
-    this.saveInvoice(overdueInvoice).catch(error => console.error('Error persisting overdue status:', error));
-    return overdueInvoice;
-  }
-
-  async getClients(): Promise<Client[]> {
-    this.cache.clients = await this.fetchFromSupabaseOrStorage(
-      () => supabaseService.getClients(this.currentUserId!),
-      'clients'
-    );
-    return this.cache.clients;
-  }
-
-  async getEMIs(): Promise<EMI[]> {
-    this.cache.emis = await this.fetchFromSupabaseOrStorage(
-      () => supabaseService.getEMIs(this.currentUserId!),
-      'emis'
-    );
-    return this.cache.emis;
-  }
-
-  async getCreditCards(): Promise<CreditCard[]> {
-    this.cache.creditCards = await this.fetchFromSupabaseOrStorage(
-      () => supabaseService.getCreditCards(this.currentUserId!),
-      'creditcards'
-    );
-    return this.cache.creditCards;
-  }
-
-  async getRecurringPayments(): Promise<RecurringPayment[]> {
-    this.cache.recurringPayments = await this.fetchFromSupabaseOrStorage(
-      () => supabaseService.getRecurringPayments(this.currentUserId!),
-      'recurringpayments'
-    );
-    return this.cache.recurringPayments;
-  }
-
-  // ── Synchronous cache reads (safe to call in render) ────────────────────────
-
-  getCachedTransactions(): Transaction[] { return this.cache.transactions; }
-  getCachedAccounts(): Account[] { return this.cache.accounts; }
-  getCachedInvoices(): Invoice[] { return this.cache.invoices; }
-  getCachedClients(): Client[] { return this.cache.clients; }
-  getCachedEMIs(): EMI[] { return this.cache.emis; }
-  getCachedCreditCards(): CreditCard[] { return this.cache.creditCards; }
-  getCachedRecurringPayments(): RecurringPayment[] { return this.cache.recurringPayments; }
-
-  // ── Save / Delete ────────────────────────────────────────────────────────────
-
-  async saveTransaction(transaction: Transaction): Promise<void> {
-    this.upsertStorageItem('transactions', transaction);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.saveTransaction(this.currentUserId, transaction);
-      } catch (error) {
-        console.error('Error saving to Supabase, kept local copy:', error);
-      }
-    }
-    const idx = this.cache.transactions.findIndex(t => t.id === transaction.id);
-    if (idx >= 0) this.cache.transactions[idx] = transaction;
-    else this.cache.transactions.push(transaction);
-  }
-
-  async deleteTransaction(id: string): Promise<void> {
-    this.deleteStorageItem<Transaction>('transactions', id);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.deleteTransaction(id); }
-      catch (error) { console.error('Error deleting from Supabase:', error); }
-    }
-    this.cache.transactions = this.cache.transactions.filter(t => t.id !== id);
-  }
-
-  async saveAccount(account: Account): Promise<void> {
-    this.upsertStorageItem('accounts', account);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try {
-        await supabaseService.saveAccount(this.currentUserId, account);
-      } catch (error) {
-        console.error('Error saving to Supabase, kept local copy:', error);
-      }
-    }
-    const idx = this.cache.accounts.findIndex(a => a.id === account.id);
-    if (idx >= 0) this.cache.accounts[idx] = account;
-    else this.cache.accounts.push(account);
-  }
-
-  async deleteAccount(id: string): Promise<void> {
-    this.deleteStorageItem<Account>('accounts', id);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.deleteAccount(id); }
-      catch (error) { console.error('Error deleting from Supabase:', error); }
-    }
-    this.cache.accounts = this.cache.accounts.filter(a => a.id !== id);
-  }
-
-  async saveInvoice(invoice: Invoice): Promise<void> {
-    this.upsertStorageItem('invoices', invoice);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.saveInvoice(this.currentUserId, invoice); }
-      catch (error) { console.error('Error saving to Supabase:', error); }
-    }
-    const idx = this.cache.invoices.findIndex(i => i.id === invoice.id);
-    if (idx >= 0) this.cache.invoices[idx] = invoice;
-    else this.cache.invoices.push(invoice);
-  }
-
-  async deleteInvoice(id: string): Promise<void> {
-    this.deleteStorageItem<Invoice>('invoices', id);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.deleteInvoice(id); }
-      catch (error) { console.error('Error deleting from Supabase:', error); }
-    }
-    this.cache.invoices = this.cache.invoices.filter(i => i.id !== id);
-  }
-
-  async saveClient(client: Client): Promise<void> {
-    this.upsertStorageItem('clients', client);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.saveClient(this.currentUserId, client); }
-      catch (error) { console.error('Error saving to Supabase:', error); }
-    }
-    const idx = this.cache.clients.findIndex(c => c.id === client.id);
-    if (idx >= 0) this.cache.clients[idx] = client;
-    else this.cache.clients.push(client);
-  }
-
-  async deleteClient(id: string): Promise<void> {
-    this.deleteStorageItem<Client>('clients', id);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.deleteClient(id); }
-      catch (error) { console.error('Error deleting from Supabase:', error); }
-    }
-    this.cache.clients = this.cache.clients.filter(c => c.id !== id);
-  }
-
-  async saveEMI(emi: EMI): Promise<void> {
-    this.upsertStorageItem('emis', emi);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.saveEMI(this.currentUserId, emi); }
-      catch (error) { console.error('Error saving to Supabase:', error); }
-    }
-    const idx = this.cache.emis.findIndex(e => e.id === emi.id);
-    if (idx >= 0) this.cache.emis[idx] = emi;
-    else this.cache.emis.push(emi);
-  }
-
-  async deleteEMI(id: string): Promise<void> {
-    this.deleteStorageItem<EMI>('emis', id);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.deleteEMI(id); }
-      catch (error) { console.error('Error deleting from Supabase:', error); }
-    }
-    this.cache.emis = this.cache.emis.filter(e => e.id !== id);
-  }
-
-  async saveCreditCard(card: CreditCard): Promise<void> {
-    this.upsertStorageItem('creditcards', card);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.saveCreditCard(this.currentUserId, card); }
-      catch (error) { console.error('Error saving to Supabase:', error); }
-    }
-    const idx = this.cache.creditCards.findIndex(c => c.id === card.id);
-    if (idx >= 0) this.cache.creditCards[idx] = card;
-    else this.cache.creditCards.push(card);
-  }
-
-  async deleteCreditCard(id: string): Promise<void> {
-    this.deleteStorageItem<CreditCard>('creditcards', id);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.deleteCreditCard(id); }
-      catch (error) { console.error('Error deleting from Supabase:', error); }
-    }
-    this.cache.creditCards = this.cache.creditCards.filter(c => c.id !== id);
-  }
-
-  async saveRecurringPayment(payment: RecurringPayment): Promise<void> {
-    this.upsertStorageItem('recurringpayments', payment);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.saveRecurringPayment(this.currentUserId, payment); }
-      catch (error) { console.error('Error saving to Supabase:', error); }
-    }
-    const idx = this.cache.recurringPayments.findIndex(p => p.id === payment.id);
-    if (idx >= 0) this.cache.recurringPayments[idx] = payment;
-    else this.cache.recurringPayments.push(payment);
-  }
-
-  async deleteRecurringPayment(id: string): Promise<void> {
-    this.deleteStorageItem<RecurringPayment>('recurringpayments', id);
-
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      try { await supabaseService.deleteRecurringPayment(id); }
-      catch (error) { console.error('Error deleting from Supabase:', error); }
-    }
-    this.cache.recurringPayments = this.cache.recurringPayments.filter(p => p.id !== id);
-  }
-
-  // ── Analytics (computed from cache after async load) ────────────────────────
-
-  private isTransfer(transaction: Transaction): boolean {
-    return transaction.category.toLowerCase() === 'transfer';
-  }
-
-  async getMonthlyIncome(month?: number, year?: number): Promise<number> {
-    const transactions = await this.getTransactions();
-    const currentDate = new Date();
-    const targetMonth = month ?? currentDate.getMonth();
-    const targetYear = year ?? currentDate.getFullYear();
-    return transactions
-      .filter(t => {
-        const date = new Date(t.date);
-        return t.type === 'income' && !this.isTransfer(t) && date.getMonth() === targetMonth && date.getFullYear() === targetYear;
-      })
-      .reduce((sum, t) => sum + t.amount, 0);
-  }
-
-  async getMonthlyExpenses(month?: number, year?: number): Promise<number> {
-    const transactions = await this.getTransactions();
-    const currentDate = new Date();
-    const targetMonth = month ?? currentDate.getMonth();
-    const targetYear = year ?? currentDate.getFullYear();
-    return transactions
-      .filter(t => {
-        const date = new Date(t.date);
-        return t.type === 'expense' && !this.isTransfer(t) && date.getMonth() === targetMonth && date.getFullYear() === targetYear;
-      })
-      .reduce((sum, t) => sum + t.amount, 0);
-  }
-
-  async getTotalBalance(): Promise<number> {
+  async recordInvoicePayment(invoice: Invoice, accountId: string) {
     const accounts = await this.getAccounts();
-    return accounts.reduce((sum, account) => sum + account.balance, 0);
-  }
-
-  async getCashFlow(month?: number, year?: number): Promise<number> {
-    const income = await this.getMonthlyIncome(month, year);
-    const expenses = await this.getMonthlyExpenses(month, year);
-    return income - expenses;
-  }
-
-  async getIncomeByCategory(month?: number, year?: number): Promise<Record<string, number>> {
-    const currentDate = new Date();
-    const targetMonth = month ?? currentDate.getMonth();
-    const targetYear = year ?? currentDate.getFullYear();
-    const transactions = (await this.getTransactions()).filter(t => {
-      const date = new Date(t.date);
-      return t.type === 'income' && !this.isTransfer(t) && date.getMonth() === targetMonth && date.getFullYear() === targetYear;
+    const account = accounts.find(a => a.id === accountId);
+    if (!account) throw new Error('Choose an account.');
+    const amount = await currencyService.convertCurrency(invoice.amount, invoice.currency || 'USD', account.currency);
+    await this.mutate(async (state, id) => {
+      if (id) {
+        await supabaseService.recordInvoicePayment(invoice.id, accountId, amount);
+        try {
+          state.invoices = await supabaseService.getInvoices(id);
+          state.accounts = await supabaseService.getAccounts(id);
+          state.transactions = await supabaseService.getTransactions(id);
+        } catch { errorService.addError('Payment recorded. Refresh to reload your workspace.', 'info'); }
+      } else {
+        const current = state.invoices.find(i => i.id === invoice.id);
+        if (!current) throw new Error('Invoice no longer exists.');
+        if (current.status === 'paid') return;
+        applyTransactionChange(state, crypto.randomUUID(), { id: crypto.randomUUID(), date: new Date().toISOString().slice(0,10), description: `Invoice Payment - ${invoice.invoiceNumber}`, amount, type: 'income', category: 'Invoice Payment', status: 'completed', account: account.name, accountId, currency: account.currency, invoiceId: invoice.id });
+        current.status = 'paid';
+      }
     });
-    return transactions.reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>);
   }
 
-  async getExpensesByCategory(month?: number, year?: number): Promise<Record<string, number>> {
-    const currentDate = new Date();
-    const targetMonth = month ?? currentDate.getMonth();
-    const targetYear = year ?? currentDate.getFullYear();
-    const transactions = (await this.getTransactions()).filter(t => {
-      const date = new Date(t.date);
-      return t.type === 'expense' && !this.isTransfer(t) && date.getMonth() === targetMonth && date.getFullYear() === targetYear;
+  async transfer(fromId: string, toId: string, amount: number, description: string, requestId: string) {
+    await this.mutate(async (state, id) => {
+      if (id) {
+        await supabaseService.transfer(fromId, toId, amount, description, requestId);
+        try {
+          state.accounts = await supabaseService.getAccounts(id);
+          state.transactions = await supabaseService.getTransactions(id);
+        } catch { errorService.addError('Transfer recorded. Refresh to reload your workspace.', 'info'); }
+      } else {
+        const from = state.accounts.find(a => a.id === fromId);
+        const to = state.accounts.find(a => a.id === toId);
+        if (!from || !to || fromId === toId || from.currency !== to.currency || !Number.isFinite(amount) || amount <= 0 || from.balance < amount) throw new Error('Choose two accounts in the same currency and an available amount greater than zero.');
+        const transferId = requestId;
+        if (state.transactions.some(t=>t.transferId===requestId)) return;
+        for (const [account, type] of [[from, 'expense'], [to, 'income']] as const) {
+          const txn: Transaction = { id: crypto.randomUUID(), date: new Date().toISOString().slice(0,10), description: description || 'Account transfer', amount, type, category: 'Transfer', account: account.name, accountId: account.id, currency: account.currency, status: 'completed', transferId };
+          applyTransactionChange(state, txn.id, txn);
+        }
+      }
     });
-    return transactions.reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>);
   }
 
-  async initializeSampleData(): Promise<void> {
-    if (supabaseConfigured && this.currentUserId && this.isOnline) {
-      await supabaseService.initializeSampleData(this.currentUserId);
-    }
+  private async reportTransactions() {
+    const [items, accounts] = await Promise.all([this.getTransactions(), this.getAccounts()]);
+    const currency = businessProfileService.getReportCurrency();
+    return Promise.all(items.filter(t => t.status === 'completed' && t.category !== 'Transfer').map(async t => ({ ...t, amount: await currencyService.convertCurrency(t.amount, t.currency || accounts.find(a => a.id === t.accountId)?.currency || 'USD', currency) })));
   }
+  async getMonthlyIncome(month = new Date().getMonth(), year = new Date().getFullYear()) { return this.monthlyTotal('income',month,year); }
+  async getMonthlyExpenses(month = new Date().getMonth(), year = new Date().getFullYear()) { return this.monthlyTotal('expense',month,year); }
+  private async monthlyTotal(type: Transaction['type'], month: number, year: number) { return (await this.reportTransactions()).filter(t => t.type === type && Number(t.date.slice(0,4)) === year && Number(t.date.slice(5,7)) === month+1).reduce((sum,t) => sum+t.amount,0); }
+  async getCashFlow(month?: number, year?: number) { return (await this.getMonthlyIncome(month,year)) - (await this.getMonthlyExpenses(month,year)); }
+  async getTotalBalance() { const amounts = await Promise.all((await this.getAccounts()).map(a => currencyService.convertCurrency(a.balance,a.currency,businessProfileService.getReportCurrency()))); return amounts.reduce((sum,n)=>sum+n,0); }
+  async getIncomeByCategory(month = new Date().getMonth(), year = new Date().getFullYear()) { return this.byCategory('income',month,year); }
+  async getExpensesByCategory(month = new Date().getMonth(), year = new Date().getFullYear()) { return this.byCategory('expense',month,year); }
+  private async byCategory(type: Transaction['type'], month: number, year: number) { return (await this.reportTransactions()).filter(t=>t.type===type && Number(t.date.slice(0,4))===year && Number(t.date.slice(5,7))===month+1).reduce<Record<string,number>>((totals,t)=>{ totals[t.category]=(totals[t.category]||0)+t.amount;return totals; },{}); }
+  async initializeSampleData() { /* Real workspaces start empty. */ }
 }
-
 export const dataService = new DataService();

@@ -29,7 +29,7 @@ export const formatPercentage = (value: number): string => {
 };
 
 export const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  return crypto.randomUUID();
 };
 
 export const getDaysUntilDate = (date: string): number => {

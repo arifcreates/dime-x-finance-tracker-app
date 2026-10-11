@@ -1,11 +1,11 @@
+import { moneySummary } from '../utils/money';
 import React, { useState, useEffect } from 'react';
 import { Wallet, Plus, RefreshCw, Edit, Trash2, ArrowUpDown } from 'lucide-react';
 import { AccountForm } from '../components/Forms/AccountForm';
 import { TransferForm } from '../components/Forms/TransferForm';
-import { Account, Transaction } from '../types';
+import { Account } from '../types';
 import { dataService } from '../services/dataService';
 import { formatCurrency } from '../utils/formatters';
-import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
 interface AccountsProps {
   onAccountSelect?: (accountId: string) => void;
@@ -13,7 +13,6 @@ interface AccountsProps {
 }
 
 export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect, onUpdate }) => {
-  const fmt = useCurrencyFormat();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [showAccountForm, setShowAccountForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
@@ -50,7 +49,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect, onUpdate })
     setShowAccountForm(true);
   };
 
-  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
+  const totalBalance = moneySummary(accounts, a => a.balance);
 
   const getAccountTypeColor = (type: string) => {
     switch (type) {
@@ -104,7 +103,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect, onUpdate })
         {/* Total Balance Card */}
         <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl sm:rounded-[1.75rem] text-gray-950 dark:text-white border border-gray-100 dark:border-gray-800 shadow-sm">
           <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">Total Balance</h3>
-          <p className="text-2xl sm:text-3xl font-bold mt-2">{fmt(totalBalance)}</p>
+          <p className="text-2xl sm:text-3xl font-bold mt-2">{totalBalance}</p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Across {accounts.length} accounts</p>
         </div>
 
@@ -155,7 +154,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect, onUpdate })
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Balance</span>
-                    <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</span>
+                    <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(account.balance, account.currency)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Currency</span>
@@ -236,7 +235,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect, onUpdate })
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Balance</span>
-                    <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</span>
+                    <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(account.balance, account.currency)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Currency</span>
@@ -311,7 +310,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onAccountSelect, onUpdate })
                   <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getAccountTypeColor(account.type)}`}>
                     {account.type.charAt(0).toUpperCase() + account.type.slice(1)}
                   </span>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(account.balance, account.currency)}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{account.currency}</p>
                 </div>
 

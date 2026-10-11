@@ -1,6 +1,6 @@
 import React from 'react';
 import { Transaction } from '../../types';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
 import { useCurrencyFormat } from '../../hooks/useCurrencyFormat';
 import { ArrowUpRight, ArrowDownLeft, Trash2, TrendingUp, ArrowRight } from 'lucide-react';
 import { dataService } from '../../services/dataService';
@@ -102,7 +102,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                       <td className={`py-3 px-2 text-right font-bold text-sm ${
                         transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                       }`}>
-                        {transaction.type === 'income' ? '+' : '-'}{fmt(transaction.amount)}
+                        {transaction.type === 'income' ? '+' : '-'}{fmt(transaction.amount, transaction.currency)}
                       </td>
                       <td className="py-3 px-2 text-center">
                         <button
@@ -154,7 +154,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                       <p className={`font-bold text-sm ${
                         transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                       }`}>
-                        {transaction.type === 'income' ? '+' : '-'}{fmt(transaction.amount)}
+                        {transaction.type === 'income' ? '+' : '-'}{fmt(transaction.amount, transaction.currency)}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">{transaction.account}</p>
                     </div>

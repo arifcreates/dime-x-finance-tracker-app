@@ -1,3 +1,4 @@
+import type { AppUser } from '../../types';
 import React from 'react';
 import {
   LayoutGrid,
@@ -5,7 +6,6 @@ import {
   CreditCard,
   Wallet,
   Calendar,
-  TrendingUp,
   FileText,
   BarChart3,
   X,
@@ -19,7 +19,7 @@ interface SidebarProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
   onClose?: () => void;
-  user?: any;
+  user?: AppUser;
   onSettingsClick?: () => void;
 }
 
@@ -30,7 +30,9 @@ const navigationItems = [
   { id: 'expenses', label: 'Expenses', icon: Receipt },
   { id: 'accounts', label: 'Accounts', icon: Wallet },
   { id: 'emi', label: 'Loans', icon: CreditCard },
-  { id: 'recurring', label: 'Subscriptions', icon: Calendar },
+  { id: 'recurring', label: 'Bills', icon: Calendar },
+  { id: 'assistant', label: 'AI Drafts', icon: FileText },
+  { id: 'billing', label: 'Dime-X Plan', icon: CreditCard },
   { id: 'reports', label: 'Reports', icon: BarChart3 },
 ];
 

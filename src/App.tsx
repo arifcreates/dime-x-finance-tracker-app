@@ -1,4 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { errorService } from './services/errorService';
+import type { Session } from '@supabase/supabase-js';
+import { businessProfileService } from './services/businessProfileService';
+import { ErrorToastContainer } from './components/Common/ErrorToast';
+import type { AppUser } from './types';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
@@ -15,7 +20,9 @@ import { Expenses } from './pages/Expenses';
 import { Accounts } from './pages/Accounts';
 import { EMI } from './pages/EMI';
 import { Recurring } from './pages/Recurring';
-import { Reports } from './pages/Reports';
+const Reports = lazy(() => import('./pages/Reports').then(module=>({default:module.Reports})));
+const Billing = lazy(() => import('./pages/Billing'));
+const Assistant = lazy(() => import('./pages/Assistant'));
 import { AccountDetail } from './pages/AccountDetail';
 import { dataService } from './services/dataService';
 import { supabaseService } from './services/supabaseService';
@@ -33,6 +40,8 @@ const sectionTitles: Record<string, string> = {
   emi: 'Loans & Credit',
   recurring: 'Subscriptions & Bills',
   reports: 'Reports & Analytics',
+  billing: 'Dime-X Plan',
+  assistant: 'AI Drafts',
 };
 
 // Detect touch device
@@ -67,7 +76,7 @@ function App() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -100,78 +109,48 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Check for existing Supabase session
-    const checkSession = async () => {
+    let cancelled = false;
+    let version = 0;
+    const restore = async (session: Session | null) => {
+      const request = ++version;
       setIsLoading(true);
       try {
-        if (!supabaseConfigured) {
-          const savedUser = getSavedUser();
-          if (savedUser) {
-            setUser(savedUser);
-            setTransactions([]);
-          }
-          return;
-        }
-
-        const { data: { session } } = await withTimeout(supabase.auth.getSession(), 2500);
-        
-        if (session?.user) {
-          // Get user profile
-          const profile = await supabaseService.getProfile(session.user.id);
-          
-          const userData = {
-            id: session.user.id,
-            name: profile.name,
-            email: profile.email,
-            avatar: profile.preferences?.avatar || null,
-            preferences: profile.preferences || {
-              theme: 'light',
-              currency: 'USD',
-              notifications: true,
-            }
-          };
-          
-          setUser(userData);
+        if (session) {
           dataService.setCurrentUserId(session.user.id);
-          const userTransactions = await dataService.getTransactions();
-          setTransactions(userTransactions);
+          const profile = await supabaseService.getProfile(session.user.id);
+          if (cancelled || request !== version) return;
+          businessProfileService.hydrate(profile.business_profile, profile.preferences.currency);
+          localStorage.setItem('user', JSON.stringify({id:session.user.id,name:profile.name,email:session.user.email || profile.email,avatar:profile.preferences.avatar || null,preferences:profile.preferences}));
+          window.dispatchEvent(new Event('dimex-theme-changed'));
+          setUser({ id: session.user.id, name: profile.name, email: session.user.email || profile.email, phone: profile.phone || '', avatar: profile.preferences.avatar || null, preferences: profile.preferences });
+          const restoredTransactions = await dataService.getTransactions();
+          if (!cancelled && request === version) setTransactions(restoredTransactions);
         } else {
-          // Check for guest user in localStorage
           const savedUser = getSavedUser();
-          if (savedUser) {
-            setUser(savedUser);
-            setTransactions([]);
-          }
+          dataService.setCurrentUserId(null);
+          setUser(savedUser?.id === 'guest' ? savedUser : null);
+          setTransactions(savedUser?.id === 'guest' ? await dataService.getTransactions() : []);
+          if (savedUser?.id !== 'guest') localStorage.removeItem('user');
         }
       } catch (error) {
-        console.error('Error checking session:', error);
+        if (!cancelled && request === version) { setUser(null); dataService.setCurrentUserId(null); }
+        errorService.addError('Could not restore your account. Please sign in again or retry later.');
+        console.error('Could not restore your session:', error);
       } finally {
-        setIsLoading(false);
+        if (!cancelled && request === version) setIsLoading(false);
       }
     };
-
-    checkSession();
-
-    // Listen for auth state changes (skip if Supabase not configured)
-    let unsubscribe = () => {};
-    if (supabaseConfigured) {
-      try {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
-          if (event === 'SIGNED_OUT') {
-            setUser(null);
-            setTransactions([]);
-            localStorage.removeItem('user');
-          }
-        });
-        unsubscribe = () => subscription.unsubscribe();
-      } catch (error) {
-        console.error('Auth state change setup error:', error);
-      }
+    if (!supabaseConfigured) void restore(null);
+    else {
+      void withTimeout(supabase.auth.getSession(), 10000).then(({data, error}) => { if(error) throw error; return restore(data.session); }).catch(error => { console.error(error); setIsLoading(false); });
     }
-
-    return () => {
-      unsubscribe();
-    };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        // Never await database calls inside Supabase's auth callback.
+        window.setTimeout(() => { if (!cancelled) void restore(session); }, 0);
+      }
+    });
+    return () => { cancelled = true; subscription.unsubscribe(); };
   }, []);
 
   const refreshTransactions = async () => {
@@ -180,37 +159,29 @@ function App() {
       const userTransactions = await dataService.getTransactions();
       setTransactions(userTransactions);
     } else {
-      setTransactions([]);
+      setTransactions(await dataService.getTransactions());
     }
   };
 
-  const handleLogin = async (userData: any) => {
-    setUser(userData);
+  const handleLogin = async (userData: AppUser) => {
     dataService.setCurrentUserId(userData.id === 'guest' ? null : userData.id);
-    
-    if (userData.id === 'guest') {
-      localStorage.setItem('user', JSON.stringify(userData));
-      setTransactions([]);
-    } else {
-      localStorage.setItem('user', JSON.stringify(userData));
-      const userTransactions = await dataService.getTransactions();
-      setTransactions(userTransactions);
+    if (userData.id !== 'guest') {
+      const profile = await supabaseService.getProfile(userData.id);
+      businessProfileService.hydrate(profile.business_profile, userData.preferences.currency);
     }
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    window.dispatchEvent(new Event('dimex-theme-changed'));
+    setTransactions(await dataService.getTransactions());
   };
 
   const handleLogout = async () => {
-    try {
-      if (user && user.id !== 'guest') {
-        await supabaseService.signOut();
-      }
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-    
+    if (user && user.id !== 'guest') await supabaseService.signOut();
     setUser(null);
     setTransactions([]);
     dataService.setCurrentUserId(null);
     localStorage.removeItem('user');
+    window.dispatchEvent(new Event('dimex-theme-changed'));
   };
 
   const handleQuickAction = (action: string) => {
@@ -247,7 +218,7 @@ function App() {
       quickActionRequest,
       onQuickActionHandled: () => setQuickActionRequest(null),
       onCreateAccount: handleCreateAccountFromQuickAction,
-      user,
+      user: user || undefined,
       onUpdate: refreshTransactions
     };
 
@@ -269,13 +240,15 @@ function App() {
       case 'clients':
         return <Clients />;
       case 'expenses':
-        return <Expenses onUpdate={refreshTransactions} />;
+        return <Expenses />;
       case 'accounts':
         return <Accounts onAccountSelect={handleAccountSelect} onUpdate={refreshTransactions} />;
       case 'emi':
-        return <EMI onUpdate={refreshTransactions} />;
+        return <EMI />;
       case 'recurring':
-        return <Recurring onUpdate={refreshTransactions} />;
+        return <Recurring />;
+      case 'billing': return <Billing />;
+      case 'assistant': return <Assistant />;
       case 'reports':
         return <Reports searchQuery={globalSearchQuery} />;
       default:
@@ -284,7 +257,7 @@ function App() {
   };
 
   // Show loading state only while restoring a known signed-in user.
-  if (isLoading && user) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f7f7f4] dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-black dark:border-white border-t-transparent"></div>
@@ -294,11 +267,11 @@ function App() {
 
   // Show landing page if no user is logged in
   if (!user) {
-    return <LandingPage onLogin={handleLogin} />;
+    return <><LandingPage onLogin={handleLogin} /><ErrorToastContainer /></>;
   }
 
   return (
-    <CurrencyProvider initialCurrency={user?.preferences?.currency}>
+    <><ErrorToastContainer /><CurrencyProvider initialCurrency={user?.preferences?.currency}>
     <DndProvider backend={isTouchDevice() ? TouchBackend : HTML5Backend}>
       <div className="flex h-screen bg-[#f7f7f4] dark:bg-gray-900 overflow-hidden">
         {/* Desktop Sidebar */}
@@ -344,7 +317,7 @@ function App() {
           />
           
           <main className="flex-1 overflow-y-auto pb-[calc(5.75rem+var(--mobile-browser-bottom,0px))] lg:pb-0">
-            {renderContent()}
+            <Suspense fallback={<p className="p-6">Loading…</p>}>{renderContent()}</Suspense>
           </main>
 
           {/* Mobile Bottom Navigation */}
@@ -371,7 +344,7 @@ function App() {
         />
       </div>
     </DndProvider>
-    </CurrencyProvider>
+    </CurrencyProvider></>
   );
 }
 

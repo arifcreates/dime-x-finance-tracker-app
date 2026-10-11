@@ -100,7 +100,7 @@ export const Clients: React.FC = () => {
     event?.preventDefault();
 
     const client: Client = {
-      id: formData.id || Date.now().toString(36) + Math.random().toString(36).slice(2),
+      id: formData.id || crypto.randomUUID(),
       name: formData.name.trim(),
       email: formData.email.trim(),
       phone: formData.phone.trim(),

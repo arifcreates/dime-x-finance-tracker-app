@@ -1,9 +1,10 @@
+import { moneySummary } from '../utils/money';
 import React, { useState, useEffect } from 'react';
 import { Copy, Download, FileText, Plus, DollarSign, Edit, Trash2 } from 'lucide-react';
 import { InvoiceForm } from '../components/Forms/InvoiceForm';
 import { TransactionForm } from '../components/Forms/TransactionForm';
 import { InvoiceStatusModal } from '../components/Forms/InvoiceStatusModal';
-import { Invoice, Transaction } from '../types';
+import { Invoice, Transaction, Client } from '../types';
 import { dataService } from '../services/dataService';
 import { formatDate, generateId } from '../utils/formatters';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
@@ -19,7 +20,7 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
   const fmt = useCurrencyFormat();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [showIncomeForm, setShowIncomeForm] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -47,16 +48,16 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
     refreshData();
   };
 
-  const handleDeleteInvoice = (id: string) => {
+  const handleDeleteInvoice = async (id: string) => {
     if (confirm('Are you sure you want to delete this invoice?')) {
-      dataService.deleteInvoice(id);
+      await dataService.deleteInvoice(id);
       refreshData();
     }
   };
 
-  const handleDeleteTransaction = (id: string) => {
+  const handleDeleteTransaction = async (id: string) => {
     if (confirm('Are you sure you want to delete this income record?')) {
-      dataService.deleteTransaction(id);
+      await dataService.deleteTransaction(id);
       refreshData();
     }
   };
@@ -86,7 +87,7 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
     downloadInvoicePdf(invoice, client);
   };
 
-  const handleStatusChange = (invoice: Invoice, newStatus: string) => {
+  const handleStatusChange = async (invoice: Invoice, newStatus: string) => {
     if (invoice.status === newStatus) return;
 
     if (newStatus === 'paid') {
@@ -95,7 +96,7 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
     } else {
       // For other status changes, update directly
       const updatedInvoice = { ...invoice, status: newStatus as Invoice['status'] };
-      dataService.saveInvoice(updatedInvoice);
+      await dataService.saveInvoice(updatedInvoice);
       refreshData();
     }
   };
@@ -113,10 +114,10 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
     }
   };
 
-  const totalInvoiceAmount = invoices.reduce((sum, inv) => sum + inv.amount, 0);
-  const paidAmount = invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.amount, 0);
-  const pendingAmount = totalInvoiceAmount - paidAmount;
-  const totalIncomeRecords = transactions.reduce((sum, t) => sum + t.amount, 0);
+  const totalInvoiceAmount = moneySummary(invoices, i => i.amount);
+  const paidAmount = moneySummary(invoices.filter(i => i.status === 'paid'), i => i.amount);
+  const pendingAmount = moneySummary(invoices.filter(i => i.status === 'sent' || i.status === 'overdue'), i => i.amount);
+  const totalIncomeRecords = moneySummary(transactions.filter(t => t.status === 'completed' && !t.invoiceId && t.category !== 'Transfer'), t => t.amount);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
@@ -152,22 +153,22 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Invoiced</h4>
-            <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">{fmt(totalInvoiceAmount)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">{totalInvoiceAmount}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{invoices.length} invoices</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Amount Paid</h4>
-            <p className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">{fmt(paidAmount)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">{paidAmount}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Received payments</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Pending Amount</h4>
-            <p className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">{fmt(pendingAmount)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">{pendingAmount}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Outstanding invoices</p>
           </div>
           <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Direct Income</h4>
-            <p className="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{fmt(totalIncomeRecords)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{totalIncomeRecords}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{transactions.length} records</p>
           </div>
         </div>
@@ -371,7 +372,7 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
                               <p className="text-sm text-gray-500 dark:text-gray-400">{transaction.category} • {formatDate(transaction.date)} • {transaction.account}</p>
                             </div>
                             <div className="flex items-center space-x-3">
-                              <p className="font-semibold text-green-600 dark:text-green-400 text-lg">{fmt(transaction.amount)}</p>
+                              <p className="font-semibold text-green-600 dark:text-green-400 text-lg">{fmt(transaction.amount, transaction.currency)}</p>
                               <button
                                 onClick={() => handleDeleteTransaction(transaction.id)}
                                 className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"

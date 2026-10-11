@@ -6,6 +6,10 @@ export interface Transaction {
   type: 'income' | 'expense';
   category: string;
   account: string;
+  accountId?: string;
+  currency?: string;
+  invoiceId?: string;
+  transferId?: string;
   status: 'completed' | 'pending' | 'cancelled';
 }
 
@@ -19,7 +23,7 @@ export interface Account {
 
 export interface Invoice {
   id: string;
-  clientId: string;
+  clientId: string | null;
   invoiceNumber: string;
   date: string;
   dueDate: string;
@@ -74,6 +78,7 @@ export interface Client {
 }
 
 export interface EMI {
+  currency?: string;
   id: string;
   name: string;
   principal: number;
@@ -89,6 +94,7 @@ export interface EMI {
 }
 
 export interface CreditCard {
+  currency?: string;
   id: string;
   name: string;
   creditLimit: number;
@@ -99,6 +105,7 @@ export interface CreditCard {
 }
 
 export interface RecurringPayment {
+  currency?: string;
   id: string;
   name: string;
   amount: number;
@@ -106,4 +113,29 @@ export interface RecurringPayment {
   nextDate: string;
   category: string;
   isActive: boolean;
+}
+
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'auto';
+  currency: string;
+  notifications: boolean;
+  avatar?: string | null;
+}
+
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  avatar: string | null;
+  preferences: UserPreferences;
+}
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  preferences: UserPreferences;
+  business_profile?: BusinessProfile;
 }

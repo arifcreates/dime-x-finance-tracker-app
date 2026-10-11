@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { Transaction, Account, Invoice, Client, EMI, CreditCard, RecurringPayment } from '../types';
+import { Transaction, Account, Invoice, Client, EMI, CreditCard, RecurringPayment, UserProfile, UserPreferences } from '../types';
 import { getInvoiceMetadata } from '../utils/invoiceUtils';
 
 class SupabaseService {
@@ -12,15 +12,11 @@ class SupabaseService {
         data: {
           name,
         },
+        emailRedirectTo: window.location.origin,
       },
     });
 
     if (error) throw error;
-
-    // Create profile
-    if (data.user) {
-      await this.createProfile(data.user.id, email, name);
-    }
 
     return data;
   }
@@ -53,7 +49,8 @@ class SupabaseService {
       .single();
 
     if (error) throw error;
-    return data;
+    const profile = data as UserProfile;
+    return { ...profile, preferences: { theme: 'light' as const, currency: 'INR', notifications: true, ...(profile.preferences as Partial<UserPreferences>) } };
   }
 
   async createProfile(userId: string, email: string, name: string) {
@@ -74,11 +71,11 @@ class SupabaseService {
     return data;
   }
 
-  async updateProfile(userId: string, updates: any) {
+  async updateProfile(userId: string, updates: Partial<Pick<UserProfile, 'name' | 'phone' | 'preferences' | 'business_profile'>>) {
     const { data, error } = await supabase
       .from('profiles')
       .update(updates)
-      .eq('id', userId);
+      .eq('id', userId).select('id').single();
 
     if (error) throw error;
     return data;
@@ -108,7 +105,7 @@ class SupabaseService {
 
     const { data, error } = await supabase
       .from('accounts')
-      .upsert(accountData);
+      .upsert(accountData).select().single();
 
     if (error) throw error;
     return data;
@@ -118,7 +115,7 @@ class SupabaseService {
     const { error } = await supabase
       .from('accounts')
       .delete()
-      .eq('id', accountId);
+      .eq('id', accountId).select('id').single();
 
     if (error) throw error;
   }
@@ -132,7 +129,7 @@ class SupabaseService {
       .order('date', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(t => ({ ...t, accountId: t.account_id, invoiceId: t.invoice_id || undefined, transferId: t.transfer_id || undefined }));
   }
 
   async saveTransaction(userId: string, transaction: Transaction) {
@@ -145,12 +142,14 @@ class SupabaseService {
       type: transaction.type,
       category: transaction.category,
       account: transaction.account,
+      account_id: transaction.accountId,
+      currency: transaction.currency,
       status: transaction.status,
     };
 
     const { data, error } = await supabase
       .from('transactions')
-      .upsert(transactionData);
+      .upsert(transactionData).select().single();
 
     if (error) throw error;
     return data;
@@ -160,7 +159,7 @@ class SupabaseService {
     const { error } = await supabase
       .from('transactions')
       .delete()
-      .eq('id', transactionId);
+      .eq('id', transactionId).select('id').single();
 
     if (error) throw error;
   }
@@ -189,7 +188,7 @@ class SupabaseService {
 
     const { data, error } = await supabase
       .from('clients')
-      .upsert(clientData);
+      .upsert(clientData).select().single();
 
     if (error) throw error;
     return data;
@@ -199,7 +198,7 @@ class SupabaseService {
     const { error } = await supabase
       .from('clients')
       .delete()
-      .eq('id', clientId);
+      .eq('id', clientId).select('id').single();
 
     if (error) throw error;
   }
@@ -241,7 +240,7 @@ class SupabaseService {
     const invoiceData = {
       id: invoice.id,
       user_id: userId,
-      client_id: invoice.clientId,
+      client_id: invoice.clientId || null,
       invoice_number: invoice.invoiceNumber,
       date: invoice.date,
       due_date: invoice.dueDate,
@@ -252,7 +251,7 @@ class SupabaseService {
 
     const { data, error } = await supabase
       .from('invoices')
-      .upsert(invoiceData);
+      .upsert(invoiceData).select().single();
 
     if (error) throw error;
     return data;
@@ -262,7 +261,7 @@ class SupabaseService {
     const { error } = await supabase
       .from('invoices')
       .delete()
-      .eq('id', invoiceId);
+      .eq('id', invoiceId).select('id').single();
 
     if (error) throw error;
   }
@@ -279,6 +278,7 @@ class SupabaseService {
     return data?.map(emi => ({
       id: emi.id,
       name: emi.name,
+      currency: emi.currency,
       principal: emi.principal,
       interestRate: emi.interest_rate,
       tenure: emi.tenure,
@@ -297,6 +297,7 @@ class SupabaseService {
       id: emi.id,
       user_id: userId,
       name: emi.name,
+      currency: emi.currency,
       principal: emi.principal,
       interest_rate: emi.interestRate,
       tenure: emi.tenure,
@@ -311,7 +312,7 @@ class SupabaseService {
 
     const { data, error } = await supabase
       .from('emis')
-      .upsert(emiData);
+      .upsert(emiData).select().single();
 
     if (error) throw error;
     return data;
@@ -321,7 +322,7 @@ class SupabaseService {
     const { error } = await supabase
       .from('emis')
       .delete()
-      .eq('id', emiId);
+      .eq('id', emiId).select('id').single();
 
     if (error) throw error;
   }
@@ -338,6 +339,7 @@ class SupabaseService {
     return data?.map(card => ({
       id: card.id,
       name: card.name,
+      currency: card.currency,
       creditLimit: card.credit_limit,
       currentBalance: card.current_balance,
       minimumDue: card.minimum_due,
@@ -351,6 +353,7 @@ class SupabaseService {
       id: card.id,
       user_id: userId,
       name: card.name,
+      currency: card.currency,
       credit_limit: card.creditLimit,
       current_balance: card.currentBalance,
       minimum_due: card.minimumDue,
@@ -360,7 +363,7 @@ class SupabaseService {
 
     const { data, error } = await supabase
       .from('credit_cards')
-      .upsert(cardData);
+      .upsert(cardData).select().single();
 
     if (error) throw error;
     return data;
@@ -370,7 +373,7 @@ class SupabaseService {
     const { error } = await supabase
       .from('credit_cards')
       .delete()
-      .eq('id', cardId);
+      .eq('id', cardId).select('id').single();
 
     if (error) throw error;
   }
@@ -387,6 +390,7 @@ class SupabaseService {
     return data?.map(payment => ({
       id: payment.id,
       name: payment.name,
+      currency: payment.currency,
       amount: payment.amount,
       frequency: payment.frequency,
       nextDate: payment.next_date,
@@ -400,6 +404,7 @@ class SupabaseService {
       id: payment.id,
       user_id: userId,
       name: payment.name,
+      currency: payment.currency,
       amount: payment.amount,
       frequency: payment.frequency,
       next_date: payment.nextDate,
@@ -409,7 +414,7 @@ class SupabaseService {
 
     const { data, error } = await supabase
       .from('recurring_payments')
-      .upsert(paymentData);
+      .upsert(paymentData).select().single();
 
     if (error) throw error;
     return data;
@@ -419,55 +424,24 @@ class SupabaseService {
     const { error } = await supabase
       .from('recurring_payments')
       .delete()
-      .eq('id', paymentId);
+      .eq('id', paymentId).select('id').single();
 
     if (error) throw error;
   }
 
-  // Initialize sample data for new users
+  async recordInvoicePayment(invoiceId: string, accountId: string, amount: number) {
+    const { error } = await supabase.rpc('record_invoice_payment', { p_invoice_id: invoiceId, p_account_id: accountId, p_amount: amount });
+    if (error) throw error;
+  }
+  async transfer(fromId: string, toId: string, amount: number, description: string, requestId: string) {
+    const { error } = await supabase.rpc('transfer_funds', { p_from: fromId, p_to: toId, p_amount: amount, p_description: description, p_request_id: requestId });
+    if (error) throw error;
+  }
+
+  // New users must start with an empty workspace. Keep this as a no-op so
+  // older call sites cannot accidentally seed demo balances into real accounts.
   async initializeSampleData(userId: string) {
-    try {
-      // Check if user already has data
-      const accounts = await this.getAccounts(userId);
-      if (accounts.length > 0) return; // User already has data
-
-      // Create sample accounts
-      const sampleAccounts: Account[] = [
-        { id: crypto.randomUUID(), name: 'Primary Savings', type: 'savings', balance: 45000, currency: 'USD' },
-        { id: crypto.randomUUID(), name: 'Business Current', type: 'current', balance: 28500, currency: 'USD' },
-        { id: crypto.randomUUID(), name: 'Cash in Hand', type: 'cash', balance: 2500, currency: 'USD' },
-        { id: crypto.randomUUID(), name: 'Investment Account', type: 'investment', balance: 15000, currency: 'USD' },
-      ];
-
-      for (const account of sampleAccounts) {
-        await this.saveAccount(userId, account);
-      }
-
-      // Create sample transactions
-      const sampleTransactions: Transaction[] = [
-        { id: crypto.randomUUID(), date: '2024-01-15', description: 'Website Development - TechCorp', amount: 4500, type: 'income', category: 'Freelance', account: 'Business Current', status: 'completed' },
-        { id: crypto.randomUUID(), date: '2024-01-20', description: 'Mobile App Consulting', amount: 2800, type: 'income', category: 'Consulting', account: 'Business Current', status: 'completed' },
-        { id: crypto.randomUUID(), date: '2024-01-14', description: 'Office Supplies & Equipment', amount: 320, type: 'expense', category: 'Office', account: 'Business Current', status: 'completed' },
-        { id: crypto.randomUUID(), date: '2024-01-16', description: 'Adobe Creative Suite', amount: 89, type: 'expense', category: 'Software', account: 'Business Current', status: 'completed' },
-      ];
-
-      for (const transaction of sampleTransactions) {
-        await this.saveTransaction(userId, transaction);
-      }
-
-      // Create sample clients
-      const sampleClients: Client[] = [
-        { id: crypto.randomUUID(), name: 'TechCorp Solutions', email: 'contact@techcorp.com', phone: '+1-555-0123', address: '123 Tech Street, Silicon Valley, CA 94000' },
-        { id: crypto.randomUUID(), name: 'StartupXYZ', email: 'hello@startupxyz.com', phone: '+1-555-0456', address: '456 Innovation Ave, Austin, TX 78701' },
-      ];
-
-      for (const client of sampleClients) {
-        await this.saveClient(userId, client);
-      }
-
-    } catch (error) {
-      console.error('Error initializing sample data:', error);
-    }
+    console.info('Sample data seeding is disabled for user workspaces:', userId);
   }
 }
 

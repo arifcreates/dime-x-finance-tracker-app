@@ -1,33 +1,22 @@
 import { errorService } from './errorService';
 
 class CurrencyService {
-  private exchangeRates: Record<string, number> = {
-    USD: 1,
-    EUR: 0.85,
-    GBP: 0.73,
-    INR: 83.12,
-    AED: 3.67,
-    CAD: 1.35,
-    AUD: 1.52,
-    JPY: 149.50,
-    CHF: 0.88,
-    CNY: 7.24,
-    SGD: 1.34,
-    RUB: 77.700707,
-  };
-
-  private lastUpdated: Date = new Date();
+  private exchangeRates: Record<string, number> = { USD: 1 };
+  private refreshing: Promise<void> | null = null;
+  private lastUpdated: Date = new Date(0);
 
   async getExchangeRates(): Promise<Record<string, number>> {
     try {
       // Check if rates are older than 1 hour
       const oneHour = 60 * 60 * 1000;
       if (Date.now() - this.lastUpdated.getTime() > oneHour) {
-        await this.updateExchangeRates();
+        if (!this.refreshing) this.refreshing = this.updateExchangeRates().finally(() => { this.refreshing = null; });
+        await this.refreshing;
       }
       return this.exchangeRates;
-    } catch (error) {
+    } catch {
       errorService.addError('Failed to get exchange rates. Using cached rates.', 'warning');
+      if (Date.now() - this.lastUpdated.getTime() > 24 * 60 * 60 * 1000) throw new Error('Current exchange rates unavailable.');
       return this.exchangeRates;
     }
   }
@@ -79,7 +68,7 @@ class CurrencyService {
       return usdAmount * rates[toCurrency];
     } catch (error) {
       errorService.addError(`Currency conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
-      return amount; // Return original amount as fallback
+      throw new Error('Currency conversion unavailable. Please retry before recording payment.');
     }
   }
 
@@ -104,7 +93,7 @@ class CurrencyService {
     try {
       const currency = this.getSupportedCurrencies().find(c => c.code === currencyCode);
       return currency?.symbol || '$';
-    } catch (error) {
+    } catch {
       errorService.addError('Failed to get currency symbol', 'warning');
       return '$';
     }
@@ -119,7 +108,7 @@ class CurrencyService {
         this.exchangeRates = rates;
         this.lastUpdated = new Date(lastUpdated);
       }
-    } catch (error) {
+    } catch {
       errorService.addError('Failed to load cached exchange rates', 'warning');
     }
   }

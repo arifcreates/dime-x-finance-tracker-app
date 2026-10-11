@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext", "moduleResolution": "Bundler", "strict": true,
+    "noEmit": true, "allowImportingTsExtensions": true, "skipLibCheck": true,
+    "baseUrl": ".", "paths": {"npm:@supabase/supabase-js@2.105.4": ["node_modules/@supabase/supabase-js/dist/index.d.mts"]}
+  },
+  "include": ["supabase/functions/**/*.ts", "supabase/edge-runtime.d.ts"]
+}

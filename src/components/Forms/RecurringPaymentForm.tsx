@@ -1,3 +1,4 @@
+import { useCurrency } from '../../contexts/CurrencyContext';
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { RecurringPayment } from '../../types';
@@ -18,6 +19,9 @@ export const RecurringPaymentForm: React.FC<RecurringPaymentFormProps> = ({
   onSave,
   payment,
 }) => {
+  const { currency } = useCurrency();
+  const draftId = React.useRef(generateId());
+  React.useEffect(() => { if (isOpen) draftId.current = generateId(); }, [isOpen]);
   const [formData, setFormData] = useState({
     name: payment?.name || '',
     amount: payment?.amount ? String(payment.amount) : '',
@@ -63,7 +67,7 @@ export const RecurringPaymentForm: React.FC<RecurringPaymentFormProps> = ({
     label: category,
   }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const amount = Number(formData.amount);
@@ -73,12 +77,13 @@ export const RecurringPaymentForm: React.FC<RecurringPaymentFormProps> = ({
     }
     
     const newPayment: RecurringPayment = {
-      id: payment?.id || generateId(),
+      id: payment?.id || draftId.current,
+      currency: payment?.currency || currency,
       ...formData,
       amount,
     };
 
-    dataService.saveRecurringPayment(newPayment);
+    await dataService.saveRecurringPayment(newPayment);
     onSave(newPayment);
     onClose();
     

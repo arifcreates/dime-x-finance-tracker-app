@@ -21,6 +21,8 @@ export const AccountForm: React.FC<AccountFormProps> = ({
   account,
 }) => {
   const { currency } = useCurrency();
+  const draftId = React.useRef(generateId());
+  React.useEffect(() => { if (isOpen) draftId.current = generateId(); }, [isOpen]);
   const [formData, setFormData] = useState({
     name: account?.name || '',
     type: account?.type || 'savings' as const,
@@ -43,7 +45,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
     e.preventDefault();
     
     const newAccount: Account = {
-      id: account?.id || generateId(),
+      id: account?.id || draftId.current,
       ...formData,
       balance: Number(formData.balance) || 0,
     };

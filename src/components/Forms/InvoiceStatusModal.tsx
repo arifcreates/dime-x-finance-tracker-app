@@ -74,37 +74,7 @@ export const InvoiceStatusModal: React.FC<InvoiceStatusModalProps> = ({
     setIsProcessing(true);
 
     try {
-      // Update invoice status
-      const updatedInvoice = { ...invoice, status: 'paid' as const };
-      await dataService.saveInvoice(updatedInvoice);
-
-      // Find the selected account
-      const account = accounts.find(acc => acc.id === selectedAccount);
-      if (account) {
-        const creditedAmount = await currencyService.convertCurrency(invoice.amount, invoiceCurrency, account.currency);
-        // Update account balance
-        const updatedAccount = {
-          ...account,
-          balance: account.balance + creditedAmount
-        };
-        await dataService.saveAccount(updatedAccount);
-
-        // Create income transaction
-        const convertedLabel = invoiceCurrency === account.currency
-          ? ''
-          : ` (${formatCurrency(invoice.amount, invoiceCurrency)} converted to ${formatCurrency(creditedAmount, account.currency)})`;
-        const transaction = {
-          id: `invoice-payment-${invoice.id}`,
-          date: new Date().toISOString().split('T')[0],
-          description: `Invoice Payment - ${invoice.invoiceNumber}${convertedLabel}`,
-          amount: creditedAmount,
-          type: 'income' as const,
-          category: 'Invoice Payment',
-          account: account.name,
-          status: 'completed' as const,
-        };
-        await dataService.saveTransaction(transaction);
-      }
+      await dataService.recordInvoicePayment(invoice, selectedAccount);
 
       onUpdate();
       onClose();

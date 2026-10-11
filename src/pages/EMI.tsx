@@ -1,10 +1,11 @@
+import { moneySummary } from '../utils/money';
 import React, { useState, useEffect } from 'react';
 import { CreditCard as CreditCardIcon, Plus, Calculator, Edit, Trash2, Calendar, TrendingDown, AlertCircle, Target, HandCoins } from 'lucide-react';
 import { EMIForm } from '../components/Forms/EMIForm';
 import { CreditCardForm } from '../components/Forms/CreditCardForm';
 import { EMI as EMIType, CreditCard } from '../types';
 import { dataService } from '../services/dataService';
-import { formatCurrency, formatDate, getDaysUntilDate } from '../utils/formatters';
+import { formatDate, getDaysUntilDate } from '../utils/formatters';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 
 export const EMI: React.FC = () => {
@@ -39,16 +40,16 @@ export const EMI: React.FC = () => {
     setEditingCard(undefined);
   };
 
-  const handleDeleteEMI = (id: string) => {
+  const handleDeleteEMI = async (id: string) => {
     if (confirm('Are you sure you want to delete this EMI?')) {
-      dataService.deleteEMI(id);
+      await dataService.deleteEMI(id);
       refreshData();
     }
   };
 
-  const handleDeleteCard = (id: string) => {
+  const handleDeleteCard = async (id: string) => {
     if (confirm('Are you sure you want to delete this credit card?')) {
-      dataService.deleteCreditCard(id);
+      await dataService.deleteCreditCard(id);
       refreshData();
     }
   };
@@ -65,11 +66,11 @@ export const EMI: React.FC = () => {
   };
 
   // Calculate totals
-  const totalEMIAmount = emis.reduce((sum, emi) => sum + emi.monthlyAmount, 0);
-  const totalRemainingBalance = emis.reduce((sum, emi) => sum + emi.remainingBalance, 0);
-  const totalCreditLimit = creditCards.reduce((sum, card) => sum + card.creditLimit, 0);
-  const totalCreditUsed = creditCards.reduce((sum, card) => sum + Math.abs(card.currentBalance), 0);
-  const totalMinimumDue = creditCards.reduce((sum, card) => sum + card.minimumDue, 0);
+  const totalEMIAmount = moneySummary(emis, item => item.monthlyAmount);
+  const totalRemainingBalance = moneySummary(emis, item => item.remainingBalance);
+  const totalCreditLimit = moneySummary(creditCards, item => item.creditLimit);
+  const totalCreditUsed = moneySummary(creditCards, item => Math.abs(item.currentBalance));
+  const totalMinimumDue = moneySummary(creditCards, item => item.minimumDue);
   const snowballDebts = [
     ...emis
       .filter(emi => emi.remainingBalance > 0)
@@ -78,6 +79,7 @@ export const EMI: React.FC = () => {
         name: emi.name,
         type: emi.debtType === 'credit' ? 'Borrowed Credit' : 'Loan',
         balance: emi.remainingBalance,
+        currency: emi.currency,
         minimumPayment: emi.monthlyAmount,
         rate: emi.interestRate,
       })),
@@ -88,12 +90,14 @@ export const EMI: React.FC = () => {
         name: card.name,
         type: 'Card',
         balance: Math.abs(card.currentBalance),
+        currency: card.currency,
         minimumPayment: card.minimumDue,
         rate: card.interestRate,
       })),
   ].sort((a, b) => a.balance - b.balance);
-  const snowballMinimum = snowballDebts.reduce((sum, debt) => sum + debt.minimumPayment, 0);
-  const snowballTarget = snowballDebts[0];
+  const snowballMinimum = moneySummary(snowballDebts, debt => debt.minimumPayment);
+  const snowballTargets = [...new Set(snowballDebts.map(d=>d.currency || 'USD'))].map(currency=>snowballDebts.find(d=>(d.currency || 'USD')===currency)!);
+  const snowballTarget = snowballTargets.length === 1 ? snowballTargets[0] : undefined;
 
   const getUtilizationColor = (utilization: number) => {
     if (utilization > 80) return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30';
@@ -161,7 +165,7 @@ export const EMI: React.FC = () => {
               </span>
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Monthly EMI</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{fmt(totalEMIAmount)}</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">{totalEMIAmount}</p>
           </div>
 
           <div className="bg-white dark:bg-gray-900 p-5 rounded-[1.5rem] shadow-sm border border-gray-100 dark:border-gray-800">
@@ -174,7 +178,7 @@ export const EMI: React.FC = () => {
               </span>
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Remaining Balance</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{fmt(totalRemainingBalance)}</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">{totalRemainingBalance}</p>
           </div>
 
           <div className="bg-white dark:bg-gray-900 p-5 rounded-[1.5rem] shadow-sm border border-gray-100 dark:border-gray-800">
@@ -187,8 +191,8 @@ export const EMI: React.FC = () => {
               </span>
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Credit Used</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{fmt(totalCreditUsed)}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">of {fmt(totalCreditLimit)} limit</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">{totalCreditUsed}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">of {totalCreditLimit} limit</p>
           </div>
 
           <div className="bg-white dark:bg-gray-900 p-5 rounded-[1.5rem] shadow-sm border border-gray-100 dark:border-gray-800">
@@ -201,7 +205,7 @@ export const EMI: React.FC = () => {
               </span>
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">Minimum Due</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{fmt(totalMinimumDue)}</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">{totalMinimumDue}</p>
           </div>
         </div>
 
@@ -226,11 +230,11 @@ export const EMI: React.FC = () => {
                   <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-4">
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Next Target</p>
                     <p className="text-base font-semibold text-gray-900 dark:text-white">{snowballTarget.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{fmt(snowballTarget.balance)}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{fmt(snowballTarget.balance, snowballTarget.currency)}</p>
                   </div>
                   <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-4">
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Monthly Minimums</p>
-                    <p className="text-base font-semibold text-gray-900 dark:text-white">{fmt(snowballMinimum)}</p>
+                    <p className="text-base font-semibold text-gray-900 dark:text-white">{snowballMinimum}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Before extra payments</p>
                   </div>
                   <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-4">
@@ -258,10 +262,10 @@ export const EMI: React.FC = () => {
                       </span>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{debt.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{debt.type} · min {fmt(debt.minimumPayment)}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{debt.type} · min {fmt(debt.minimumPayment, debt.currency)}</p>
                       </div>
                     </div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">{fmt(debt.balance)}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">{fmt(debt.balance, debt.currency)}</p>
                   </div>
                 ))}
               </div>
@@ -362,11 +366,11 @@ export const EMI: React.FC = () => {
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Monthly EMI</p>
-                                <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(emi.monthlyAmount)}</p>
+                                <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(emi.monthlyAmount, emi.currency)}</p>
                               </div>
                               <div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Remaining</p>
-                                <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{fmt(emi.remainingBalance)}</p>
+                                <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{fmt(emi.remainingBalance, emi.currency)}</p>
                               </div>
                             </div>
 
@@ -456,7 +460,7 @@ export const EMI: React.FC = () => {
                               <div>
                                 <h4 className="font-bold text-gray-900 dark:text-white">{card.name}</h4>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {fmt(availableCredit)} available
+                                  {fmt(availableCredit, card.currency)} available
                                 </p>
                               </div>
                             </div>
@@ -480,11 +484,11 @@ export const EMI: React.FC = () => {
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Current Balance</p>
-                                <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(card.currentBalance)}</p>
+                                <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(card.currentBalance, card.currency)}</p>
                               </div>
                               <div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Minimum Due</p>
-                                <p className="text-lg font-bold text-red-600 dark:text-red-400">{fmt(card.minimumDue)}</p>
+                                <p className="text-lg font-bold text-red-600 dark:text-red-400">{fmt(card.minimumDue, card.currency)}</p>
                               </div>
                             </div>
 

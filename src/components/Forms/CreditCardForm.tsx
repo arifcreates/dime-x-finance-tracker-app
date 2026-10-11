@@ -1,3 +1,4 @@
+import { useCurrency } from '../../contexts/CurrencyContext';
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { CreditCard } from '../../types';
@@ -17,6 +18,9 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
   onSave,
   card,
 }) => {
+  const { currency } = useCurrency();
+  const draftId = React.useRef(generateId());
+  React.useEffect(() => { if (isOpen) draftId.current = generateId(); }, [isOpen]);
   const [formData, setFormData] = useState({
     name: card?.name || '',
     creditLimit: card?.creditLimit ? String(card.creditLimit) : '',
@@ -48,7 +52,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const creditLimit = Number(formData.creditLimit);
@@ -57,7 +61,8 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
     const interestRate = Number(formData.interestRate);
     
     const newCard: CreditCard = {
-      id: card?.id || generateId(),
+      id: card?.id || draftId.current,
+      currency: card?.currency || currency,
       name: formData.name,
       creditLimit,
       currentBalance,
@@ -66,7 +71,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({
       interestRate,
     };
 
-    dataService.saveCreditCard(newCard);
+    await dataService.saveCreditCard(newCard);
     onSave(newCard);
     onClose();
     

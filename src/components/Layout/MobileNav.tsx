@@ -4,8 +4,6 @@ import {
   Receipt,
   CreditCard,
   Wallet,
-  Calendar,
-  BarChart3,
   FileText,
 } from 'lucide-react';
 

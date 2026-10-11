@@ -1,3 +1,4 @@
+import type { AppUser } from '../types';
 import React, { useState, useEffect, useCallback } from 'react';
 import { DraggableCard } from '../components/Dashboard/DraggableCard';
 import { RecentTransactions } from '../components/Dashboard/RecentTransactions';
@@ -19,7 +20,7 @@ interface DashboardProps {
   onQuickActionHandled?: () => void;
   onUpdate?: () => void;
   onCreateAccount?: () => void;
-  user?: any;
+  user?: AppUser;
 }
 
 interface DashboardCard {
@@ -32,7 +33,6 @@ interface DashboardCard {
 
 export const Dashboard: React.FC<DashboardProps> = ({
   transactions: initialTransactions,
-  onQuickAction,
   quickActionRequest,
   onQuickActionHandled,
   onUpdate,
@@ -167,11 +167,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const handleViewAllTransactions = () => {
     setShowTransactionsModal(true);
-  };
-
-  const handleViewAllPayments = () => {
-    // Navigate to EMI/recurring payments page - implement navigation logic
-    console.log('Navigate to payments page');
   };
 
   const handleTransactionSave = () => {
@@ -426,7 +421,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <Wallet className="h-6 w-6" />
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(account.balance, account.currency)}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           {getAccountShare(account.balance).toFixed(1)}%
                         </p>
@@ -474,7 +469,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <Wallet className="h-6 w-6" />
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">{fmt(account.balance, account.currency)}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           {getAccountShare(account.balance).toFixed(1)}%
                         </p>
@@ -521,7 +516,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       }`}>
                         <Wallet className="h-4 w-4" />
                       </div>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">{fmt(account.balance)}</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">{fmt(account.balance, account.currency)}</p>
                     </div>
                     
                     <div className="space-y-2">

@@ -1,3 +1,4 @@
+import { AIInvoiceDraft } from './AIInvoiceDraft';
 import React, { useState, useEffect } from 'react';
 import { Download, Plus, Trash2, X } from 'lucide-react';
 import { Client, Invoice, InvoiceItem } from '../../types';
@@ -30,7 +31,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 }) => {
   const { currency: defaultCurrency } = useCurrency();
 
-  const createInitialFormData = (source?: Invoice) => {
+  const createInitialFormData = React.useCallback((source?: Invoice) => {
     const profile = businessProfileService.getProfile();
     return {
       clientId: source?.clientId || '',
@@ -53,8 +54,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       discountType: source?.discountType || 'fixed' as Invoice['discountType'],
       discountValue: source?.discountValue ?? 0,
     };
-  };
+  }, [defaultCurrency]);
 
+  const draftId = React.useRef(generateId());
+  React.useEffect(() => { if (isOpen) draftId.current = generateId(); }, [isOpen]);
   const [formData, setFormData] = useState(createInitialFormData(invoice));
   const [items, setItems] = useState<InvoiceItem[]>(
     invoice?.items?.length ? invoice.items : [{ description: '', quantity: 1, rate: 0, amount: 0 }]
@@ -82,7 +85,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         setFormData((prev) => ({ ...prev, invoiceNumber: getNextInvoiceNumber(invoices, prefix) }));
       });
     }
-  }, [isOpen, invoice, defaultCurrency]);
+  }, [isOpen, invoice, createInitialFormData]);
 
   // Copy everything except number, dates, and status from a past invoice.
   const applyPastInvoice = (invoiceId: string) => {
@@ -90,7 +93,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     if (!source) return;
     setFormData((prev) => ({
       ...prev,
-      clientId: source.clientId,
+      clientId: source.clientId || '',
       currency: source.currency || prev.currency,
       companyName: source.companyName || prev.companyName,
       companyEmail: source.companyEmail || prev.companyEmail,
@@ -146,7 +149,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   const addClient = async () => {
     const client: Client = {
-      id: generateId(),
+      id: crypto.randomUUID(),
       ...newClient,
     };
 
@@ -167,7 +170,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   const buildInvoice = (): Invoice => {
     const draftInvoice: Invoice = {
-      id: invoice?.id || generateId(),
+      id: invoice?.id || draftId.current,
       ...formData,
       items,
       amount: 0,
@@ -217,6 +220,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto overscroll-contain modal-scroll px-5 py-5 sm:px-6 space-y-6">
+            <AIInvoiceDraft onApply={setItems} />
           {!invoice && pastInvoices.length > 0 && (
             <section className="rounded-xl border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-4">
               <label className={labelClass}>Start from a past invoice (optional)</label>

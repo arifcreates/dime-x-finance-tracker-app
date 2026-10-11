@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Search, Filter, ArrowUpRight, ArrowDownLeft, Trash2, Calendar } from 'lucide-react';
 import { Transaction } from '../../types';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
 import { useCurrencyFormat } from '../../hooks/useCurrencyFormat';
 import { dataService } from '../../services/dataService';
 
@@ -237,7 +237,7 @@ export const TransactionsModal: React.FC<TransactionsModalProps> = ({
                         <td className={`py-4 px-4 text-right font-bold ${
                           transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                         }`}>
-                          {transaction.type === 'income' ? '+' : '-'}{fmt(transaction.amount)}
+                          {transaction.type === 'income' ? '+' : '-'}{fmt(transaction.amount, transaction.currency)}
                         </td>
                         <td className="py-4 px-4 text-center">
                           <button
@@ -296,7 +296,7 @@ export const TransactionsModal: React.FC<TransactionsModalProps> = ({
                       <span className={`font-bold ${
                         transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                       }`}>
-                        {transaction.type === 'income' ? '+' : '-'}{fmt(transaction.amount)}
+                        {transaction.type === 'income' ? '+' : '-'}{fmt(transaction.amount, transaction.currency)}
                       </span>
                     </div>
                   </div>

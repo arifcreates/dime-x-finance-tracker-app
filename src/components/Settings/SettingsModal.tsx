@@ -1,3 +1,4 @@
+import type { AppUser } from '../../types';
 import React, { useState } from 'react';
 import { X, User, Bell, Shield, Palette, LogOut, Camera, Trash2, Briefcase, ImagePlus } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
@@ -12,8 +13,8 @@ import { BusinessProfile } from '../../types';
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  user: any;
-  onUpdateUser: (user: any) => void;
+  user: AppUser;
+  onUpdateUser: (user: AppUser) => void;
   onLogout: () => void;
 }
 
@@ -40,8 +41,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     avatar: user?.avatar || user?.preferences?.avatar || '',
     currency: user?.preferences?.currency || 'USD',
     notifications: user?.preferences?.notifications ?? true,
-    biometric: user?.preferences?.biometric ?? false,
-    twoFactor: user?.preferences?.twoFactor ?? false,
   });
 
   React.useEffect(() => {
@@ -54,8 +53,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       avatar: user?.avatar || user?.preferences?.avatar || '',
       currency: user?.preferences?.currency || 'USD',
       notifications: user?.preferences?.notifications ?? true,
-      biometric: user?.preferences?.biometric ?? false,
-      twoFactor: user?.preferences?.twoFactor ?? false,
     });
     setSaveError(null);
     setAvatarError(null);
@@ -115,8 +112,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     try {
       const avatar = await resizeAvatar(file);
       setFormData({ ...formData, avatar });
-    } catch (error: any) {
-      setAvatarError(error.message || 'Could not use that image.');
+    } catch (error) {
+      setAvatarError((error instanceof Error ? error.message : String(error)) || 'Could not use that image.');
     }
   };
 
@@ -168,8 +165,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     try {
       const logoDataUrl = await resizeLogo(file);
       setBusinessProfile({ ...businessProfile, logoDataUrl });
-    } catch (error: any) {
-      setLogoError(error.message || 'Could not use that image.');
+    } catch (error) {
+      setLogoError((error instanceof Error ? error.message : String(error)) || 'Could not use that image.');
     }
   };
 
@@ -179,15 +176,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       currency: formData.currency,
       theme: theme,
       notifications: formData.notifications,
-      biometric: formData.biometric,
-      twoFactor: formData.twoFactor,
       avatar: formData.avatar || null,
     };
 
     const updatedUser = {
       ...user,
       name: formData.name,
-      email: formData.email,
+      email: user.email,
       phone: formData.phone,
       avatar: formData.avatar || null,
       preferences,
@@ -200,13 +195,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       if (supabaseConfigured && user?.id && user.id !== 'guest') {
         await supabaseService.updateProfile(user.id, {
           name: formData.name,
-          email: formData.email,
           phone: formData.phone,
           preferences,
         });
       }
 
-      businessProfileService.saveProfile({
+      await businessProfileService.saveProfile({
         ...businessProfile,
         invoicePrefix: businessProfile.invoicePrefix.trim() || 'INV',
       });
@@ -214,8 +208,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       onUpdateUser(updatedUser);
       setCurrency(formData.currency);
       onClose();
-    } catch (error: any) {
-      setSaveError(error.message || 'Could not save your profile.');
+    } catch (error) {
+      setSaveError(error instanceof Error ? (error instanceof Error ? error.message : String(error)) : 'Could not save your profile.');
     } finally {
       setIsSaving(false);
     }
@@ -380,7 +374,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         Email Address
                       </label>
                       <input
-                        type="email"
+                        type="email" readOnly
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -461,7 +455,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Business Email</label>
                         <input
-                          type="email"
+                          type="email" readOnly
                           value={businessProfile.companyEmail}
                           onChange={(e) => setBusinessProfile({ ...businessProfile, companyEmail: e.target.value })}
                           className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -569,34 +563,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             )}
 
             {activeTab === 'security' && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Security Settings</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between gap-4 p-4 bg-[#fbfbf8] dark:bg-gray-800 rounded-xl border border-black/[0.07] dark:border-gray-700">
-                      <div className="min-w-0">
-                        <h4 className="font-semibold text-gray-900 dark:text-white">Two-Factor Authentication</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Add an extra layer of security</p>
-                      </div>
-                      <ToggleSwitch
-                        label="Toggle two-factor authentication"
-                        checked={formData.twoFactor}
-                        onClick={() => setFormData({ ...formData, twoFactor: !formData.twoFactor })}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between gap-4 p-4 bg-[#fbfbf8] dark:bg-gray-800 rounded-xl border border-black/[0.07] dark:border-gray-700">
-                      <div className="min-w-0">
-                        <h4 className="font-semibold text-gray-900 dark:text-white">Biometric Login</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Use fingerprint or face recognition</p>
-                      </div>
-                      <ToggleSwitch
-                        label="Toggle biometric login"
-                        checked={formData.biometric}
-                        onClick={() => setFormData({ ...formData, biometric: !formData.biometric })}
-                      />
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Account security</h3>
+                <p className="text-sm text-gray-600">Your account uses a verified email and password. Two-factor authentication and passkeys are not enabled in this version.</p>
               </div>
             )}
 
