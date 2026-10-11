@@ -134,6 +134,7 @@ export interface UserPreferences {
   currency: string;
   notifications: boolean;
   avatar?: string | null;
+  planning?: import('../utils/outlook').PlanningSettings;
 }
 
 export interface AppUser {

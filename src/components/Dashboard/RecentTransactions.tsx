@@ -4,6 +4,7 @@ import { formatDate } from '../../utils/formatters';
 import { useCurrencyFormat } from '../../hooks/useCurrencyFormat';
 import { ArrowUpRight, ArrowDownLeft, Trash2, TrendingUp, ArrowRight } from 'lucide-react';
 import { dataService } from '../../services/dataService';
+import { errorService } from '../../services/errorService';
 
 interface RecentTransactionsProps {
   transactions: Transaction[];
@@ -19,10 +20,10 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({
   const fmt = useCurrencyFormat();
   const recentTransactions = transactions.slice(0, 5);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this transaction?')) {
-      dataService.deleteTransaction(id);
-      onUpdate();
+      try {await dataService.deleteTransaction(id);onUpdate();}
+      catch(error){errorService.addError(error instanceof Error?error.message:'Could not delete the entry.','error');}
     }
   };
 

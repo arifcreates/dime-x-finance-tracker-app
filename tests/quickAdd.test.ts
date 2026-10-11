@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseQuickAdd, resolveQuickDate, matchCategory, preferredAccount } from '../src/utils/quickAdd';
+import { parseQuickAdd, enrichQuickAdd, resolveQuickDate, matchCategory, preferredAccount } from '../src/utils/quickAdd';
 import { validateQuickAdd } from '../supabase/functions/_shared/quick-add';
 import { DataService } from '../src/services/dataService';
 import { supabaseService } from '../src/services/supabaseService';
@@ -16,7 +16,7 @@ test('local quick-add preserves decimals, k/lakh, multiple entries and relative 
 });
 
 test('ambiguous amounts and compound financial intents remain unsupported',()=>{
- for(const text of ['paid HDFC card 12k','paid car EMI 500','paid loan 500','Acme paid invoice 1042','moved 5k to cash','put 5k toward laptop','not spent 500 food','pending 500 food','450 plus 300 food','500 rent tomorrow','500 food 2026-02-30','spent -450 food','I received 20k salary','20k salary','500 food last week','yesterday 450 food']) {
+ for(const text of ['paid HDFC card 12k','paid car EMI 500','paid loan 500','Acme paid invoice 1042','moved 5k to cash','put 5k toward laptop','not spent 500 food','pending 500 food','450 plus 300 food','500 rent tomorrow','500 food 2026-02-30','spent -450 food','500 food last week']) {
   const row=parseQuickAdd(text)[0];
   assert.ok(row.intent==='unsupported' || !resolveQuickDate(row.dateText),text);
  }
@@ -63,4 +63,32 @@ test('cloud batch rejection leaves local cache unchanged',async()=>{
  supabaseService.saveTransactions=async()=>{throw new Error('Atomic batch rejected');};
  try {await assert.rejects(()=>service.saveTransactions([entry]),/Atomic batch rejected/);assert.deepEqual(service.getCachedTransactions(),[]);}
  finally {supabaseService.saveTransactions=original;}
+});
+
+test('conversational wording resolves income, expense, account references and flexible date placement',()=>{
+ const hdfc={...account,id:'hdfc',name:'HDFC'};
+ const cases:[string,'income'|'expense',number,string][]=[
+  ['yesterday 450 food','expense',450,'yesterday'],
+  ['I spent 450 rupees on lunch yesterday using HDFC','expense',450,'yesterday'],
+  ['Yesterday I bought shoes for 2k using my HDFC account','expense',2000,'Yesterday'],
+  ['I received 20,000 rupees from a client for design','income',20000,'today'],
+  ['My salary of 1.5 lakh was credited today','income',150000,'today'],
+  ['Acme paid me 5000 for design on Friday','income',5000,'on Friday'],
+ ];
+ for(const [text,intent,amount,dateText] of cases) {
+  const result=parseQuickAdd(text,[hdfc])[0];
+  assert.equal(result.intent,intent,text);assert.equal(result.amount,amount,text);assert.equal(result.dateText,dateText,text);
+ }
+ const named=parseQuickAdd('I spent 450 rupees on lunch yesterday using HDFC',[hdfc])[0];assert.equal(named.accountHint,'HDFC');assert.equal(preferredAccount(named,[],[account,hdfc]),'hdfc');
+ assert.equal(parseQuickAdd('20k freelance project',[], 'income')[0].intent,'income');
+ assert.equal(parseQuickAdd('20k freelance project')[0].intent,'unsupported');
+ assert.equal(parseQuickAdd('500 for food and drinks')[0].intent,'expense');
+ assert.equal(parseQuickAdd('paid HDFC card 12000',[hdfc])[0].intent,'unsupported');
+});
+
+test('explicit account, currency and date are retained if omitted by AI, without mapping ambiguous clauses by order',()=>{
+ const hdfc={...account,id:'hdfc',name:'HDFC'};
+ const rows=enrichQuickAdd([{intent:'expense',amount:500,description:'Lunch',merchant:'Lunch',category:'Food',dateText:'today'},{intent:'income',amount:20000,description:'Freelance design',merchant:'Freelance design',category:'Freelance',dateText:'today'}],'I spent five hundred rupees on lunch yesterday using HDFC and received twenty thousand for freelance design today.',[hdfc]);
+ assert.equal(rows[0].accountHint,'HDFC');assert.equal(rows[0].currency,'INR');assert.equal(rows[0].dateText,'yesterday');assert.equal(rows[1].accountHint,undefined);
+ const ambiguous=enrichQuickAdd([rows[1]],'received design money using HDFC and received design money using Cash',[hdfc,account]);assert.equal(ambiguous[0].accountHint,undefined);
 });

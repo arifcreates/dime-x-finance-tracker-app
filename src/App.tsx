@@ -240,7 +240,7 @@ function App() {
       case 'clients':
         return <Clients />;
       case 'expenses':
-        return <Expenses />;
+        return <Expenses onUpdate={refreshTransactions} onCreateAccount={handleCreateAccountFromQuickAction} />;
       case 'accounts':
         return <Accounts onAccountSelect={handleAccountSelect} onUpdate={refreshTransactions} />;
       case 'emi':

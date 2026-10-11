@@ -76,17 +76,52 @@ browser walkthrough and live model quality evaluation of this new task remain
 manual checks; mock provider tests establish protocol behavior, not model
 accuracy.
 
+## Second increment: implemented dashboard and language fixes
+
+- Replaced the old widget grid with Safe to Spend, this month's expense donut,
+  upcoming commitments, a 30-day cash forecast and five recent transactions.
+  Removed duplicate cash-flow cards, prime-space quick actions and Income
+  Sources from the dashboard.
+- Safe to Spend uses cash/bank balances, scheduled bills, monthly EMIs, full
+  card balances and configured reserves. Investment balances and unpaid
+  invoices are excluded. The horizon stays 30 days rather than stopping at an
+  uncertain expected payment date. The dashed forecast includes expected
+  invoices only as a separate scenario.
+- Tax, savings/other reserves and a safety buffer are explicit amounts in the
+  user's chosen currency, persisted in owned profile preferences (guest
+  browser storage). No default tax liability is invented and no money moves
+  when reserves change. Goals and automatic tax-reserve accumulation remain
+  separate future work.
+- Local date recurrence preserves month-end anchors, carries an overdue
+  commitment visibly and never manufactures a backlog of paid/unpaid months.
+  Schedules remain predictions requiring users to keep balances/dates current.
+- The primary quick-add action understands broader conversational numerical
+  phrases. When consent and prototype eligibility are satisfied, it falls back
+  to AI for unclear wording or unknown categories. Explicit named accounts,
+  currencies and dates are retained through local context checks even if the
+  model omits them. Editable review and confirmed saving remain mandatory.
+- Income and Expenses now expose quick-add with their respective page context;
+  explicit transaction meaning always overrides that default.
+- Live NVIDIA evaluation extracted English word amounts, mixed income/expense
+  text and Hinglish amounts correctly in three synthetic examples, about five
+  seconds each. One omitted account reference motivated the local context
+  repair; category suggestions still require review. The temporary synthetic
+  test hook was immediately removed and the normal authenticated handler was
+  verified after restoration. No user records were used for this evaluation.
+- Regression coverage includes mixed-currency normalization, reserve
+  persistence, overdue and month-end schedules, cleared/paid records,
+  transfer exclusion, natural phrasing and retained account context. No
+  connected browser was available for a signed-in visual walkthrough.
+
 ## Next increments
 
-1. Safe-to-Spend calculation and visible breakdown, 30-day obligations and
-   expected invoices, expense donut and deterministic status sentence. Define
-   tax reserve persistence and reconciliation before presenting a confident
-   spending number.
-2. Voice feeding the same text review, with supported-browser fallback and
+1. Voice feeding the same text review, with supported-browser fallback and
    clear consent/processing notice.
-3. Goals with earmarks, reserve enforcement and compact dashboard progress.
-4. Group navigation around spending, earning, planning and accounts.
-5. Image reading once a suitable vision provider and retention terms are
+2. Goals with earmarks, reserve enforcement and compact dashboard progress;
+   replace manually entered savings reserves with actual goal allocations
+   without double-counting either.
+3. Group navigation around spending, earning, planning and accounts.
+4. Image reading once a suitable vision provider and retention terms are
    configured. Then CSV imports, balance history and holdings as justified by
    actual usage.
 

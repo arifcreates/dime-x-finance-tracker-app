@@ -40,3 +40,16 @@ test('late reads from an old identity cannot populate the new identity cache',as
   assert.deepEqual(await read,[]); assert.deepEqual(service.getCachedAccounts(),[]);
  } finally {supabaseService.getAccounts=original;}
 });
+
+test('planning reserves persist for guests and invalid reserves are rejected',async()=>{
+ const service=new DataService();const settings={currency:'INR',taxReserve:1000,otherReserve:2000,buffer:500};
+ await service.savePlanningSettings(settings);
+ assert.deepEqual(await new DataService().getPlanningSettings('INR'),settings);
+ await assert.rejects(()=>service.savePlanningSettings({...settings,taxReserve:-1}),/valid reserve/);
+ assert.deepEqual(await service.getPlanningSettings('INR'),settings);
+ service.setCurrentUserId('plan-user');
+ const original=supabaseService.getProfile;
+ supabaseService.getProfile=async()=>({id:'plan-user',name:'Test',email:'test@example.com',phone:null,preferences:{theme:'light',currency:'USD',notifications:true}});
+ try{assert.deepEqual(await service.getPlanningSettings('USD'),{currency:'USD',taxReserve:0,otherReserve:0,buffer:0});}
+ finally{supabaseService.getProfile=original;}
+});

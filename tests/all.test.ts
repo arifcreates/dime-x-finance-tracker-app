@@ -4,3 +4,4 @@ import './dataService.test';
 import './aiPrototype.test';
 import './aiProvider.test';
 import './quickAdd.test';
+import './outlook.test';

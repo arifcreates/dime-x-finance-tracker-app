@@ -4,22 +4,25 @@ import { Copy, Download, FileText, Plus, DollarSign, Edit, Trash2 } from 'lucide
 import { InvoiceForm } from '../components/Forms/InvoiceForm';
 import { TransactionForm } from '../components/Forms/TransactionForm';
 import { InvoiceStatusModal } from '../components/Forms/InvoiceStatusModal';
-import { Invoice, Transaction, Client } from '../types';
+import { Invoice, Transaction, Client, Account } from '../types';
 import { dataService } from '../services/dataService';
 import { formatDate, generateId } from '../utils/formatters';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
 import { downloadInvoicePdf, formatInvoiceMoney, getNextInvoiceNumber } from '../utils/invoiceUtils';
 import { businessProfileService } from '../services/businessProfileService';
+import { QuickAdd } from '../components/QuickAdd/QuickAdd';
 
 interface IncomeProps {
   onUpdate?: () => void;
   onCreateAccount?: () => void;
 }
 
-export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
+export const Income: React.FC<IncomeProps> = ({ onCreateAccount, onUpdate }) => {
   const fmt = useCurrencyFormat();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [showIncomeForm, setShowIncomeForm] = useState(false);
@@ -33,7 +36,8 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
   }, []);
 
   const refreshData = async () => {
-    const [invs, txns, cls] = await Promise.all([dataService.getInvoices(), dataService.getTransactions(), dataService.getClients()]);
+    const [invs, txns, cls, accs] = await Promise.all([dataService.getInvoices(), dataService.getTransactions(), dataService.getClients(), dataService.getAccounts()]);
+    setAccounts(accs);setAllTransactions(txns);
     setInvoices(invs);
     setTransactions(txns.filter(t => t.type === 'income'));
     setClients(cls);
@@ -45,7 +49,7 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
   };
 
   const handleIncomeSave = () => {
-    refreshData();
+    refreshData();onUpdate?.();
   };
 
   const handleDeleteInvoice = async (id: string) => {
@@ -148,6 +152,8 @@ export const Income: React.FC<IncomeProps> = ({ onCreateAccount }) => {
             </div>
           </div>
         </div>
+
+        <QuickAdd accounts={accounts} transactions={allTransactions} defaultIntent="income" onSaved={handleIncomeSave} onCreateAccount={onCreateAccount} />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">

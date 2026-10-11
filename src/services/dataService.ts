@@ -6,6 +6,7 @@ import { calculateInvoiceTotals } from '../utils/invoiceUtils';
 import { errorService } from './errorService';
 import { applyTransactionChange, type FinanceState } from '../utils/finance';
 import { currencyService } from './currencyService';
+import type { PlanningSettings } from '../utils/outlook';
 
 const emptyState = (): FinanceState => ({ transactions: [], accounts: [], invoices: [], clients: [], emis: [], creditCards: [], recurringPayments: [], categories: [], categoryRules: [] });
 type Collection = keyof FinanceState;
@@ -16,6 +17,7 @@ export class DataService {
   private revision = 0;
   private reads = new Map<string, Promise<unknown>>();
   private pending: Promise<unknown> = Promise.resolve();
+  getWorkspaceId() { return this.currentUserId || 'guest'; }
 
   setCurrentUserId(userId: string | null) {
     if (this.currentUserId === userId) return;
@@ -76,6 +78,26 @@ export class DataService {
   getRecurringPayments() { return this.load('recurringPayments', id => supabaseService.getRecurringPayments(id)); }
   getCategories() { return this.load('categories', id => supabaseService.getCategories(id)); }
   getCategoryRules() { return this.load('categoryRules', id => supabaseService.getCategoryRules(id)); }
+
+  async getPlanningSettings(currency: string): Promise<PlanningSettings> {
+    const id=this.currentUserId,revision=this.revision;
+    const defaults={currency,taxReserve:0,otherReserve:0,buffer:0};
+    const settings=id ? (await supabaseService.getProfile(id)).preferences.planning : JSON.parse(localStorage.getItem(`${this.localKey}:planning`) || 'null');
+    if(revision!==this.revision) throw new Error('Your account changed. Please reload.');
+    if(!settings) return defaults;
+    if(typeof settings.currency!=='string' || ![settings.taxReserve,settings.otherReserve,settings.buffer].every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0)) throw new Error('Your planning reserves need to be updated.');
+    return settings;
+  }
+
+  async savePlanningSettings(settings: PlanningSettings) {
+    if(!currencyService.getSupportedCurrencies().some(c=>c.code===settings.currency)||![settings.taxReserve,settings.otherReserve,settings.buffer].every(n=>Number.isFinite(n)&&n>=0&&n<=100000000)) throw new Error('Enter valid reserve amounts.');
+    await this.mutate(async (_state,id)=>{
+      if(id) {
+        const profile=await supabaseService.getProfile(id);
+        await supabaseService.updateProfile(id,{preferences:{...profile.preferences,planning:settings}});
+      } else localStorage.setItem(`${this.localKey}:planning`,JSON.stringify(settings));
+    });
+  }
 
   async learnCategoryRule(matchText: string, name: string, type: Transaction['type']) {
     const match = matchText.trim().toLowerCase();

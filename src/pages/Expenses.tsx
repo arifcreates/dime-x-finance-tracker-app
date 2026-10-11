@@ -2,24 +2,28 @@ import { moneySummary } from '../utils/money';
 import React, { useState, useEffect } from 'react';
 import { Receipt, Plus, Edit, Trash2 } from 'lucide-react';
 import { TransactionForm } from '../components/Forms/TransactionForm';
-import { Transaction } from '../types';
+import { Transaction, Account } from '../types';
 import { dataService } from '../services/dataService';
 import { formatDate } from '../utils/formatters';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
+import { QuickAdd } from '../components/QuickAdd/QuickAdd';
 
-export const Expenses: React.FC = () => {
+export const Expenses: React.FC<{onUpdate?:()=>void;onCreateAccount?:()=>void}> = ({onUpdate,onCreateAccount}) => {
   const fmt = useCurrencyFormat();
+  const [accounts,setAccounts]=useState<Account[]>([]);
+  const [allTransactions,setAllTransactions]=useState<Transaction[]>([]);
   const [expenses, setExpenses] = useState<Transaction[]>([]);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Transaction | undefined>();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
-    dataService.getTransactions().then(txns => setExpenses(txns.filter(t => t.type === 'expense' && t.status === 'completed' && t.category !== 'Transfer')));
+    Promise.all([dataService.getTransactions(),dataService.getAccounts()]).then(([txns,accs])=>{setAccounts(accs);setAllTransactions(txns);setExpenses(txns.filter(t => t.type === 'expense' && t.status === 'completed' && t.category !== 'Transfer'));});
   }, []);
 
   const handleExpenseSave = async () => {
-    const txns = await dataService.getTransactions();
+    const [txns,accs] = await Promise.all([dataService.getTransactions(),dataService.getAccounts()]);
+    setAccounts(accs);setAllTransactions(txns);onUpdate?.();
     setExpenses(txns.filter(t => t.type === 'expense' && t.status === 'completed' && t.category !== 'Transfer'));
     setEditingExpense(undefined);
   };
@@ -70,6 +74,8 @@ export const Expenses: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <QuickAdd accounts={accounts} transactions={allTransactions} defaultIntent="expense" onSaved={()=>void handleExpenseSave()} onCreateAccount={onCreateAccount} />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
