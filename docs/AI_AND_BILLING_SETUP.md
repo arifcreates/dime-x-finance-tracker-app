@@ -34,12 +34,31 @@ Before choosing the final model, compare it with a smaller candidate on at least
 
 ## AI configuration
 
+### Internal free-API prototype
+
+The internal prototype defaults to NVIDIA `nvidia/nemotron-3.5-lightning-30b-a3b` and `https://integrate.api.nvidia.com/v1/chat/completions`. It works without asserting production approval. In Supabase Dashboard → Edge Functions → Secrets, set:
+
+```text
+AI_MODE=prototype
+AI_API_KEY=<NVIDIA API key>
+AI_PROTOTYPE_EMAILS=<your verified Dime-X sign-in email>
+```
+
+The email list may contain comma-separated internal testers. Only verified listed accounts can generate drafts. The UI checks availability before enabling Generate, identifies the selected model, and requires confirmation that inputs and invoice records are fictional test data. Never submit real client, bank or confidential information to the free trial endpoint. Status checks do not consume the daily quota. Backend defaults cover the model and endpoint, but either can be explicitly configured using `supabase/functions/.env.example` as a reference. Your API key belongs in Supabase secrets, not in this file or chat.
+
+The prototype is not a customer launch. When changing providers, set the production endpoint, model and key, then set `AI_MODE=production` and `AI_PRODUCTION_APPROVED=true` after confirming suitable production terms. Production mode removes the internal tester restriction and the fictional-data checkbox; authentication, consent, output validation, quotas and manual draft review remain.
+
+Live synthetic evaluation on October 11, 2026: the initial zero-shot prompt lost supplied prices. After adding explicit extraction instructions and an example, three requests preserved the expected quantities and rates: INR 25000 plus 3 × INR 1500; 2.5 × INR 1200 plus INR 3000; and 4 × USD 15 plus a missing-price item at 0. Responses took approximately 1.2–1.4 seconds. This is a small connection check, not a quality guarantee; users must still review every item. No real client records were sent during this evaluation.
+
+### Production provider
+
 Set secrets on Supabase Edge Functions, never in `VITE_*`, source control or chat:
 
 ```text
 AI_API_URL=<production HTTPS chat-completions URL>
 AI_API_KEY=<production provider secret>
-AI_MODEL=nvidia/nemotron-3-super-120b-a12b
+AI_MODEL=<model offered by your production provider>
+AI_MODE=production
 AI_PRODUCTION_APPROVED=true
 APP_ORIGINS=https://<actual-production-domain>,http://localhost:5173,http://127.0.0.1:5173
 ```
@@ -99,4 +118,4 @@ npm test
 
 `tests/database-integrity.sql` runs ownership, ledger, retry, invoice, currency-history, subscription event and quota assertions inside a transaction that ends with rollback. Execute it with an administrative connection on a test database, or review before running against another database. It uses fixed synthetic UUIDs and performs no lasting writes. It has passed against the connected project.
 
-The current live backend integration is deployed, but AI and payments remain disabled until their provider setup is complete. Tests verify deterministic logic and database protections; they do not establish model quality, provider delivery, checkout usability or production frontend behavior.
+The current live backend integration is deployed. Internal AI testing requires a provider key and configured tester emails; public AI and payments require their production provider setup. Tests verify deterministic logic and database protections; they do not establish model quality, provider delivery, checkout usability or production frontend behavior.
