@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { callBackend } from '../../services/backendService';
 import type { InvoiceItem } from '../../types';
 import { useAIStatus } from '../../hooks/useAIStatus';
+import { useAIWaitMessage } from '../../hooks/useAIWaitMessage';
 
 export function AIInvoiceDraft({onApply}:{onApply:(items:InvoiceItem[])=>void}) {
   const [description,setDescription]=useState('');
@@ -11,6 +12,7 @@ export function AIInvoiceDraft({onApply}:{onApply:(items:InvoiceItem[])=>void}) 
   const [busy,setBusy]=useState(false);
   const [testDataConfirmed,setTestDataConfirmed]=useState(false);
   const {status,checking,statusError,refresh}=useAIStatus();
+  const waitMessage=useAIWaitMessage(busy);
   const generate=async()=>{
     setBusy(true);setError('');setItems([]);
     try { const result=await callBackend<{items:InvoiceItem[]}>('ai-assist',{task:'invoice-draft',description,consent,testDataConfirmed});setItems(result.items); }
@@ -29,6 +31,7 @@ export function AIInvoiceDraft({onApply}:{onApply:(items:InvoiceItem[])=>void}) 
       <label className="flex gap-2 text-sm"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)} />Send this description to the configured AI provider. Avoid personal and bank details.</label>
       {status?.prototype && <label className="flex gap-2 text-sm"><input type="checkbox" checked={testDataConfirmed} onChange={e=>setTestDataConfirmed(e.target.checked)} />This is a fictional test example, without real client or confidential information.</label>}
       <button type="button" disabled={busy || checking || !status?.ready || !consent || (status.prototype && !testDataConfirmed) || description.trim().length<5} onClick={generate} className="rounded-lg bg-black px-4 py-2 text-white disabled:opacity-40">{busy?'Drafting…':'Generate draft'}</button>
+      {waitMessage && <p role="status" className="text-sm text-gray-500">{waitMessage}</p>}
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
       {items.length>0 && <div className="space-y-2">
         {items.map((item,index)=><p key={index} className="text-sm">{item.description} — {item.quantity} × {item.rate}</p>)}

@@ -48,6 +48,8 @@ The email list may contain comma-separated internal testers. Only verified liste
 
 The prototype is not a customer launch. When changing providers, set the production endpoint, model and key, then set `AI_MODE=production` and `AI_PRODUCTION_APPROVED=true` after confirming suitable production terms. Production mode removes the internal tester restriction and the fictional-data checkbox; authentication, consent, output validation, quotas and manual draft review remain.
 
+Transient provider timeouts, network errors and HTTP 500/502/503/504 responses get one automatic retry. The first attempt has a 30-second budget and the second a 60-second budget, including response-body reading. Both attempts count as one Dime-X quota reservation. Authentication failures and rate limits are not retried. The UI explains a longer wait after 15 seconds. Diagnostic logs include model, attempt, status and elapsed time; they exclude descriptions, invoice facts, API keys and user identities.
+
 Live synthetic evaluation on October 11, 2026: the initial zero-shot prompt lost supplied prices. After adding explicit extraction instructions and an example, three requests preserved the expected quantities and rates: INR 25000 plus 3 × INR 1500; 2.5 × INR 1200 plus INR 3000; and 4 × USD 15 plus a missing-price item at 0. Responses took approximately 1.2–1.4 seconds. This is a small connection check, not a quality guarantee; users must still review every item. No real client records were sent during this evaluation.
 
 ### Production provider

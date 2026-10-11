@@ -3,6 +3,7 @@ import { dataService } from '../services/dataService';
 import { callBackend } from '../services/backendService';
 import type { Invoice } from '../types';
 import { useAIStatus } from '../hooks/useAIStatus';
+import { useAIWaitMessage } from '../hooks/useAIWaitMessage';
 
 export default function Assistant() {
   const [invoices,setInvoices]=useState<Invoice[]>([]);
@@ -14,6 +15,7 @@ export default function Assistant() {
   const [copied,setCopied]=useState(false);
   const [testDataConfirmed,setTestDataConfirmed]=useState(false);
   const {status,checking,statusError,refresh}=useAIStatus();
+  const waitMessage=useAIWaitMessage(busy);
   useEffect(()=>{dataService.getInvoices().then(items=>{const outstanding=items.filter(i=>i.status==='sent' || i.status==='overdue');setInvoices(outstanding);setInvoiceId(outstanding[0]?.id || '');});},[]);
   const generate=async()=>{
     setBusy(true);setError('');setDraft('');setCopied(false);
@@ -32,6 +34,7 @@ export default function Assistant() {
       <label className="flex gap-2 text-sm"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)} />Use the configured AI provider to draft the wording. Client names, bank details and invoice facts stay out of the model request.</label>
       {status?.prototype && <label className="flex gap-2 text-sm"><input type="checkbox" checked={testDataConfirmed} onChange={e=>setTestDataConfirmed(e.target.checked)} />The selected invoice is a fictional test record, without real client or confidential information.</label>}
       <button disabled={busy || checking || !status?.ready || !consent || (status.prototype && !testDataConfirmed) || !invoiceId} onClick={generate} className="rounded-lg bg-black px-4 py-3 text-white disabled:opacity-40">{busy?'Drafting…':'Draft reminder'}</button>
+      {waitMessage && <p role="status" className="text-sm text-gray-500">{waitMessage}</p>}
       {error && <p role="alert" className="text-red-600">{error}</p>}
       {draft && <><textarea aria-label="Reminder draft" value={draft} onChange={e=>setDraft(e.target.value)} rows={9} className="w-full rounded-lg border p-3 dark:bg-gray-800" /><button onClick={async()=>{await navigator.clipboard.writeText(draft);setCopied(true);}} className="rounded-lg border px-4 py-2">{copied?'Copied':'Copy reviewed reminder'}</button><p className="text-sm text-gray-500">Nothing has been sent. Review the message and send it through your email app.</p></>}
     </div>

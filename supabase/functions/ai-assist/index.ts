@@ -1,5 +1,6 @@
 import { admin, authenticate, body, env, json, HttpError } from '../_shared/http.ts';
 import { aiConfiguration } from '../_shared/ai-config.ts';
+import { requestAIDraft } from '../_shared/ai-provider.ts';
 
 export async function handleRequest(req: Request) {
   if(req.method==='OPTIONS') return json({},200,req);
@@ -29,7 +30,7 @@ export async function handleRequest(req: Request) {
       // Only the generic writing task goes to the model; client identity and bank details stay in the database.
       userPrompt='Write a brief, polite payment reminder for an outstanding invoice. Do not invent names, amounts, dates, payment links, fees or promises. Return only JSON: {"message":"..."}. The invoice facts will be appended separately.';
     }
-    const apiKey=env('AI_API_KEY'); const model=config.model;
+    const apiKey=env('AI_API_KEY').trim(); const model=config.model;
     const url=new URL(config.url); if(url.protocol!=='https:') throw new Error('AI provider must use HTTPS.');
     if(config.prototype && url.href!=='https://integrate.api.nvidia.com/v1/chat/completions') throw new HttpError('The prototype endpoint must use NVIDIA. Configure production mode for another provider.',503);
     const {data:quota,error:quotaError}=await client.rpc('claim_ai_usage',{p_user_id:user.id});
@@ -39,12 +40,7 @@ export async function handleRequest(req: Request) {
       {role:'user',content:'Extract line items: logo design, 1 project at INR 25000; revisions, 3 hours at INR 1500 per hour; consultation with no price agreed.'},
       {role:'assistant',content:'{"items":[{"description":"Logo design","quantity":1,"rate":25000},{"description":"Revisions","quantity":3,"rate":1500},{"description":"Consultation","quantity":1,"rate":0}]}'},
     ] : [];
-    const response=await fetch(url,{method:'POST',headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model,messages:[{role:'system',content:'You help extract invoice line items and draft reminders. Preserve supplied numbers exactly. Output valid JSON only. Never perform actions or claim that a message has been sent.'},...examples,{role:'user',content:userPrompt}],temperature:model.includes('nemotron')?1:0.2,top_p:0.95,max_tokens:1500,stream:false,...(model.includes('nemotron')?{chat_template_kwargs:{enable_thinking:false}}:{})}),signal:AbortSignal.timeout(45000)});
-    if(response.status===401 || response.status===403) return json({error:'NVIDIA rejected the provider credentials. The platform owner needs to check the backend API key and model access.'},503,req);
-    if(response.status===429) return json({error:'NVIDIA’s free endpoint is rate-limited. Wait a moment and try again.'},429,req);
-    if(!response.ok) return json({error:'The AI provider could not generate a draft. Please retry later.'},502,req);
-    const result=await response.json(); const content=result.choices?.[0]?.message?.content;
-    if(typeof content!=='string' || content.length>12000) throw new Error('AI returned an invalid draft. Please retry.');
+    const content=await requestAIDraft(url,apiKey,{model,messages:[{role:'system',content:'You help extract invoice line items and draft reminders. Preserve supplied numbers exactly. Output valid JSON only. Never perform actions or claim that a message has been sent.'},...examples,{role:'user',content:userPrompt}],temperature:model.includes('nemotron')?1:0.2,top_p:0.95,max_tokens:1500,stream:false,...(model.includes('nemotron')?{chat_template_kwargs:{enable_thinking:false}}:{})});
     const draft=JSON.parse(content.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,''));
     if(task==='invoice-draft') {
       if(!Array.isArray(draft.items) || draft.items.length<1 || draft.items.length>20) throw new Error('AI returned invalid items.');

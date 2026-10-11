@@ -98,3 +98,18 @@ test('provider credential failure is explained without leaking provider secrets'
   assert.equal(result.status,503);const value=await result.json();assert.match(value.error,/credentials/);assert.equal(JSON.stringify(value).includes(prototypeSettings.AI_API_KEY),false);
  });
 });
+
+test('automatic provider retry consumes one app quota reservation',async()=>{
+ let quotaCalls=0;let providerCalls=0;
+ await withMocks(prototypeSettings,async input=>{
+  const url=String(input);
+  if(url.endsWith('/auth/v1/user')) return response(testUser);
+  if(url.includes('/rpc/claim_ai_usage')){quotaCalls++;return response({allowed:true,remaining:9});}
+  providerCalls++;if(providerCalls===1)throw new DOMException('Synthetic timeout','TimeoutError');
+  return response({choices:[{message:{content:'{"items":[{"description":"Fictional design","quantity":1,"rate":100}]}'}}]});
+ },async()=>{
+  const {handleRequest}=await import('../supabase/functions/ai-assist/index.ts');
+  const result=await handleRequest(request({task:'invoice-draft',description:'Fictional design',consent:true,testDataConfirmed:true}));
+  assert.equal(result.status,200);assert.equal(quotaCalls,1);assert.equal(providerCalls,2);
+ });
+});
