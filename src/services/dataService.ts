@@ -7,7 +7,7 @@ import { errorService } from './errorService';
 import { applyTransactionChange, type FinanceState } from '../utils/finance';
 import { currencyService } from './currencyService';
 
-const emptyState = (): FinanceState => ({ transactions: [], accounts: [], invoices: [], clients: [], emis: [], creditCards: [], recurringPayments: [] });
+const emptyState = (): FinanceState => ({ transactions: [], accounts: [], invoices: [], clients: [], emis: [], creditCards: [], recurringPayments: [], categories: [], categoryRules: [] });
 type Collection = keyof FinanceState;
 
 export class DataService {
@@ -74,6 +74,43 @@ export class DataService {
   getEMIs() { return this.load('emis', id => supabaseService.getEMIs(id)); }
   getCreditCards() { return this.load('creditCards', id => supabaseService.getCreditCards(id)); }
   getRecurringPayments() { return this.load('recurringPayments', id => supabaseService.getRecurringPayments(id)); }
+  getCategories() { return this.load('categories', id => supabaseService.getCategories(id)); }
+  getCategoryRules() { return this.load('categoryRules', id => supabaseService.getCategoryRules(id)); }
+
+  async learnCategoryRule(matchText: string, name: string, type: Transaction['type']) {
+    const match = matchText.trim().toLowerCase();
+    if (match.length < 2 || match.length > 100 || !name.trim() || name.length > 100 || name.trim() === 'Transfer') throw new Error('Enter a merchant and category to remember.');
+    await this.mutate(async (state, id) => {
+      let category = state.categories.find(c => c.name.toLowerCase() === name.trim().toLowerCase());
+      if (!category) {
+        category = { id: crypto.randomUUID(), name: name.trim(), bucket: type === 'income' ? 'income' : 'flex' };
+        if (id) category = await supabaseService.saveCategory(id, category);
+        state.categories.push(category);
+      }
+      let rule = { id: state.categoryRules.find(r => r.matchText === match)?.id || crypto.randomUUID(), matchText: match, categoryId: category.id };
+      if (id) rule = await supabaseService.saveCategoryRule(id, rule);
+      state.categoryRules = [...state.categoryRules.filter(r => r.matchText !== match), rule];
+    });
+  }
+
+  // One request / one guest snapshot: all reviewed rows succeed or none do.
+  async saveTransactions(items: Transaction[]) {
+    if (!items.length || items.length > 10 || new Set(items.map(t => t.id)).size !== items.length) throw new Error('Review 1–10 distinct entries.');
+    for (const item of items) {
+      if (!Number.isFinite(item.amount) || item.amount <= 0 || item.invoiceId || item.transferId || item.category === 'Transfer') throw new Error('Quick-add supports ordinary income and expenses. Use the dedicated payment or transfer flow.');
+    }
+    await this.mutate(async (state, id) => {
+      if (id) {
+        await supabaseService.saveTransactions(id, items);
+        try {
+          state.transactions = await supabaseService.getTransactions(id);
+          state.accounts = await supabaseService.getAccounts(id);
+        } catch { errorService.addError('Entries saved. Refresh to reload your balances.', 'info'); }
+      } else {
+        for (const item of items) applyTransactionChange(state, item.id, item);
+      }
+    });
+  }
 
   getCachedTransactions() { return this.cache.transactions; }
   getCachedAccounts() { return this.cache.accounts; }

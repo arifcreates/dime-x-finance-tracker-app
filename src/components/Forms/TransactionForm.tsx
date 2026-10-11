@@ -64,7 +64,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const expenseCategories = ['Office', 'Software', 'Marketing', 'Travel', 'Equipment', 'Utilities', 'Food', 'Transportation', 'Other'];
   
   const categories = type === 'income' ? incomeCategories : expenseCategories;
-  const categoryOptions = categories.map(category => ({
+  const categoryOptions = [...new Set([...categories, ...(transaction?.category ? [transaction.category] : [])])].map(category => ({
     value: category,
     label: category,
   }));
@@ -93,6 +93,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       amount,
       type,
       status: 'completed',
+      source: transaction?.source || 'manual',
+      categoryId: transaction?.category === formData.category ? transaction.categoryId : undefined,
     };
 
     const selectedAccount = accounts.find(account => account.id === formData.account);

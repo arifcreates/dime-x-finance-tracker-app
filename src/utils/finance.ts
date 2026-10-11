@@ -1,8 +1,9 @@
-import type { Transaction, Account, Invoice, Client, EMI, CreditCard, RecurringPayment } from '../types';
+import type { Transaction, Account, Invoice, Client, EMI, CreditCard, RecurringPayment, Category, CategoryRule } from '../types';
 
 export interface FinanceState {
   transactions: Transaction[]; accounts: Account[]; invoices: Invoice[]; clients: Client[];
   emis: EMI[]; creditCards: CreditCard[]; recurringPayments: RecurringPayment[];
+  categories: Category[]; categoryRules: CategoryRule[];
 }
 
 export function applyTransactionChange(state: FinanceState, id: string, next?: Transaction) {

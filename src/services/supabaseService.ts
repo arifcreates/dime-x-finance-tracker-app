@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { Transaction, Account, Invoice, Client, EMI, CreditCard, RecurringPayment, UserProfile, UserPreferences } from '../types';
+import { Transaction, Account, Invoice, Client, EMI, CreditCard, RecurringPayment, UserProfile, UserPreferences, Category, CategoryRule } from '../types';
 import { getInvoiceMetadata } from '../utils/invoiceUtils';
 
 class SupabaseService {
@@ -129,11 +129,11 @@ class SupabaseService {
       .order('date', { ascending: false });
 
     if (error) throw error;
-    return (data || []).map(t => ({ ...t, accountId: t.account_id, invoiceId: t.invoice_id || undefined, transferId: t.transfer_id || undefined }));
+    return (data || []).map(t => ({ ...t, accountId: t.account_id, invoiceId: t.invoice_id || undefined, transferId: t.transfer_id || undefined, categoryId: t.category_id || undefined }));
   }
 
-  async saveTransaction(userId: string, transaction: Transaction) {
-    const transactionData = {
+  private transactionData(userId: string, transaction: Transaction) {
+    return {
       id: transaction.id,
       user_id: userId,
       date: transaction.date,
@@ -145,8 +145,18 @@ class SupabaseService {
       account_id: transaction.accountId,
       currency: transaction.currency,
       status: transaction.status,
+      source: transaction.source || 'manual',
+      category_id: transaction.categoryId || null,
     };
+  }
 
+  async saveTransactions(userId: string, transactions: Transaction[]) {
+    const { error } = await supabase.from('transactions').upsert(transactions.map(t => this.transactionData(userId, t)));
+    if (error) throw error;
+  }
+
+  async saveTransaction(userId: string, transaction: Transaction) {
+    const transactionData = this.transactionData(userId, transaction);
     const { data, error } = await supabase
       .from('transactions')
       .upsert(transactionData).select().single();
@@ -162,6 +172,30 @@ class SupabaseService {
       .eq('id', transactionId).select('id').single();
 
     if (error) throw error;
+  }
+
+  async getCategories(userId: string): Promise<Category[]> {
+    const { data, error } = await supabase.from('categories').select('id,name,bucket').eq('user_id', userId).order('name');
+    if (error) throw error;
+    return data || [];
+  }
+
+  async getCategoryRules(userId: string): Promise<CategoryRule[]> {
+    const { data, error } = await supabase.from('category_rules').select('id,match_text,category_id').eq('user_id', userId);
+    if (error) throw error;
+    return (data || []).map(r => ({id:r.id, matchText:r.match_text, categoryId:r.category_id}));
+  }
+
+  async saveCategory(userId: string, category: Category): Promise<Category> {
+    const { data, error } = await supabase.from('categories').upsert({user_id:userId,name:category.name,bucket:category.bucket}, {onConflict:'user_id,name'}).select('id,name,bucket').single();
+    if (error) throw error;
+    return data;
+  }
+
+  async saveCategoryRule(userId: string, rule: CategoryRule): Promise<CategoryRule> {
+    const { data, error } = await supabase.from('category_rules').upsert({user_id:userId,match_text:rule.matchText,category_id:rule.categoryId}, {onConflict:'user_id,match_text'}).select('id,match_text,category_id').single();
+    if (error) throw error;
+    return {id:data.id,matchText:data.match_text,categoryId:data.category_id};
   }
 
   // Clients

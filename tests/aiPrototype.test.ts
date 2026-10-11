@@ -113,3 +113,19 @@ test('automatic provider retry consumes one app quota reservation',async()=>{
   assert.equal(result.status,200);assert.equal(quotaCalls,1);assert.equal(providerCalls,2);
  });
 });
+
+test('quick-add is a draft-only metered task and never fetches financial records',async()=>{
+ let quota=0;
+ await withMocks(prototypeSettings,async(input,init)=>{
+  const url=String(input);
+  if(url.endsWith('/auth/v1/user')) return response(testUser);
+  if(url.includes('/rpc/claim_ai_usage')) {quota++;return response({allowed:true,remaining:9});}
+  assert.equal(url,'https://integrate.api.nvidia.com/v1/chat/completions');
+  const payload=JSON.parse(String(init?.body));assert.match(payload.messages.at(-1).content,/Do NOT resolve relative dates/);
+  return response({choices:[{message:{content:JSON.stringify({entries:[{intent:'expense',amount:450,description:'Fictional meal',merchant:'Fictional cafe',category:'Food',dateText:'yesterday'},{intent:'unsupported',amount:null,description:'Card payment',dateText:'today'}]})}}]});
+ },async()=>{
+  const {handleRequest}=await import('../supabase/functions/ai-assist/index.ts');
+  const result=await handleRequest(request({task:'quick-add',description:'Fictional meal yesterday and card payment',consent:true,testDataConfirmed:true}));
+  assert.equal(result.status,200);const value=await result.json();assert.equal(value.entries[0].dateText,'yesterday');assert.equal(value.entries[1].intent,'unsupported');assert.equal(quota,1);
+ });
+});

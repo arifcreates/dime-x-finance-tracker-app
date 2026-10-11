@@ -10,7 +10,21 @@ export interface Transaction {
   currency?: string;
   invoiceId?: string;
   transferId?: string;
+  source?: 'manual' | 'recurring' | 'import' | 'ai';
+  categoryId?: string;
   status: 'completed' | 'pending' | 'cancelled';
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  bucket: 'fixed' | 'flex' | 'non_monthly' | 'income' | 'transfer';
+}
+
+export interface CategoryRule {
+  id: string;
+  matchText: string;
+  categoryId: string;
 }
 
 export interface Account {

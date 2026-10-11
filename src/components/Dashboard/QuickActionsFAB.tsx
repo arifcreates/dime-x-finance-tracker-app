@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, X, DollarSign, Receipt, FileText, CreditCard } from 'lucide-react';
+import { Plus, X, DollarSign, Receipt, FileText, CreditCard, MessageSquare } from 'lucide-react';
 
 interface QuickActionsFABProps {
   onAction: (action: string) => void;
@@ -9,6 +9,7 @@ export const QuickActionsFAB: React.FC<QuickActionsFABProps> = ({ onAction }) =>
   const [isOpen, setIsOpen] = useState(false);
 
   const actions = [
+    { id: 'quick-add', label: 'Tell Dime-X', icon: MessageSquare },
     {
       id: 'add-income',
       label: 'Add Income',

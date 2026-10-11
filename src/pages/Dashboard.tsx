@@ -12,6 +12,7 @@ import { getDaysUntilDate } from '../utils/formatters';
 import { Transaction, Account, EMI, CreditCard, RecurringPayment, Invoice } from '../types';
 import { dataService } from '../services/dataService';
 import { useCurrencyFormat } from '../hooks/useCurrencyFormat';
+import { QuickAdd } from '../components/QuickAdd/QuickAdd';
 
 interface DashboardProps {
   transactions: Transaction[];
@@ -136,6 +137,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const openQuickAction = useCallback((action: string) => {
     switch (action) {
+      case 'quick-add':
+        document.getElementById('quick-add')?.scrollIntoView({behavior:'smooth',block:'start'});
+        document.getElementById('quick-add-text')?.focus({preventScroll:true});
+        break;
       case 'add-income':
         setTransactionType('income');
         setShowTransactionForm(true);
@@ -677,6 +682,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             Here's what's happening with your finances today
           </p>
         </div>
+
+        <QuickAdd accounts={accounts} transactions={transactions} onSaved={handleTransactionSave} onCreateAccount={onCreateAccount} />
 
         {/* Draggable Dashboard Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6">

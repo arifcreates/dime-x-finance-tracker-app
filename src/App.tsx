@@ -316,7 +316,7 @@ function App() {
             searchQuery={globalSearchQuery}
           />
           
-          <main className="flex-1 overflow-y-auto pb-[calc(5.75rem+var(--mobile-browser-bottom,0px))] lg:pb-0">
+          <main key={user?.id || 'guest'} className="flex-1 overflow-y-auto pb-[calc(5.75rem+var(--mobile-browser-bottom,0px))] lg:pb-0">
             <Suspense fallback={<p className="p-6">Loading…</p>}>{renderContent()}</Suspense>
           </main>
 
